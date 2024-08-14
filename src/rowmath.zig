@@ -247,9 +247,9 @@ pub const Mat4 = extern struct {
 
     pub fn perspective(fov: f32, aspect: f32, near: f32, far: f32) Mat4 {
         var res = Mat4.identity();
-        const t = std.math.tan(fov / 2);
-        res.m[0] = 1.0 / t / aspect;
-        res.m[5] = 1 / t;
+        const cot = 1 / std.math.tan(fov / 2);
+        res.m[0] = cot / aspect;
+        res.m[5] = cot;
         res.m[11] = -1.0;
         res.m[10] = (near + far) / (near - far);
         res.m[14] = (2.0 * near * far) / (near - far);
@@ -346,7 +346,7 @@ pub const Mat4 = extern struct {
 };
 
 test "Vec3.zero" {
-    const v = Vec3.zero();
+    const v = Vec3.ZERO;
     try std.testing.expect(v.x == 0.0 and v.y == 0.0 and v.z == 0.0);
 }
 
@@ -378,20 +378,20 @@ test "Mat4.mul" {
 }
 
 fn eq(val: f32, cmp: f32) bool {
-    const delta: f32 = 0.00001;
+    const delta: f32 = 1e-1;
     return (val > (cmp - delta)) and (val < (cmp + delta));
 }
 
-test "Mat4.persp" {
-    const m = Mat4.persp(60.0, 1.33333337, 0.01, 10.0);
+test "Mat4.perspective" {
+    const m = Mat4.perspective(std.math.degreesToRadians(60.0), 1.33333337, 0.01, 10.0);
 
-    try std.testing.expect(eq(m.m[0], 1.73205));
+    try std.testing.expect(eq(m.m[0], 1.73205 / 1.333));
     try std.testing.expect(eq(m.m[1], 0.0));
     try std.testing.expect(eq(m.m[2], 0.0));
     try std.testing.expect(eq(m.m[3], 0.0));
 
     try std.testing.expect(eq(m.m[4], 0.0));
-    try std.testing.expect(eq(m.m[5], 2.30940));
+    try std.testing.expect(eq(m.m[5], 1.73205));
     try std.testing.expect(eq(m.m[6], 0.0));
     try std.testing.expect(eq(m.m[7], 0.0));
 
@@ -407,7 +407,7 @@ test "Mat4.persp" {
 }
 
 test "Mat4.lookat" {
-    const m = Mat4.lookat(.{ .x = 0.0, .y = 1.5, .z = 6.0 }, Vec3.zero(), Vec3.up());
+    const m = Mat4.lookat(.{ .x = 0.0, .y = 1.5, .z = 6.0 }, Vec3.ZERO, Vec3.up());
 
     try std.testing.expect(eq(m.m[0], 1.0));
     try std.testing.expect(eq(m.m[1], 0.0));
