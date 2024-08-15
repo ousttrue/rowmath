@@ -33,11 +33,25 @@ pub fn build(b: *std.Build) void {
     });
     mod.linkLibrary(lib);
 
-    sokol_examples.build(b, target, optimize, lib);
-    raylib_examples.build(b, target, optimize, lib);
+    {
+        // examples
+        const dep_sokol = b.dependency("sokol", .{
+            .target = target,
+            .optimize = optimize,
+        });
+
+        // create a build step which invokes the Emscripten linker
+        var emsdk: ?*std.Build.Dependency = null;
+        if (target.result.isWasm()) {
+            emsdk = dep_sokol.builder.dependency("emsdk", .{});
+        }
+
+        sokol_examples.build(b, target, optimize, lib, dep_sokol, emsdk);
+        raylib_examples.build(b, target, optimize, lib, dep_sokol, emsdk);
+    }
 
     // tests
-    const test_step = b.step("test", "Run unit tests");
+    const test_step = b.step("test", "rowmath tests");
     for (tests) |src| {
         const lib_unit_tests = b.addTest(.{
             .root_source_file = b.path(src),
