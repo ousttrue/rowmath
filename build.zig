@@ -20,18 +20,10 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const mod = b.addModule(
+    const lib = b.addModule(
         "rowmath",
-        .{ .root_source_file = b.path("src/main.zig") },
+        .{ .root_source_file = b.path("src/rowmath.zig") },
     );
-
-    const lib = b.addStaticLibrary(.{
-        .name = "rowmath",
-        .root_source_file = b.path("src/main.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    mod.linkLibrary(lib);
 
     {
         // examples
@@ -61,4 +53,24 @@ pub fn build(b: *std.Build) void {
         const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
         test_step.dependOn(&run_lib_unit_tests.step);
     }
+
+    // docs
+    const doc_root = b.addObject(.{
+        .name = "rowmath",
+        .root_source_file = b.path("src/doc_root.zig"),
+        .target = b.host,
+        .optimize = .Debug,
+    });
+    // doc_root.root_module.addImport("rowmath", lib);
+    // b.installArtifact(doc_root);
+    const install_docs = b.addInstallDirectory(.{
+        .source_dir = doc_root.getEmittedDocs(),
+        .install_dir = .prefix,
+        .install_subdir = "docs",
+    });
+    b.getInstallStep().dependOn(&install_docs.step);
+    // install_docs.step.dependOn(b.getInstallStep());
+    // b.installArtifact(doc_root);
+    const docs_step = b.step("docs", "Copy documentation artifacts to prefix path");
+    docs_step.dependOn(&install_docs.step);
 }

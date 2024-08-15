@@ -5,7 +5,7 @@ pub fn build(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
-    rowmath: *std.Build.Step.Compile,
+    rowmath: *std.Build.Module,
     dep_sokol: *std.Build.Dependency,
     _emsdk: ?*std.Build.Dependency,
 ) void {
@@ -21,7 +21,7 @@ pub fn build(
 
         // inject dependency(must inject before emLinkStep)
         lib.root_module.addImport("sokol", dep_sokol.module("sokol"));
-        lib.root_module.addImport("rowmath", &rowmath.root_module);
+        lib.root_module.addImport("rowmath", rowmath);
 
         // link emscripten
         const link_step = try sokol.emLinkStep(b, .{
@@ -58,7 +58,7 @@ pub fn build(
 
         // inject dependency
         exe.root_module.addImport("sokol", dep_sokol.module("sokol"));
-        exe.root_module.addImport("rowmath", &rowmath.root_module);
+        exe.root_module.addImport("rowmath", rowmath);
 
         // run
         const run = b.addRunArtifact(exe);

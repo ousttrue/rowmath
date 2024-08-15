@@ -10,7 +10,6 @@
 // * trs
 // [vec4][s][r][t]
 //------------------------------------------------------------------------------
-
 pub const Vec2 = @import("Vec2.zig");
 pub const Vec3 = @import("Vec3.zig");
 pub const Vec4 = @import("Vec4.zig");
