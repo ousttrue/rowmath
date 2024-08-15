@@ -62,17 +62,18 @@ pub fn update_transform(self: *@This()) void {
 }
 
 pub fn update(self: *@This(), input_state: InputState) Vec2 {
-    const dx = input_state.mouse_x - self.input_state.mouse_x;
-    const dy = input_state.mouse_y - self.input_state.mouse_y;
+    const dx = (input_state.mouse_x - self.input_state.mouse_x) / input_state.screen_height;
+    const dy = (input_state.mouse_y - self.input_state.mouse_y) / input_state.screen_height;
     self.input_state = input_state;
     const t = std.math.tan(self.yFov / 2);
     if (input_state.mouse_right) {
-        self.yaw -= std.math.degreesToRadians(dx * t);
-        self.pitch -= std.math.degreesToRadians(dy * t);
+        const ROT_SPEED = 2;
+        self.yaw -= dx * t * ROT_SPEED;
+        self.pitch -= dy * t * ROT_SPEED;
     }
     if (input_state.mouse_middle) {
-        self.shift.x -= dx / input_state.screen_height * self.shift.z * t;
-        self.shift.y += dy / input_state.screen_height * self.shift.z * t;
+        self.shift.x -= dx * t * self.shift.z;
+        self.shift.y += dy * t * self.shift.z;
     }
     if (input_state.mouse_wheel > 0) {
         self.shift.z *= 0.9;

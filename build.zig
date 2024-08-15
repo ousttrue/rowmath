@@ -1,4 +1,5 @@
 const std = @import("std");
+const examples = @import("examples/build.zig");
 
 const tests = [_][]const u8{
     "src/main.zig",
@@ -11,7 +12,7 @@ const tests = [_][]const u8{
     "src/Transform.zig",
     "src/InputState.zig",
     "src/Ray.zig",
-    "src/_Camera.zig",
+    "src/Camera.zig",
 };
 
 pub fn build(b: *std.Build) void {
@@ -31,6 +32,9 @@ pub fn build(b: *std.Build) void {
     });
     mod.linkLibrary(lib);
 
+    examples.build(b, target, optimize, lib);
+
+    // tests
     const test_step = b.step("test", "Run unit tests");
     for (tests) |src| {
         const lib_unit_tests = b.addTest(.{
