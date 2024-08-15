@@ -33,6 +33,7 @@ pub fn build(
             .use_emmalloc = true,
             .use_filesystem = false,
             .shell_file_path = dep_sokol.path("src/sokol/web/shell.html").getPath(b),
+            .release_use_closure = false,
         });
 
         // emrun

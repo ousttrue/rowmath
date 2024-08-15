@@ -50,6 +50,7 @@ pub fn build(
                 "-sUSE_GLFW=3",
                 "-sASYNCIFY",
             },
+            .release_use_closure = false,
         });
 
         // emrun
