@@ -1,5 +1,19 @@
 const std = @import("std");
 
+const tests = [_][]const u8{
+    "src/main.zig",
+    "src/Vec2.zig",
+    "src/Vec3.zig",
+    "src/Vec4.zig",
+    "src/Quat.zig",
+    "src/Mat4.zig",
+    "src/RigidTransform.zig",
+    "src/Transform.zig",
+    "src/InputState.zig",
+    "src/Ray.zig",
+    "src/_Camera.zig",
+};
+
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -17,17 +31,14 @@ pub fn build(b: *std.Build) void {
     });
     mod.linkLibrary(lib);
 
-    // Creates a step for unit testing. This only builds the test executable
-    // but does not run it.
-    const lib_unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/main.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
-    // Similar to creating the run step earlier, this exposes a `test` step to
-    // the `zig build --help` menu, providing a way for the user to request
-    // running the unit tests.
     const test_step = b.step("test", "Run unit tests");
-    test_step.dependOn(&run_lib_unit_tests.step);
+    for (tests) |src| {
+        const lib_unit_tests = b.addTest(.{
+            .root_source_file = b.path(src),
+            .target = target,
+            .optimize = optimize,
+        });
+        const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
+        test_step.dependOn(&run_lib_unit_tests.step);
+    }
 }
