@@ -1,5 +1,6 @@
 const std = @import("std");
-const examples = @import("examples/build.zig");
+const sokol_examples = @import("examples/sokol/build.zig");
+const raylib_examples = @import("examples/raylib/build.zig");
 
 const tests = [_][]const u8{
     "src/main.zig",
@@ -32,7 +33,8 @@ pub fn build(b: *std.Build) void {
     });
     mod.linkLibrary(lib);
 
-    examples.build(b, target, optimize, lib);
+    sokol_examples.build(b, target, optimize, lib);
+    raylib_examples.build(b, target, optimize, lib);
 
     // tests
     const test_step = b.step("test", "Run unit tests");

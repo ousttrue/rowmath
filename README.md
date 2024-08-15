@@ -19,3 +19,9 @@ rowmath は `横vec` + `row major` です。
 双方ともに `(m12, m13, m14)` に translation が格納される。
 
 乗算順(local x parent x root x view x projection)の左右が異なる。
+
+## examples
+
+### sokol
+
+### raylib
