@@ -36,6 +36,7 @@ pub fn main() void {
     const screenWidth = 800;
     const screenHeight = 450;
 
+    c.SetConfigFlags(c.FLAG_WINDOW_RESIZABLE);
     c.InitWindow(screenWidth, screenHeight, "raylib [models] example - geometric shapes");
     defer c.CloseWindow(); // Close window and OpenGL context
 
