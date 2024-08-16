@@ -34,8 +34,9 @@ jobs:
         run: |
           zig build --summary all -Dtarget=wasm32-emscripten -Doptimize=ReleaseSmall -Dsokol
           zig build --summary all -Dtarget=wasm32-emscripten -Doptimize=ReleaseSmall -Draylib
-          cp -rp zig-out/web docs/static/wasm
           zig build -Dtarget=wasm32-emscripten -Doptimize=ReleaseSmall docs
+          find zig-out
+          cp -rp zig-out/web docs/static/wasm
           cp -rp zig-out/docs docs/static/api
       # docusaurus
       - uses: actions/setup-node@v3
