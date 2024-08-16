@@ -72,6 +72,7 @@ pub fn build(
         });
 
         // inject dependency
+        exe.addIncludePath(dep_raylib.path("src"));
         exe.root_module.linkLibrary(raylib);
         exe.root_module.addImport("rowmath", rowmath);
 

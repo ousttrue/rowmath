@@ -4,6 +4,7 @@
 # Production
 /build
 /static/api/
+/static/wasm/
 
 # Generated files
 .docusaurus

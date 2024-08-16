@@ -21,7 +21,7 @@ function HomepageHeader() {
             className="button button--secondary button--lg"
             target="_blank"
             to="/api/index.html">
-            API ⏱️
+            ⚡ API ⚡
           </Link>
         </div>
       </div>

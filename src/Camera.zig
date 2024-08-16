@@ -159,6 +159,10 @@ pub fn frustum(self: @This()) Frustum {
     };
 }
 
+pub fn target(self: @This()) Vec3 {
+    return self.transform.translation.add(self.transform.rotation.dirZ().scale(-@abs(self.shift.z)));
+}
+
 test "camera" {
     const cam = Camera{};
     try std.testing.expectEqual(Vec3{ .x = 1, .y = 0, .z = 0 }, cam.transform.rotation.dirX());

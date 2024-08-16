@@ -20,28 +20,6 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const lib = b.addModule(
-        "rowmath",
-        .{ .root_source_file = b.path("src/rowmath.zig") },
-    );
-
-    {
-        // examples
-        const dep_sokol = b.dependency("sokol", .{
-            .target = target,
-            .optimize = optimize,
-        });
-
-        // create a build step which invokes the Emscripten linker
-        var emsdk: ?*std.Build.Dependency = null;
-        if (target.result.isWasm()) {
-            emsdk = dep_sokol.builder.dependency("emsdk", .{});
-        }
-
-        sokol_examples.build(b, target, optimize, lib, dep_sokol, emsdk);
-        raylib_examples.build(b, target, optimize, lib, dep_sokol, emsdk);
-    }
-
     // tests
     const test_step = b.step("test", "rowmath tests");
     for (tests) |src| {
@@ -73,4 +51,30 @@ pub fn build(b: *std.Build) void {
     // b.installArtifact(doc_root);
     const docs_step = b.step("docs", "Copy documentation artifacts to prefix path");
     docs_step.dependOn(&install_docs.step);
+
+    const lib = b.addModule(
+        "rowmath",
+        .{ .root_source_file = b.path("src/rowmath.zig") },
+    );
+    const build_sokol = !target.result.isWasm() or (b.option(bool, "sokol", "build sokol example") orelse false);
+    const build_raylib = !target.result.isWasm() or (b.option(bool, "raylib", "build raylib example") orelse false);
+    if (build_sokol or build_raylib) {
+        const dep_sokol = b.dependency("sokol", .{
+            .target = target,
+            .optimize = optimize,
+        });
+
+        // create a build step which invokes the Emscripten linker
+        var emsdk: ?*std.Build.Dependency = null;
+        if (target.result.isWasm()) {
+            emsdk = dep_sokol.builder.dependency("emsdk", .{});
+        }
+
+        if (build_sokol) {
+            sokol_examples.build(b, target, optimize, lib, dep_sokol, emsdk);
+        }
+        if (build_raylib) {
+            raylib_examples.build(b, target, optimize, lib, dep_sokol, emsdk);
+        }
+    }
 }
