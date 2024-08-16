@@ -6,7 +6,6 @@ pub fn build(
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     rowmath: *std.Build.Module,
-    dep_sokol: *std.Build.Dependency,
     _emsdk: ?*std.Build.Dependency,
 ) void {
     if (_emsdk) |emsdk| {
@@ -45,7 +44,7 @@ pub fn build(
             .use_webgl2 = true,
             .use_emmalloc = true,
             .use_filesystem = false,
-            .shell_file_path = dep_sokol.path("src/sokol/web/shell.html").getPath(b),
+            .shell_file_path = dep_raylib.path("src/minshell.html").getPath(b),
             .extra_args = &.{
                 "-sUSE_GLFW=3",
                 "-sASYNCIFY",

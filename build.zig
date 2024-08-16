@@ -74,7 +74,7 @@ pub fn build(b: *std.Build) void {
             sokol_examples.build(b, target, optimize, lib, dep_sokol, emsdk);
         }
         if (build_raylib) {
-            raylib_examples.build(b, target, optimize, lib, dep_sokol, emsdk);
+            raylib_examples.build(b, target, optimize, lib, emsdk);
         }
     }
 }

@@ -17,12 +17,11 @@ const c = @cImport({
     @cInclude("raylib.h");
 });
 
-fn to_raylib(src: rowmath.Vec3)c.Vector3
-{
+fn to_raylib(src: rowmath.Vec3) c.Vector3 {
     return .{
-        .x=src.x,
-        .y=src.y,
-        .z=src.z,
+        .x = src.x,
+        .y = src.y,
+        .z = src.z,
     };
 }
 
@@ -33,11 +32,8 @@ pub fn main() void {
     // Initialization
     //--------------------------------------------------------------------------------------
 
-    const screenWidth = 800;
-    const screenHeight = 450;
-
     c.SetConfigFlags(c.FLAG_WINDOW_RESIZABLE);
-    c.InitWindow(screenWidth, screenHeight, "raylib [models] example - geometric shapes");
+    c.InitWindow(800, 450, "raylib [models] example - geometric shapes");
     defer c.CloseWindow(); // Close window and OpenGL context
 
     // Define the camera to look into our 3d world
@@ -52,9 +48,12 @@ pub fn main() void {
     // Main game loop
     while (!c.WindowShouldClose()) // Detect window close button or ESC key
     {
+        const screenWidth = c.GetMonitorWidth(0);
+        const screenHeight = c.GetMonitorHeight(0);
+        c.SetWindowSize(screenWidth, screenHeight);
         _ = rowmath_camera.update(.{
-            .screen_width = @floatFromInt(c.GetScreenWidth()),
-            .screen_height = @floatFromInt(c.GetScreenHeight()),
+            .screen_width = @floatFromInt(screenWidth),
+            .screen_height = @floatFromInt(screenHeight),
             .mouse_x = @floatFromInt(c.GetMouseX()),
             .mouse_y = @floatFromInt(c.GetMouseY()),
             .mouse_left = c.IsMouseButtonDown(c.MOUSE_BUTTON_LEFT),
