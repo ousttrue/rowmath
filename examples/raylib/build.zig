@@ -20,7 +20,7 @@ pub fn build(
 
     const name = "raylib_camera";
     const src = "examples/raylib/camera.zig";
-    const compile = if (_emsdk) |emsdk| block: {
+    if (_emsdk) |emsdk| {
         const lib = b.addStaticLibrary(.{
             .target = target,
             .optimize = optimize,
@@ -63,9 +63,7 @@ pub fn build(
             b.fmt("emrun-{s}", .{name}),
             b.fmt("EmRun {s}.wasm", .{name}),
         ).dependOn(&run.step);
-
-        break :block lib;
-    } else block: {
+    } else {
         const exe = b.addExecutable(.{
             .target = target,
             .optimize = optimize,
@@ -83,11 +81,5 @@ pub fn build(
             b.fmt("run-{s}", .{name}),
             b.fmt("run {s}", .{name}),
         ).dependOn(&run.step);
-
-        break :block exe;
-    };
-
-    // install
-    const install_artifact = b.addInstallArtifact(compile, .{});
-    b.getInstallStep().dependOn(&install_artifact.step);
+    }
 }
