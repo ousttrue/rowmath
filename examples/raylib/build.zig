@@ -44,7 +44,8 @@ pub fn build(
             .use_webgl2 = true,
             .use_emmalloc = true,
             .use_filesystem = false,
-            .shell_file_path = dep_raylib.path("src/minshell.html").getPath(b),
+            // .shell_file_path = dep_raylib.path("src/minshell.html").getPath(b),
+            .shell_file_path = b.path("examples/raylib/minshell.html").getPath(b),
             .extra_args = &.{
                 "-sUSE_GLFW=3",
                 "-sASYNCIFY",

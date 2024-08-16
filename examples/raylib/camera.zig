@@ -48,9 +48,8 @@ pub fn main() void {
     // Main game loop
     while (!c.WindowShouldClose()) // Detect window close button or ESC key
     {
-        const screenWidth = c.GetMonitorWidth(0);
-        const screenHeight = c.GetMonitorHeight(0);
-        c.SetWindowSize(screenWidth, screenHeight);
+        const screenWidth = c.GetScreenWidth();
+        const screenHeight = c.GetScreenHeight();
         _ = rowmath_camera.update(.{
             .screen_width = @floatFromInt(screenWidth),
             .screen_height = @floatFromInt(screenHeight),
