@@ -170,6 +170,6 @@ test "camera" {
     try std.testing.expectEqual(Vec3{ .x = 0, .y = 0, .z = 1 }, cam.transform.rotation.dirZ());
 
     const q = Quat{ .x = 0, .y = 0, .z = 0, .w = 1 };
-    const v = q.qrot(.{ .x = 1, .y = 2, .z = 3 });
+    const v = q.rotatePoint(.{ .x = 1, .y = 2, .z = 3 });
     try std.testing.expectEqual(Vec3{ .x = 1, .y = 2, .z = 3 }, v);
 }

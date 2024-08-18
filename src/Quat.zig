@@ -12,12 +12,7 @@ y: f32,
 z: f32,
 w: f32,
 
-pub const IDENTITY: Quat = .{
-    .x = 0,
-    .y = 0,
-    .z = 0,
-    .w = 1,
-};
+pub const identity: Quat = .{ .x = 0, .y = 0, .z = 0, .w = 1 };
 
 pub fn axisAngle(axis: Vec3, angle: f32) Quat {
     const s = std.math.sin(angle / 2);
@@ -29,7 +24,7 @@ pub fn axisAngle(axis: Vec3, angle: f32) Quat {
     };
 }
 
-pub fn conj(q: @This()) @This() {
+pub fn conjugate(q: @This()) @This() {
     return .{
         .x = -q.x,
         .y = -q.y,
@@ -38,7 +33,7 @@ pub fn conj(q: @This()) @This() {
     };
 }
 
-pub fn length2(q: @This()) f32 {
+pub fn sqNorm(q: @This()) f32 {
     return q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
 }
 
@@ -95,6 +90,6 @@ pub fn matrix(q: @This()) Mat4 {
     };
 }
 
-pub fn qrot(q: @This(), v: Vec3) Vec3 {
+pub fn rotatePoint(q: @This(), v: Vec3) Vec3 {
     return (q.dirX().scale(v.x)).add(q.dirY().scale(v.y)).add(q.dirZ().scale(v.z));
 }

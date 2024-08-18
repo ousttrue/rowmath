@@ -21,7 +21,7 @@ pub fn trs(t: Vec3, r: Quat, s: Vec3) @This() {
     };
 }
 
-pub fn uniform_scale(self: @This()) bool {
+pub fn uniformScale(self: @This()) bool {
     return self.scale.x == self.scale.y and self.scale.x == self.scale.z;
 }
 pub fn matrix(self: @This()) Mat4 {
@@ -32,20 +32,20 @@ pub fn matrix(self: @This()) Mat4 {
     );
 }
 
-pub fn transform_vector(self: @This(), vec: Vec3) Vec3 {
+pub fn transformVector(self: @This(), vec: Vec3) Vec3 {
     return self.rigid_transform.rotation.qrot(.{
         .x = vec.x * self.scale.x,
         .y = vec.y * self.scale.y,
         .z = vec.z * self.scale.z,
     });
 }
-pub fn transform_point(self: @This(), p: Vec3) Vec3 {
+pub fn transformPoint(self: @This(), p: Vec3) Vec3 {
     return self.rigid_transform.translation.add(self.transform_vector(p));
 }
-pub fn detransform_point(self: @This(), p: Vec3) Vec3 {
+pub fn detransformPoint(self: @This(), p: Vec3) Vec3 {
     return self.detransform_vector(p.sub(self.rigid_transform.translation));
 }
-pub fn detransform_vector(self: @This(), vec: Vec3) Vec3 {
+pub fn detransformVector(self: @This(), vec: Vec3) Vec3 {
     const v = self.rigid_transform.rotation.inverse().qrot(vec);
     return .{
         .x = v.x / self.scale.x,
