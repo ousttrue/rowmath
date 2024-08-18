@@ -8,6 +8,7 @@ const tests = [_][]const u8{
     "src/Vec3.zig",
     "src/Vec4.zig",
     "src/Quat.zig",
+    "src/Rgba.zig",
     "src/Mat4.zig",
     "src/RigidTransform.zig",
     "src/Transform.zig",

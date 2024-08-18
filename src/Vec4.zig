@@ -6,14 +6,6 @@ y: f32,
 z: f32,
 w: f32,
 
-pub const RED: Vec4 = .{ .x = 1, .y = 0, .z = 0, .w = 1.0 };
-pub const GREEN: Vec4 = .{ .x = 0, .y = 1, .z = 0, .w = 1.0 };
-pub const BLUE: Vec4 = .{ .x = 0, .y = 0, .z = 1, .w = 1.0 };
-pub const CYAN: Vec4 = .{ .x = 0, .y = 0.5, .z = 0.5, .w = 1.0 };
-pub const MAGENTA: Vec4 = .{ .x = 0.5, .y = 0, .z = 0.5, .w = 1.0 };
-pub const YELLOW: Vec4 = .{ .x = 0.3, .y = 0.3, .z = 0, .w = 1.0 };
-pub const GRAY: Vec4 = .{ .x = 0.7, .y = 0.7, .z = 0.7, .w = 1.0 };
-
 pub fn fromVec3(v: Vec3, w: f32) @This() {
     return .{
         .x = v.x,

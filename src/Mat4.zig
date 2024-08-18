@@ -105,8 +105,8 @@ pub fn perspective(fov: f32, aspect: f32, near: f32, far: f32) Mat4 {
 pub fn lookat(eye: Vec3, center: Vec3, up: Vec3) Mat4 {
     var res = Mat4.zero();
 
-    const f = Vec3.norm(Vec3.sub(center, eye));
-    const s = Vec3.norm(Vec3.cross(f, up));
+    const f = Vec3.sub(center, eye).normalize();
+    const s = Vec3.cross(f, up).normalize();
     const u = Vec3.cross(s, f);
 
     res.m[0] = s.x;
@@ -132,7 +132,7 @@ pub fn lookat(eye: Vec3, center: Vec3, up: Vec3) Mat4 {
 pub fn rotate(degree: f32, axis_unorm: Vec3) Mat4 {
     var res = Mat4.identity();
 
-    const axis = Vec3.norm(axis_unorm);
+    const axis = axis_unorm.normalize();
     const sin_theta = std.math.sin(std.math.degreesToRadians(degree));
     const cos_theta = std.math.cos(std.math.degreesToRadians(degree));
     const cos_value = 1.0 - cos_theta;

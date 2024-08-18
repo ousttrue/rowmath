@@ -43,12 +43,12 @@ pub fn negate(self: @This()) @This() {
     return .{ .x = -self.x, .y = -self.y, .z = -self.z };
 }
 
-pub fn len2(v: Vec3) f32 {
+pub fn sqNorm(v: Vec3) f32 {
     return Vec3.dot(v, v);
 }
 
-pub fn len(v: Vec3) f32 {
-    return std.math.sqrt(v.len2());
+pub fn norm(v: Vec3) f32 {
+    return std.math.sqrt(v.sqNorm());
 }
 
 pub fn add(lhs: Vec3, rhs: Vec3) Vec3 {
@@ -63,8 +63,8 @@ pub fn scale(v: Vec3, s: f32) Vec3 {
     return Vec3{ .x = v.x * s, .y = v.y * s, .z = v.z * s };
 }
 
-pub fn norm(v: Vec3) Vec3 {
-    const l = Vec3.len(v);
+pub fn normalize(v: Vec3) Vec3 {
+    const l = Vec3.norm(v);
     if (l != 0.0) {
         return Vec3{ .x = v.x / l, .y = v.y / l, .z = v.z / l };
     } else {
@@ -72,13 +72,13 @@ pub fn norm(v: Vec3) Vec3 {
     }
 }
 
-pub fn mul_each(v0: Vec3, v1: Vec3) Vec3 {
-    return Vec3{
-        .x = v0.x * v1.x,
-        .y = v0.y * v1.y,
-        .z = v0.z * v1.z,
-    };
-}
+// pub fn mul_each(v0: Vec3, v1: Vec3) Vec3 {
+//     return Vec3{
+//         .x = v0.x * v1.x,
+//         .y = v0.y * v1.y,
+//         .z = v0.z * v1.z,
+//     };
+// }
 
 pub fn cross(v0: Vec3, v1: Vec3) Vec3 {
     return Vec3{ .x = (v0.y * v1.z) - (v0.z * v1.y), .y = (v0.z * v1.x) - (v0.x * v1.z), .z = (v0.x * v1.y) - (v0.y * v1.x) };
