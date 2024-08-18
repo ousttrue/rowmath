@@ -4,7 +4,7 @@ const Vec3 = @import("Vec3.zig");
 const Mat4 = @import("Mat4.zig");
 
 rotation: Quat = Quat.IDENTITY,
-translation: Vec3 = Vec3.ZERO,
+translation: Vec3 = Vec3.zero,
 
 pub fn localToWorld(self: @This()) Mat4 {
     const r = self.rotation.matrix();

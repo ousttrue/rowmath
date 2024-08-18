@@ -245,7 +245,11 @@ test "Mat4.perspective" {
 }
 
 test "Mat4.lookat" {
-    const m = Mat4.lookat(.{ .x = 0.0, .y = 1.5, .z = 6.0 }, Vec3.ZERO, Vec3.up());
+    const m = Mat4.lookat(
+        .{ .x = 0.0, .y = 1.5, .z = 6.0 },
+        Vec3.zero,
+        Vec3.up,
+    );
 
     try std.testing.expect(eq(m.m[0], 1.0));
     try std.testing.expect(eq(m.m[1], 0.0));

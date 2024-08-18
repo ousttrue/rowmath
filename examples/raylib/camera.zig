@@ -32,7 +32,7 @@ pub fn main() void {
     // Initialization
     //--------------------------------------------------------------------------------------
 
-    c.SetConfigFlags(c.FLAG_WINDOW_RESIZABLE);
+    c.SetConfigFlags(c.FLAG_WINDOW_RESIZABLE | c.FLAG_WINDOW_HIGHDPI);
     c.InitWindow(800, 450, "raylib [models] example - geometric shapes");
     defer c.CloseWindow(); // Close window and OpenGL context
 

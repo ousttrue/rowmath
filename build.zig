@@ -3,7 +3,7 @@ const sokol_examples = @import("examples/sokol/build.zig");
 const raylib_examples = @import("examples/raylib/build.zig");
 
 const tests = [_][]const u8{
-    "src/main.zig",
+    "src/rowmath.zig",
     "src/Vec2.zig",
     "src/Vec3.zig",
     "src/Vec4.zig",
@@ -31,6 +31,7 @@ pub fn build(b: *std.Build) void {
         const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
         test_step.dependOn(&run_lib_unit_tests.step);
     }
+    b.getInstallStep().dependOn(test_step);
 
     // docs
     const doc_root = b.addObject(.{

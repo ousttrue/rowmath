@@ -21,11 +21,11 @@ pub fn format(
     });
 }
 
-pub const ONE = Vec3{ .x = 1, .y = 1, .z = 1 };
-pub const ZERO = Vec3{ .x = 0.0, .y = 0.0, .z = 0.0 };
-pub const RIGHT: Vec3 = .{ .x = 1, .y = 0, .z = 0 };
-pub const UP: Vec3 = .{ .x = 0, .y = 1, .z = 0 };
-pub const FORWARD: Vec3 = .{ .x = 0, .y = 0, .z = 1 };
+pub const one = Vec3{ .x = 1, .y = 1, .z = 1 };
+pub const zero = Vec3{ .x = 0, .y = 0, .z = 0 };
+pub const right: Vec3 = .{ .x = 1, .y = 0, .z = 0 };
+pub const up: Vec3 = .{ .x = 0, .y = 1, .z = 0 };
+pub const forward: Vec3 = .{ .x = 0, .y = 0, .z = 1 };
 
 pub fn scalar(f: f32) Vec3 {
     return .{
@@ -37,10 +37,6 @@ pub fn scalar(f: f32) Vec3 {
 
 pub fn new(x: f32, y: f32, z: f32) Vec3 {
     return Vec3{ .x = x, .y = y, .z = z };
-}
-
-pub fn up() Vec3 {
-    return Vec3{ .x = 0.0, .y = 1.0, .z = 0.0 };
 }
 
 pub fn negate(self: @This()) @This() {
@@ -55,12 +51,12 @@ pub fn len(v: Vec3) f32 {
     return std.math.sqrt(v.len2());
 }
 
-pub fn add(left: Vec3, right: Vec3) Vec3 {
-    return Vec3{ .x = left.x + right.x, .y = left.y + right.y, .z = left.z + right.z };
+pub fn add(lhs: Vec3, rhs: Vec3) Vec3 {
+    return Vec3{ .x = lhs.x + rhs.x, .y = lhs.y + rhs.y, .z = lhs.z + rhs.z };
 }
 
-pub fn sub(left: Vec3, right: Vec3) Vec3 {
-    return Vec3{ .x = left.x - right.x, .y = left.y - right.y, .z = left.z - right.z };
+pub fn sub(lhs: Vec3, rhs: Vec3) Vec3 {
+    return Vec3{ .x = lhs.x - rhs.x, .y = lhs.y - rhs.y, .z = lhs.z - rhs.z };
 }
 
 pub fn scale(v: Vec3, s: f32) Vec3 {
@@ -72,7 +68,7 @@ pub fn norm(v: Vec3) Vec3 {
     if (l != 0.0) {
         return Vec3{ .x = v.x / l, .y = v.y / l, .z = v.z / l };
     } else {
-        return Vec3.ZERO;
+        return Vec3.zero;
     }
 }
 
@@ -93,7 +89,7 @@ pub fn dot(v0: Vec3, v1: Vec3) f32 {
 }
 
 test "Vec3.zero" {
-    const v = Vec3.ZERO;
+    const v = Vec3.zero;
     try std.testing.expect(v.x == 0.0 and v.y == 0.0 and v.z == 0.0);
 }
 
