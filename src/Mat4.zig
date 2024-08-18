@@ -6,27 +6,23 @@ const Quat = @import("Quat.zig");
 
 m: [16]f32,
 
-pub fn identity() Mat4 {
-    return Mat4{
-        .m = [_]f32{
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0, 1.0,
-        },
-    };
-}
+pub const identity = Mat4{
+    .m = [_]f32{
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0,
+    },
+};
 
-pub fn zero() Mat4 {
-    return Mat4{
-        .m = [_]f32{
-            0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0,
-        },
-    };
-}
+pub const zero = Mat4{
+    .m = [_]f32{
+        0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0,
+    },
+};
 
 pub fn transpose(s: Mat4) Mat4 {
     return .{
@@ -50,7 +46,7 @@ pub fn scale(s: Vec3) Mat4 {
     };
 }
 
-pub fn scale_uniform(s: f32) Mat4 {
+pub fn scaleUniform(s: f32) Mat4 {
     return scale(.{ .x = s, .y = s, .z = s });
 }
 
@@ -90,9 +86,9 @@ pub fn mul(left: Mat4, right: Mat4) Mat4 {
     };
 }
 
-pub fn perspective(fov: f32, aspect: f32, near: f32, far: f32) Mat4 {
-    var res = Mat4.identity();
-    const cot = 1 / std.math.tan(fov / 2);
+pub fn perspective(fovYRadians: f32, aspect: f32, near: f32, far: f32) Mat4 {
+    var res = Mat4.identity;
+    const cot = 1 / std.math.tan(fovYRadians / 2);
     res.m[0] = cot / aspect;
     res.m[5] = cot;
     res.m[11] = -1.0;
@@ -102,8 +98,8 @@ pub fn perspective(fov: f32, aspect: f32, near: f32, far: f32) Mat4 {
     return res;
 }
 
-pub fn lookat(eye: Vec3, center: Vec3, up: Vec3) Mat4 {
-    var res = Mat4.zero();
+pub fn lookAt(eye: Vec3, center: Vec3, up: Vec3) Mat4 {
+    var res = Mat4.zero;
 
     const f = Vec3.sub(center, eye).normalize();
     const s = Vec3.cross(f, up).normalize();
@@ -130,7 +126,7 @@ pub fn lookat(eye: Vec3, center: Vec3, up: Vec3) Mat4 {
 }
 
 pub fn rotate(degree: f32, axis_unorm: Vec3) Mat4 {
-    var res = Mat4.identity();
+    var res = Mat4.identity;
 
     const axis = axis_unorm.normalize();
     const sin_theta = std.math.sin(std.math.degreesToRadians(degree));
@@ -171,7 +167,7 @@ pub fn trs(t: Vec3, r: Quat, s: Vec3) Mat4 {
     };
 }
 
-pub fn transform_coord(self: @This(), coord: Vec3) Vec3 {
+pub fn transformPoint(self: @This(), coord: Vec3) Vec3 {
     const r = self.apply(Vec4.fromVec3(coord, 1));
     return .{
         .x = r.x / r.w,
@@ -180,11 +176,11 @@ pub fn transform_coord(self: @This(), coord: Vec3) Vec3 {
     };
 }
 
-pub fn transform_vector(self: @This(), vector: Vec3) Vec3 {
+pub fn transformDirection(self: @This(), vector: Vec3) Vec3 {
     return self.apply(Vec4.fromVec3(vector, 0)).toVec3();
 }
 
-pub fn apply(self: @This(), v: Vec4) Vec4 {
+pub fn transform(self: @This(), v: Vec4) Vec4 {
     return .{
         .x = v.dot(self.col0()),
         .y = v.dot(self.col1()),
@@ -194,7 +190,7 @@ pub fn apply(self: @This(), v: Vec4) Vec4 {
 }
 
 test "Mat4.ident" {
-    const m = Mat4.identity();
+    const m = Mat4.identity;
     try std.testing.expectEqual(m.m, [_]f32{
         1, 0, 0, 0,
         0, 1, 0, 0,
@@ -204,8 +200,8 @@ test "Mat4.ident" {
 }
 
 test "Mat4.mul" {
-    const l = Mat4.identity();
-    const r = Mat4.identity();
+    const l = Mat4.identity;
+    const r = Mat4.identity;
     const m = Mat4.mul(l, r);
     try std.testing.expectEqual(m.m, [_]f32{
         1, 0, 0, 0,
@@ -245,7 +241,7 @@ test "Mat4.perspective" {
 }
 
 test "Mat4.lookat" {
-    const m = Mat4.lookat(
+    const m = Mat4.lookAt(
         .{ .x = 0.0, .y = 1.5, .z = 6.0 },
         Vec3.zero,
         Vec3.up,

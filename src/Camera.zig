@@ -26,7 +26,7 @@ input_state: InputState = .{},
 yFov: f32 = std.math.degreesToRadians(60.0),
 near_clip: f32 = 0.1,
 far_clip: f32 = 50.0,
-projection: Mat4 = Mat4.identity(),
+projection: Mat4 = Mat4.identity,
 
 // transform
 pitch: f32 = 0,
