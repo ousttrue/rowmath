@@ -70,6 +70,7 @@ pub fn build(
             .name = name,
             .root_source_file = b.path(src),
         });
+        b.installArtifact(exe);
 
         // inject dependency
         exe.addIncludePath(dep_raylib.path("src"));

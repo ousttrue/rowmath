@@ -42,7 +42,7 @@ pub fn viewProjectionMatrix(self: @This()) Mat4 {
     return self.transform.worldToLocal().mul(self.projection);
 }
 
-pub fn update_projection_matrix(self: *@This()) void {
+pub fn updateProjectionMatrix(self: *@This()) void {
     self.projection = Mat4.perspective(
         self.yFov,
         self.input_state.aspect(),
@@ -51,7 +51,7 @@ pub fn update_projection_matrix(self: *@This()) void {
     );
 }
 
-pub fn update_transform(self: *@This()) void {
+pub fn updateTransform(self: *@This()) void {
     const yaw = Quat.axisAngle(.{ .x = 0, .y = 1, .z = 0 }, self.yaw);
     const pitch = Quat.axisAngle(.{ .x = 1, .y = 0, .z = 0 }, self.pitch);
     self.transform.rotation = yaw.mul(pitch); //.matrix();
@@ -80,8 +80,8 @@ pub fn update(self: *@This(), input_state: InputState) Vec2 {
     } else if (input_state.mouse_wheel < 0) {
         self.shift.z *= 1.1;
     }
-    self.update_projection_matrix();
-    self.update_transform();
+    self.updateProjectionMatrix();
+    self.updateTransform();
 
     return .{
         .x = (input_state.mouse_x / input_state.screen_width) * 2 - 1,

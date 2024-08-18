@@ -32,7 +32,7 @@ pub fn build(b: *std.Build) void {
         const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
         test_step.dependOn(&run_lib_unit_tests.step);
     }
-    b.getInstallStep().dependOn(test_step);
+    // b.getInstallStep().dependOn(test_step);
 
     // docs
     const doc_root = b.addObject(.{

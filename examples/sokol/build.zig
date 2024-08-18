@@ -53,6 +53,7 @@ pub fn build(
             .name = name,
             .root_source_file = b.path(src),
         });
+        b.installArtifact(exe);
 
         // inject dependency
         exe.root_module.addImport("sokol", dep_sokol.module("sokol"));

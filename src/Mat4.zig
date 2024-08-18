@@ -147,7 +147,7 @@ pub fn rotate(degree: f32, axis_unorm: Vec3) Mat4 {
 }
 
 pub fn translate(translation: Vec3) Mat4 {
-    var res = Mat4.identity();
+    var res = Mat4.identity;
     res.m[12] = translation.x;
     res.m[13] = translation.y;
     res.m[14] = translation.z;

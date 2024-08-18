@@ -14,6 +14,6 @@ pub fn localToWorld(self: @This()) Mat4 {
 
 pub fn worldToLocal(self: @This()) Mat4 {
     const t = Mat4.translate(self.translation.negate());
-    const r = self.rotation.conj().matrix();
+    const r = self.rotation.conjugate().matrix();
     return t.mul(r);
 }
