@@ -18,7 +18,7 @@ pub fn build(
     const raylib = dep_raylib.artifact("raylib");
 
     const name = "raylib_camera";
-    const src = "examples/raylib/camera.zig";
+    const src = "raylib/camera.zig";
     if (_emsdk) |emsdk| {
         const lib = b.addStaticLibrary(.{
             .target = target,
@@ -45,7 +45,7 @@ pub fn build(
             .use_emmalloc = true,
             .use_filesystem = false,
             // .shell_file_path = dep_raylib.path("src/minshell.html").getPath(b),
-            .shell_file_path = b.path("examples/raylib/minshell.html").getPath(b),
+            .shell_file_path = b.path("raylib/minshell.html").getPath(b),
             .extra_args = &.{
                 "-sUSE_GLFW=3",
                 "-sASYNCIFY",

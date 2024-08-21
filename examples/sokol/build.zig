@@ -10,7 +10,7 @@ pub fn build(
     _emsdk: ?*std.Build.Dependency,
 ) void {
     const name = "sokol_camera";
-    const src = "examples/sokol/camera.zig";
+    const src = "sokol/camera.zig";
     if (_emsdk) |emsdk| {
         const lib = b.addStaticLibrary(.{
             .target = target,
@@ -58,12 +58,5 @@ pub fn build(
         // inject dependency
         exe.root_module.addImport("sokol", dep_sokol.module("sokol"));
         exe.root_module.addImport("rowmath", rowmath);
-
-        // run
-        const run = b.addRunArtifact(exe);
-        b.step(
-            b.fmt("run-{s}", .{name}),
-            b.fmt("run {s}", .{name}),
-        ).dependOn(&run.step);
     }
 }
