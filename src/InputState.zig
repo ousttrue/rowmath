@@ -1,5 +1,11 @@
 const InputState = @This();
 
+pub const MouseButton = enum {
+    left,
+    right,
+    middle,
+};
+
 screen_width: f32 = 0,
 screen_height: f32 = 0,
 mouse_x: f32 = 0,

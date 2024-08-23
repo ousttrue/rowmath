@@ -2,7 +2,7 @@ const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const rowmath = @import("rowmath");
-const draw_util = @import("utils");
+const utils = @import("utils");
 
 const state = struct {
     var pass_action = sg.PassAction{};
@@ -51,14 +51,12 @@ export fn frame() void {
         .action = state.pass_action,
         .swapchain = sokol.glue.swapchain(),
     });
-    sokol.gl.setContext(sokol.gl.defaultContext());
-    sokol.gl.defaults();
-    sokol.gl.matrixModeProjection();
-    sokol.gl.multMatrix(&state.camera.projection.m[0]);
-    sokol.gl.matrixModeModelview();
-    sokol.gl.multMatrix(&state.camera.transform.worldToLocal().m[0]);
-    draw_util.draw_grid();
-    sokol.gl.contextDraw(sokol.gl.defaultContext());
+    utils.gl_begin(.{
+        .projection = state.camera.projection,
+        .view = state.camera.transform.worldToLocal(),
+    });
+    utils.draw_grid();
+    utils.gl_end();
 
     sokol.debugtext.draw();
     sg.endPass();

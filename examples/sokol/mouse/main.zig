@@ -4,21 +4,22 @@
 //  Simple text rendering with sokol_debugtext.h, formatting, tabs, etc...
 //------------------------------------------------------------------------------
 const sokol = @import("sokol");
-const rowmath = @import("rowmath");
 const sg = sokol.gfx;
+const rowmath = @import("rowmath");
+const Mat4 = rowmath.Mat4;
+const InputState = rowmath.InputState;
+const DragHandle = rowmath.DragHandle;
+const utils = @import("utils");
 
 const FONT_KC854 = 0;
 
-const Color = struct {
-    u8,
-    u8,
-    u8,
-};
-
 const state = struct {
     var pass_action = sg.PassAction{};
-    var palette = Color{ 0xf4, 0x43, 0x36 };
-    var input = rowmath.InputState{};
+    var input = InputState{};
+
+    var drag_left = DragHandle{};
+    var drag_right = DragHandle{};
+    var drag_middle = DragHandle{};
 };
 
 export fn init() void {
@@ -31,6 +32,9 @@ export fn init() void {
         .environment = sokol.glue.environment(),
         .logger = .{ .func = sokol.log.func },
     });
+    sokol.gl.setup(.{
+        .logger = .{ .func = sokol.log.func },
+    });
     var sdtx_desc = sokol.debugtext.Desc{
         .logger = .{ .func = sokol.log.func },
     };
@@ -39,85 +43,59 @@ export fn init() void {
 }
 
 export fn frame() void {
-    sokol.debugtext.canvas(sokol.app.widthf() * 0.5, sokol.app.heightf() * 0.5);
-    sokol.debugtext.origin(3.0, 3.0);
-
-    const color = state.palette;
-    sokol.debugtext.font(0);
-    sokol.debugtext.color3b(color[0], color[1], color[2]);
-    sokol.debugtext.print(
-        "Screen: {d:4.0} x {d:4.0}\n",
-        .{ sokol.app.widthf(), sokol.app.heightf() },
+    state.drag_left.frame(
+        .{ .x = state.input.mouse_x, .y = state.input.mouse_y },
+        state.input.mouse_left,
     );
-    sokol.debugtext.print(
-        "Mouse : {d:4.0} x {d:4.0}: {d:.0}\n",
-        .{ state.input.mouse_x, state.input.mouse_y, state.input.mouse_wheel },
+    state.drag_right.frame(
+        .{ .x = state.input.mouse_x, .y = state.input.mouse_y },
+        state.input.mouse_right,
     );
-    sokol.debugtext.print(
-        "Left  : {}\n",
-        .{state.input.mouse_left},
-    );
-    sokol.debugtext.print(
-        "Right : {}\n",
-        .{state.input.mouse_right},
-    );
-    sokol.debugtext.print(
-        "Middle: {}\n",
-        .{state.input.mouse_middle},
+    state.drag_middle.frame(
+        .{ .x = state.input.mouse_x, .y = state.input.mouse_y },
+        state.input.mouse_middle,
     );
 
-    sg.beginPass(.{
-        .action = state.pass_action,
-        .swapchain = sokol.glue.swapchain(),
-    });
-    sokol.debugtext.draw();
-    sg.endPass();
+    {
+        sg.beginPass(.{
+            .action = state.pass_action,
+            .swapchain = sokol.glue.swapchain(),
+        });
+        defer sg.endPass();
+        utils.gl_begin(.{
+            .projection = Mat4.orthographic(
+                0,
+                sokol.app.widthf(),
+                sokol.app.heightf(),
+                0,
+                -1,
+                1,
+            ),
+            .view = Mat4.identity,
+        });
+        defer utils.gl_end();
+
+        utils.draw_mouse_state(state.input, utils.yellow);
+
+        {
+            sokol.gl.beginLines();
+            defer sokol.gl.end();
+            utils.draw_button("Left", utils.red, state.drag_left.state);
+            utils.draw_button("Right", utils.green, state.drag_right.state);
+            utils.draw_button("Middle", utils.blue, state.drag_middle.state);
+            sokol.debugtext.draw();
+        }
+    }
     sg.commit();
 }
 
 export fn event(e: [*c]const sokol.app.Event) void {
-    switch (e.*.type) {
-        .MOUSE_DOWN => {
-            switch (e.*.mouse_button) {
-                .LEFT => {
-                    state.input.mouse_left = true;
-                },
-                .RIGHT => {
-                    state.input.mouse_right = true;
-                },
-                .MIDDLE => {
-                    state.input.mouse_middle = true;
-                },
-                .INVALID => {},
-            }
-        },
-        .MOUSE_UP => {
-            switch (e.*.mouse_button) {
-                .LEFT => {
-                    state.input.mouse_left = false;
-                },
-                .RIGHT => {
-                    state.input.mouse_right = false;
-                },
-                .MIDDLE => {
-                    state.input.mouse_middle = false;
-                },
-                .INVALID => {},
-            }
-        },
-        .MOUSE_MOVE => {
-            state.input.mouse_x = e.*.mouse_x;
-            state.input.mouse_y = e.*.mouse_y;
-        },
-        .MOUSE_SCROLL => {
-            state.input.mouse_wheel = e.*.scroll_y;
-        },
-        else => {},
-    }
+    utils.inputEvent(e, &state.input);
 }
 
 export fn cleanup() void {
     sokol.debugtext.shutdown();
+    sokol.gl.shutdown();
     sg.shutdown();
 }
 

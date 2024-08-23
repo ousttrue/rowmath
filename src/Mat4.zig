@@ -86,6 +86,27 @@ pub fn mul(left: Mat4, right: Mat4) Mat4 {
     };
 }
 
+pub fn orthographic(
+    left: f32,
+    right: f32,
+    bottom: f32,
+    top: f32,
+    nearVal: f32,
+    farVal: f32,
+) Mat4 {
+    const w = right - left;
+    const h = top - bottom;
+    const d = farVal - nearVal;
+    return .{
+        .m = .{
+            2 / w,               0,                   0,                       0,
+            0,                   2 / h,               0,                       0,
+            0,                   0,                   2 / d,                   0,
+            -(left + right) / w, -(top + bottom) / h, -(farVal + nearVal) / d, 1,
+        },
+    };
+}
+
 pub fn perspective(fovYRadians: f32, aspect: f32, near: f32, far: f32) Mat4 {
     var res = Mat4.identity;
     const cot = 1 / std.math.tan(fovYRadians / 2);
