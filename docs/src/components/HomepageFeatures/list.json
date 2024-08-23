@@ -1,10 +1,22 @@
 [
   {
+    "name": "raylib camera",
+    "base_name": "raylib_camera"
+  },
+  {
     "name": "sokol camera simple",
     "base_name": "sokol_camera_simple"
   },
   {
-    "name": "raylib camera",
-    "base_name": "raylib_camera"
+    "name": "sokol camera rendertarget",
+    "base_name": "sokol_camera_rendertarget"
+  },
+  {
+    "name": "sokol imgui gizmo",
+    "base_name": "sokol_imgui_gizmo"
+  },
+  {
+    "name": "sokol imgui gizmo instancing",
+    "base_name": "sokol_imgui_gizmo_instancing"
   }
 ]

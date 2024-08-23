@@ -10,6 +10,9 @@
             .url = "git+https://github.com/ousttrue/emsdk-zig.git#29cbca572fa013c4daab21051ddb5e69b2b4c114",
             .hash = "12207dbaa9d2e7d1f9cd0f9b363773b2110fe1147743b2e684e2590488900ba09c79",
         },
+        .cimgui = .{
+            .path = "cimgui",
+        },
     },
     .paths = .{
         "build.zig",
