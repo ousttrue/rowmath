@@ -53,29 +53,19 @@ pub fn build(b: *std.Build) void {
         "Copy documentation artifacts to prefix path",
     ).dependOn(&install_docs.step);
 
-    const build_sokol = (b.option(bool, "sokol", "build sokol example") orelse false);
-    if (build_sokol) {
+    const build_examples = (b.option(bool, "examples", "build examples") orelse false);
+    if (build_examples) {
         const examples_dep = b.dependency("examples", .{});
-        const artifact = examples_dep.artifact("sokol_camera");
+        for (examples_dep.builder.install_tls.step.dependencies.items) |dep_step| {
+            const inst = dep_step.cast(std.Build.Step.InstallArtifact) orelse continue;
+            const artifact = inst.artifact;
 
-        // run
-        const run = b.addRunArtifact(artifact);
-        b.step(
-            b.fmt("run-{s}", .{artifact.name}),
-            b.fmt("run {s}", .{artifact.name}),
-        ).dependOn(&run.step);
-    }
-
-    const build_raylib = (b.option(bool, "raylib", "build raylib example") orelse false);
-    if (build_raylib) {
-        const examples_dep = b.dependency("examples", .{});
-        const artifact = examples_dep.artifact("raylib_camera");
-
-        // run
-        const run = b.addRunArtifact(artifact);
-        b.step(
-            b.fmt("run-{s}", .{artifact.name}),
-            b.fmt("run {s}", .{artifact.name}),
-        ).dependOn(&run.step);
+            // run
+            const run = b.addRunArtifact(artifact);
+            b.step(
+                b.fmt("run-{s}", .{artifact.name}),
+                b.fmt("run {s}", .{artifact.name}),
+            ).dependOn(&run.step);
+        }
     }
 }

@@ -22,43 +22,35 @@ function Feature({ title, description }: FeatureItem) {
   );
 }
 
+const list: { name: string, base_path: string }[] = [
+  {
+    name: 'sokol camera simple',
+    base_path: '/wasm/sokol_camera_simple',
+  },
+  {
+    name: 'raylib camera',
+    base_path: '/wasm/raylib_camera',
+  },
+];
+
 export default function HomepageFeatures(): JSX.Element {
-  const FeatureList: FeatureItem[] = [
-    {
-      title: 'sokol camera',
-      // Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
-      description: (
-        <>
-          <Link
-            target="_blank"
-            to={useBaseUrl("/wasm/sokol_camera.html")}>
-            <ThemedImage
-              sources={{
-                light: useBaseUrl("/wasm/sokol_camera.jpg"),
-                dark: useBaseUrl("/wasm/sokol_camera.jpg"),
-              }} />
-          </Link>
-        </>
+  const FeatureList: FeatureItem[] = list.map((x) => {
+    return {
+      title: x.name,
+      description: (<>
+        <Link
+          target="_blank"
+          to={useBaseUrl(x.base_path + ".html")}>
+          <ThemedImage
+            sources={{
+              light: useBaseUrl(x.base_path + ".jpg"),
+              dark: useBaseUrl(x.base_path + ".jpg"),
+            }} />
+        </Link>
+      </>
       ),
-    },
-    {
-      title: 'raylib camera',
-      // Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
-      description: (
-        <>
-          <Link
-            target="_blank"
-            to={useBaseUrl("/wasm/raylib_camera.html")}>
-            <ThemedImage
-              sources={{
-                light: useBaseUrl("/wasm/raylib_camera.jpg"),
-                dark: useBaseUrl("/wasm/raylib_camera.jpg"),
-              }} />
-          </Link>
-        </>
-      ),
-    },
-  ];
+    }
+  });
 
   return (
     <section className={styles.features}>
