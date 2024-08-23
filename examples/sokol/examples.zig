@@ -7,11 +7,15 @@ pub const Example = struct {
 pub const examples = [_]Example{
     .{
         .name = "sokol_camera_simple",
-        .src = "camera_simple.zig",
+        .src = "camera_simple/main.zig",
+    },
+    .{
+        .name = "sokol_mouse",
+        .src = "mouse/main.zig",
     },
     .{
         .name = "sokol_camera_rendertarget",
-        .src = "camera_rendertarget.zig",
+        .src = "camera_rendertarget/main.zig",
         .use_imgui = true,
     },
 };

@@ -9,8 +9,8 @@ const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const ig = @import("cimgui");
-const CameraView = @import("CameraView.zig");
-const draw_util = @import("draw_util.zig");
+const utils = @import("utils");
+const CameraView = utils.CameraView;
 const rowmath = @import("rowmath");
 const Vec2 = rowmath.Vec2;
 const Vec3 = rowmath.Vec3;
@@ -107,7 +107,7 @@ export fn frame() void {
                 state.view1_cursor = render_context.cursor;
 
                 // grid
-                draw_util.draw_grid();
+                utils.draw_grid();
             }
         }
         ig.igEnd();
@@ -127,7 +127,7 @@ export fn frame() void {
                 state.view2_cursor = render_context.cursor;
 
                 // grid
-                draw_util.draw_grid();
+                utils.draw_grid();
             }
         }
         ig.igEnd();

@@ -13,11 +13,13 @@ const BuildExampleOptions = struct {
     rowmath: *std.Build.Module,
     dep_sokol: *std.Build.Dependency,
     cimgui: *std.Build.Dependency,
+    utils: *std.Build.Module,
 
     fn inject(self: @This(), compile: *std.Build.Step.Compile) void {
         compile.root_module.addImport("sokol", self.dep_sokol.module("sokol"));
         compile.root_module.addImport("rowmath", self.rowmath);
         compile.root_module.addImport("cimgui", self.cimgui.module("cimgui"));
+        compile.root_module.addImport("utils", self.utils);
     }
 
     fn injectWasmSysRoot(
@@ -117,6 +119,13 @@ pub fn build(b: *std.Build) void {
         emsdk = _emsdk_zig.builder.dependency("emsdk", .{});
     }
 
+    var utils = b.addModule("utils", .{
+        .root_source_file = b.path("utils/utils.zig"),
+    });
+    utils.addImport("rowmath", rowmath);
+    utils.addImport("sokol", dep_sokol.module("sokol"));
+    utils.addImport("cimgui", cimgui.module("cimgui"));
+
     for (examples) |example| {
         build_example(
             b,
@@ -128,6 +137,7 @@ pub fn build(b: *std.Build) void {
                 .rowmath = rowmath,
                 .dep_sokol = dep_sokol,
                 .cimgui = cimgui,
+                .utils = utils,
             },
         );
     }
