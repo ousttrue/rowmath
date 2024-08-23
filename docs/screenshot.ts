@@ -1,3 +1,4 @@
+const list = require('./src/components/HomepageFeatures/list.json');
 const pw = require('playwright');
 
 (async () => {
@@ -6,13 +7,13 @@ const pw = require('playwright');
   const page = await context.newPage();
   page.setViewportSize({ "width": 400, "height": 300 });
 
-  await page.goto('http://localhost:3000/rowmath/wasm/sokol_camera.html');
-  await page.waitForLoadState('networkidle')
-  await page.screenshot({ path: 'static/wasm/sokol_camera.jpg' });
+  for(const item of list){
 
-  await page.goto('http://localhost:3000/rowmath/wasm/raylib_camera.html');
-  await page.waitForLoadState('networkidle')
-  await page.screenshot({ path: 'static/wasm/raylib_camera.jpg' });
+    await page.goto(`http://localhost:3000/rowmath/wasm/${item.name}.html`);
+    await page.waitForLoadState('networkidle')
+    await page.screenshot({ path: `static/wasm/${item.name}.jpg` });
+
+  }
 
   await browser.close();
 })();

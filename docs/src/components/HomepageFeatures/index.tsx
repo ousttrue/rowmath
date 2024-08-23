@@ -4,6 +4,7 @@ import styles from './styles.module.css';
 import Link from '@docusaurus/Link';
 import ThemedImage from '@theme/ThemedImage';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import list from './list.json';
 
 type FeatureItem = {
   title: string;
@@ -22,17 +23,6 @@ function Feature({ title, description }: FeatureItem) {
   );
 }
 
-const list: { name: string, base_path: string }[] = [
-  {
-    name: 'sokol camera simple',
-    base_path: '/wasm/sokol_camera_simple',
-  },
-  {
-    name: 'raylib camera',
-    base_path: '/wasm/raylib_camera',
-  },
-];
-
 export default function HomepageFeatures(): JSX.Element {
   const FeatureList: FeatureItem[] = list.map((x) => {
     return {
@@ -40,11 +30,11 @@ export default function HomepageFeatures(): JSX.Element {
       description: (<>
         <Link
           target="_blank"
-          to={useBaseUrl(x.base_path + ".html")}>
+          to={useBaseUrl(`/wasm/${x.base_name}.html`)}>
           <ThemedImage
             sources={{
-              light: useBaseUrl(x.base_path + ".jpg"),
-              dark: useBaseUrl(x.base_path + ".jpg"),
+              light: useBaseUrl(`/wasm/${x.base_name}.jpg`),
+              dark: useBaseUrl(`/wasm/${x.base_name}.jpg`),
             }} />
         </Link>
       </>

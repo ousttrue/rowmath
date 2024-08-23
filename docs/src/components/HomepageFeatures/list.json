@@ -1,0 +1,10 @@
+[
+  {
+    "name": "sokol camera simple",
+    "base_name": "sokol_camera_simple"
+  },
+  {
+    "name": "raylib camera",
+    "base_name": "raylib_camera"
+  }
+]
