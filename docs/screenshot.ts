@@ -9,9 +9,9 @@ const pw = require('playwright');
 
   for(const item of list){
 
-    await page.goto(`http://localhost:3000/rowmath/wasm/${item.name}.html`);
+    await page.goto(`http://localhost:3000/rowmath/wasm/${item.base_name}.html`);
     await page.waitForLoadState('networkidle')
-    await page.screenshot({ path: `static/wasm/${item.name}.jpg` });
+    await page.screenshot({ path: `static/wasm/${item.base_name}.jpg` });
 
   }
 
