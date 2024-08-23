@@ -34,6 +34,9 @@ pub fn build(b: *std.Build) void {
         },
     });
     lib_cimgui.addIncludePath(root);
+    lib_cimgui.addCSourceFile(.{
+        .file = b.path("custom_button_behaviour.cpp"),
+    });
 
     // make cimgui available as artifact, this then allows to inject
     // the Emscripten include path in another build.zig

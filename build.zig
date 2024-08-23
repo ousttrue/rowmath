@@ -108,9 +108,11 @@ pub fn build(b: *std.Build) void {
                 }
             } else {
                 const inst = dep_step.cast(std.Build.Step.InstallArtifact) orelse continue;
-                b.installArtifact(inst.artifact);
+                const install = b.addInstallArtifact(inst.artifact, .{});
+                b.getInstallStep().dependOn(&install.step);
                 // run exe
                 const run = b.addRunArtifact(inst.artifact);
+                run.step.dependOn(&install.step);
                 b.step(
                     b.fmt("run-{s}", .{inst.artifact.name}),
                     b.fmt("Run {s}", .{inst.artifact.name}),
