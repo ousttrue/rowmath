@@ -4,6 +4,11 @@ const emsdk_zig = @import("emsdk-zig");
 const examples = @import("examples.zig").examples;
 const Example = @import("examples.zig").Example;
 
+const emcc_extra_args = [_][]const u8{
+    "-sTOTAL_MEMORY=200MB",
+    "-sUSE_OFFSET_CONVERTER=1",
+};
+
 const BuildExampleOptions = struct {
     rowmath: *std.Build.Module,
     dep_sokol: *std.Build.Dependency,
@@ -64,6 +69,7 @@ fn build_example(
             .use_filesystem = false,
             .shell_file_path = opts.dep_sokol.path("src/sokol/web/shell.html").getPath(b),
             .release_use_closure = false,
+            .extra_before = &emcc_extra_args,
         });
         b.getInstallStep().dependOn(&link_step.step);
     } else {

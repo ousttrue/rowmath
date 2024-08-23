@@ -1,3 +1,10 @@
+// TODO:
+//
+// - frustum
+// - gaze cross
+// - text status
+// - perse ortho
+//
 const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
