@@ -1,4 +1,5 @@
 const std = @import("std");
+const emsdk_zig = @import("emsdk-zig");
 
 const tests = [_][]const u8{
     "src/rowmath.zig",
@@ -19,11 +20,10 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const lib = b.addModule(
+    _ = b.addModule(
         "rowmath",
         .{ .root_source_file = b.path("src/rowmath.zig") },
     );
-    _ = lib;
 
     // tests
     const test_step = b.step("test", "rowmath tests");
@@ -53,19 +53,69 @@ pub fn build(b: *std.Build) void {
         "Copy documentation artifacts to prefix path",
     ).dependOn(&install_docs.step);
 
-    const build_examples = (b.option(bool, "examples", "build examples") orelse false);
-    if (build_examples) {
-        const examples_dep = b.dependency("examples", .{});
-        for (examples_dep.builder.install_tls.step.dependencies.items) |dep_step| {
-            const inst = dep_step.cast(std.Build.Step.InstallArtifact) orelse continue;
-            const artifact = inst.artifact;
+    // examples sokol
+    const build_sokol = if (b.option(bool, "sokol", "build sokol examples")) |enable|
+        enable
+    else
+        false;
+    if (build_sokol) {
+        const d = b.dependency("examples_sokol", .{
+            .target = target,
+            .optimize = optimize,
+        });
+        for (d.builder.install_tls.step.dependencies.items) |dep_step| {
+            if (target.result.isWasm()) {
+                if (dep_step.cast(std.Build.Step.InstallDir)) |dir| {
+                    // b.installDirectory();
+                    b.installDirectory(.{
+                        .source_dir = dir.options.source_dir,
+                        .install_dir = .prefix,
+                        .install_subdir = "web",
+                    });
+                }
+            } else {
+                const inst = dep_step.cast(std.Build.Step.InstallArtifact) orelse continue;
+                b.installArtifact(inst.artifact);
+                // run exe
+                const run = b.addRunArtifact(inst.artifact);
+                b.step(
+                    b.fmt("run-{s}", .{inst.artifact.name}),
+                    b.fmt("Run {s}", .{inst.artifact.name}),
+                ).dependOn(&run.step);
+            }
+        }
+    }
 
-            // run
-            const run = b.addRunArtifact(artifact);
-            b.step(
-                b.fmt("run-{s}", .{artifact.name}),
-                b.fmt("run {s}", .{artifact.name}),
-            ).dependOn(&run.step);
+    // examples raylib
+    const build_raylib = if (b.option(bool, "raylib", "build raylib examples")) |enable|
+        enable
+    else
+        false;
+    if (build_raylib) {
+        const d = b.dependency("examples_raylib", .{
+            .target = target,
+            .optimize = optimize,
+        });
+        for (d.builder.install_tls.step.dependencies.items) |dep_step| {
+            if (target.result.isWasm()) {
+                if (dep_step.cast(std.Build.Step.InstallDir)) |dir| {
+                    // b.installDirectory();
+                    b.installDirectory(.{
+                        .source_dir = dir.options.source_dir,
+                        .install_dir = .prefix,
+                        .install_subdir = "web",
+                    });
+                }
+            } else {
+                const inst = dep_step.cast(std.Build.Step.InstallArtifact) orelse continue;
+                b.installArtifact(inst.artifact);
+                // run exe
+                const run = b.addRunArtifact(inst.artifact);
+                b.step(
+                    b.fmt("run-{s}", .{inst.artifact.name}),
+                    b.fmt("Run {s}", .{inst.artifact.name}),
+                ).dependOn(&run.step);
+            }
         }
     }
 }

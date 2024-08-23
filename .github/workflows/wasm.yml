@@ -34,7 +34,8 @@ jobs:
           version: 0.13.0
       - name: build Wasm
         run: |
-          zig build --summary all -Dtarget=wasm32-emscripten -Doptimize=ReleaseSmall -Dexamples
+          zig build --summary all -Dtarget=wasm32-emscripten -Doptimize=ReleaseSmall -Dsokol
+          zig build --summary all -Dtarget=wasm32-emscripten -Doptimize=ReleaseSmall -Draylib
           zig build -Dtarget=wasm32-emscripten -Doptimize=ReleaseSmall docs
           find zig-out
           cp -rp zig-out/web docs/static/wasm

@@ -1,12 +1,10 @@
 .{
-    .name = "rowmath",
+    .name = "examples",
     .version = "0.0.0",
     .dependencies = .{
-        .examples_sokol = .{
-            .path = "examples/sokol",
-        },
-        .examples_raylib = .{
-            .path = "examples/raylib",
+        .sokol = .{
+            .url = "git+https://github.com/floooh/sokol-zig.git#9e4eabae83c74df29b24cdba7b31e985a2d8c33f",
+            .hash = "12209706d64fa2127cc2d48134c22790d70f561c40bdeb4589fa7f9c41c4f53fe9da",
         },
         .@"emsdk-zig" = .{
             .url = "git+https://github.com/ousttrue/emsdk-zig.git#29cbca572fa013c4daab21051ddb5e69b2b4c114",
@@ -16,6 +14,5 @@
     .paths = .{
         "build.zig",
         "build.zig.zon",
-        "src",
     },
 }
