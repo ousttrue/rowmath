@@ -8,6 +8,10 @@
     "base_name": "sokol_camera_simple"
   },
   {
+    "name": "sokol mouse",
+    "base_name": "sokol_mouse"
+  },
+  {
     "name": "sokol camera rendertarget",
     "base_name": "sokol_camera_rendertarget"
   },
