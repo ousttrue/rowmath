@@ -38,8 +38,8 @@ pub fn sqNorm(q: @This()) f32 {
 }
 
 pub fn inverse(q: @This()) @This() {
-    const sqlen = q.length2();
-    const c = q.conj();
+    const sqlen = q.sqNorm();
+    const c = q.conjugate();
     return .{
         .x = c.x / sqlen,
         .y = c.y / sqlen,

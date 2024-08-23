@@ -33,20 +33,20 @@ pub fn matrix(self: @This()) Mat4 {
 }
 
 pub fn transformVector(self: @This(), vec: Vec3) Vec3 {
-    return self.rigid_transform.rotation.qrot(.{
+    return self.rigid_transform.rotation.rotatePoint(.{
         .x = vec.x * self.scale.x,
         .y = vec.y * self.scale.y,
         .z = vec.z * self.scale.z,
     });
 }
 pub fn transformPoint(self: @This(), p: Vec3) Vec3 {
-    return self.rigid_transform.translation.add(self.transform_vector(p));
+    return self.rigid_transform.translation.add(self.transformVector(p));
 }
 pub fn detransformPoint(self: @This(), p: Vec3) Vec3 {
-    return self.detransform_vector(p.sub(self.rigid_transform.translation));
+    return self.detransformVector(p.sub(self.rigid_transform.translation));
 }
 pub fn detransformVector(self: @This(), vec: Vec3) Vec3 {
-    const v = self.rigid_transform.rotation.inverse().qrot(vec);
+    const v = self.rigid_transform.rotation.inverse().rotatePoint(vec);
     return .{
         .x = v.x / self.scale.x,
         .y = v.y / self.scale.y,

@@ -98,7 +98,7 @@ pub fn ray(self: @This(), mouse_cursor: Vec2) Ray {
         .z = -1,
     };
 
-    const dir_cursor = self.transform.rotation.qrot(dir.norm());
+    const dir_cursor = self.transform.rotation.rotatePoint(dir.normalize());
     // std.debug.print("{d:.3}, {d:.3}, {d:.3}\n", .{dir_cursor.x, dir_cursor.y, dir_cursor.z});
     return .{
         .origin = self.transform.translation,
