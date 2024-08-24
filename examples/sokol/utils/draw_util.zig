@@ -3,6 +3,7 @@ const rowmath = @import("rowmath");
 const Vec2 = rowmath.Vec2;
 const Vec3 = rowmath.Vec3;
 const Mat4 = rowmath.Mat4;
+const RgbU8 = rowmath.RgbU8;
 const Camera = rowmath.Camera;
 const InputState = rowmath.InputState;
 const DragHandle = rowmath.DragHandle;
@@ -82,22 +83,12 @@ pub fn draw_camera_frustum(camera: Camera, _cursor: ?Vec2) void {
     }
 }
 
-pub const Color = struct {
-    u8,
-    u8,
-    u8,
-};
-pub const red = Color{ 0xf4, 0x43, 0x36 };
-pub const green = Color{ 0x21, 0x96, 0xf3 };
-pub const blue = Color{ 0x4c, 0xaf, 0x50 };
-pub const yellow = Color{ 0xff, 0xeb, 0x3b };
-
-pub fn draw_mouse_state(input: InputState, color: Color) void {
+pub fn draw_mouse_state(input: InputState, color: RgbU8) void {
     sokol.debugtext.canvas(sokol.app.widthf(), sokol.app.heightf());
     sokol.debugtext.origin(3.0, 3.0);
 
     sokol.debugtext.font(0);
-    sokol.debugtext.color3b(color[0], color[1], color[2]);
+    sokol.debugtext.color3b(color.r, color.g, color.b);
     sokol.debugtext.print(
         "Screen: {d:4.0} x {d:4.0}\n",
         .{ sokol.app.widthf(), sokol.app.heightf() },
@@ -110,12 +101,12 @@ pub fn draw_mouse_state(input: InputState, color: Color) void {
 
 pub fn draw_button(
     name: []const u8,
-    color: Color,
+    color: RgbU8,
     _start: ?Vec2,
     input: InputState,
 ) void {
-    sokol.debugtext.color3b(color[0], color[1], color[2]);
-    sokol.gl.c3b(color[0], color[1], color[2]);
+    sokol.debugtext.color3b(color.r, color.g, color.b);
+    sokol.gl.c3b(color.r, color.g, color.b);
     if (_start) |start| {
         const delta = input.cursor().sub(start);
         sokol.debugtext.print(

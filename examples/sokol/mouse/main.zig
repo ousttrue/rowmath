@@ -9,6 +9,7 @@ const rowmath = @import("rowmath");
 const Mat4 = rowmath.Mat4;
 const Vec2 = rowmath.Vec2;
 const InputState = rowmath.InputState;
+const RgbU8 = rowmath.RgbU8;
 const utils = @import("utils");
 
 const FONT_KC854 = 0;
@@ -89,26 +90,26 @@ export fn frame() void {
         });
         defer utils.gl_end();
 
-        utils.draw_mouse_state(state.input, utils.yellow);
+        utils.draw_mouse_state(state.input, RgbU8.yellow);
 
         {
             sokol.gl.beginLines();
             defer sokol.gl.end();
             utils.draw_button(
                 "Left",
-                utils.red,
+                RgbU8.red,
                 state.drag_left.state,
                 state.input,
             );
             utils.draw_button(
                 "Right",
-                utils.green,
+                RgbU8.green,
                 state.drag_right.state,
                 state.input,
             );
             utils.draw_button(
                 "Middle",
-                utils.blue,
+                RgbU8.blue,
                 state.drag_middle.state,
                 state.input,
             );
