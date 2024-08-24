@@ -7,19 +7,42 @@ const sokol = @import("sokol");
 const sg = sokol.gfx;
 const rowmath = @import("rowmath");
 const Mat4 = rowmath.Mat4;
+const Vec2 = rowmath.Vec2;
 const InputState = rowmath.InputState;
-const DragHandle = rowmath.DragHandle;
 const utils = @import("utils");
 
 const FONT_KC854 = 0;
+
+fn nopHandler(drag_state: ?Vec2, input: InputState, button: bool) ?Vec2 {
+    if (drag_state) |pos| {
+        if (button) {
+            return pos;
+        } else {
+            return null;
+        }
+    } else {
+        if (button) {
+            return input.cursor();
+        } else {
+            return null;
+        }
+    }
+}
+
+fn NopHandler(comptime button: rowmath.MouseButton) rowmath.DragHandle(button, ?Vec2) {
+    return rowmath.DragHandle(button, ?Vec2){
+        .state = null,
+        .handler = &nopHandler,
+    };
+}
 
 const state = struct {
     var pass_action = sg.PassAction{};
     var input = InputState{};
 
-    var drag_left = DragHandle{};
-    var drag_right = DragHandle{};
-    var drag_middle = DragHandle{};
+    var drag_left = NopHandler(.left);
+    var drag_right = NopHandler(.right);
+    var drag_middle = NopHandler(.middle);
 };
 
 export fn init() void {
@@ -43,18 +66,9 @@ export fn init() void {
 }
 
 export fn frame() void {
-    state.drag_left.frame(
-        .{ .x = state.input.mouse_x, .y = state.input.mouse_y },
-        state.input.mouse_left,
-    );
-    state.drag_right.frame(
-        .{ .x = state.input.mouse_x, .y = state.input.mouse_y },
-        state.input.mouse_right,
-    );
-    state.drag_middle.frame(
-        .{ .x = state.input.mouse_x, .y = state.input.mouse_y },
-        state.input.mouse_middle,
-    );
+    state.drag_left.frame(state.input);
+    state.drag_right.frame(state.input);
+    state.drag_middle.frame(state.input);
 
     {
         sg.beginPass(.{
@@ -80,9 +94,24 @@ export fn frame() void {
         {
             sokol.gl.beginLines();
             defer sokol.gl.end();
-            utils.draw_button("Left", utils.red, state.drag_left.state);
-            utils.draw_button("Right", utils.green, state.drag_right.state);
-            utils.draw_button("Middle", utils.blue, state.drag_middle.state);
+            utils.draw_button(
+                "Left",
+                utils.red,
+                state.drag_left.state,
+                state.input,
+            );
+            utils.draw_button(
+                "Right",
+                utils.green,
+                state.drag_right.state,
+                state.input,
+            );
+            utils.draw_button(
+                "Middle",
+                utils.blue,
+                state.drag_middle.state,
+                state.input,
+            );
             sokol.debugtext.draw();
         }
     }

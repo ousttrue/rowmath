@@ -59,7 +59,10 @@ fn get_or_create(self: *@This(), width: i32, height: i32) RenderTarget {
 }
 
 pub fn update(self: *@This(), input: InputState) Vec2 {
-    return self.camera.update(input);
+    _ = input; // autofix
+    _ = self; // autofix
+    unreachable;
+    // return self.camera.update(input);
 }
 
 pub fn begin(self: *@This(), _rendertarget: ?RenderTarget) void {

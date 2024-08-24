@@ -4,7 +4,7 @@ const std = @import("std");
 x: f32,
 y: f32,
 
-const zero = Vec2{ .x = 0, .y = 0 };
+pub const zero = Vec2{ .x = 0, .y = 0 };
 
 pub fn dot(lhs: @This(), rhs: @This()) f32 {
     return lhs.x * rhs.x + lhs.y * rhs.y;

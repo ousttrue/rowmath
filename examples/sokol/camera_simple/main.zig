@@ -8,6 +8,8 @@ const state = struct {
     var pass_action = sg.PassAction{};
     var input = rowmath.InputState{};
     var camera = rowmath.Camera{};
+    var drag_right = rowmath.CameraRightDragHandler{};
+    var drag_middle = rowmath.CameraMiddleDragHandler{};
 };
 
 export fn init() void {
@@ -30,12 +32,19 @@ export fn init() void {
     };
     debugtext_desc.fonts[0] = sokol.debugtext.fontOric();
     sokol.debugtext.setup(debugtext_desc);
+
+    state.drag_right = rowmath.makeYawPitchHandler(.right, &state.camera);
+    state.drag_middle = rowmath.makeScreenMoveHandler(.middle, &state.camera);
 }
 
 export fn frame() void {
-    _ = state.camera.update(state.input);
+    state.camera.resize(state.input.screen_size());
+    state.drag_right.frame(state.input);
+    state.drag_middle.frame(state.input);
+    state.camera.dolly(state.input.mouse_wheel);
     // consumed
     state.input.mouse_wheel = 0;
+    state.camera.updateTransform();
 
     sokol.debugtext.canvas(sokol.app.widthf() * 0.5, sokol.app.heightf() * 0.5);
     sokol.debugtext.pos(0.5, 0.5);

@@ -1,3 +1,4 @@
+const Vec2 = @import("Vec2.zig");
 const InputState = @This();
 
 pub const MouseButton = enum {
@@ -15,6 +16,14 @@ mouse_right: bool = false,
 mouse_middle: bool = false,
 mouse_wheel: f32 = 0,
 
+pub fn screen_size(self: @This()) Vec2 {
+    return .{ .x = self.screen_width, .y = self.screen_height };
+}
+
 pub fn aspect(self: @This()) f32 {
     return self.screen_width / self.screen_height;
+}
+
+pub fn cursor(self: @This()) Vec2 {
+    return .{ .x = self.mouse_x, .y = self.mouse_y };
 }

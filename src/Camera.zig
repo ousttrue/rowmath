@@ -19,14 +19,12 @@ pub const Frustum = struct {
     far_bottom_right: Vec3,
 };
 
-// mouse
-input_state: InputState = .{},
-
 // projection
 yFov: f32 = std.math.degreesToRadians(60.0),
 near_clip: f32 = 0.1,
 far_clip: f32 = 50.0,
 projection: Mat4 = Mat4.identity,
+screen: Vec2 = .{ .x = 1, .y = 1 },
 
 // transform
 pitch: f32 = 0,
@@ -38,6 +36,10 @@ shift: Vec3 = .{
 },
 transform: RigidTransform = .{},
 
+pub fn aspect(self: @This()) f32 {
+    return self.screen.x / self.screen.y;
+}
+
 pub fn viewProjectionMatrix(self: @This()) Mat4 {
     return self.transform.worldToLocal().mul(self.projection);
 }
@@ -45,7 +47,7 @@ pub fn viewProjectionMatrix(self: @This()) Mat4 {
 pub fn updateProjectionMatrix(self: *@This()) void {
     self.projection = Mat4.perspective(
         self.yFov,
-        self.input_state.aspect(),
+        self.aspect(),
         self.near_clip,
         self.far_clip,
     );
@@ -61,32 +63,56 @@ pub fn updateTransform(self: *@This()) void {
     self.transform.translation.z = m.m[14];
 }
 
-pub fn update(self: *@This(), input_state: InputState) Vec2 {
-    const dx = (input_state.mouse_x - self.input_state.mouse_x) / input_state.screen_height;
-    const dy = (input_state.mouse_y - self.input_state.mouse_y) / input_state.screen_height;
-    self.input_state = input_state;
-    const t = std.math.tan(self.yFov / 2);
-    if (input_state.mouse_right) {
-        const ROT_SPEED = 2;
-        self.yaw -= dx * t * ROT_SPEED;
-        self.pitch -= dy * t * ROT_SPEED;
-    }
-    if (input_state.mouse_middle) {
-        self.shift.x -= dx * t * self.shift.z;
-        self.shift.y += dy * t * self.shift.z;
-    }
-    if (input_state.mouse_wheel > 0) {
+pub fn dolly(self: *@This(), d: f32) void {
+    if (d > 0) {
         self.shift.z *= 0.9;
-    } else if (input_state.mouse_wheel < 0) {
+    } else if (d < 0) {
         self.shift.z *= 1.1;
     }
-    self.updateProjectionMatrix();
-    self.updateTransform();
+}
 
-    return .{
-        .x = (input_state.mouse_x / input_state.screen_width) * 2 - 1,
-        .y = -((input_state.mouse_y / input_state.screen_height) * 2 - 1),
-    };
+const ROT_SPEED = 2;
+pub fn yawPitch(self: *@This(), input: InputState, prev: InputState) void {
+    const dx = (input.mouse_x - prev.mouse_x) / self.screen.y;
+    const dy = (input.mouse_y - prev.mouse_y) / self.screen.y;
+    const t = std.math.tan(self.yFov / 2);
+    self.yaw -= dx * t * ROT_SPEED;
+    self.pitch -= dy * t * ROT_SPEED;
+}
+
+pub fn screenMove(self: *@This(), input: InputState, prev: InputState) void {
+    const dx = (input.mouse_x - prev.mouse_x) / self.screen.y;
+    const dy = (input.mouse_y - prev.mouse_y) / self.screen.y;
+    const t = std.math.tan(self.yFov / 2);
+    self.shift.x -= dx * t * self.shift.z;
+    self.shift.y += dy * t * self.shift.z;
+}
+
+// pub fn update(self: *@This(), input_state: InputState) Vec2 {
+//     defer self.input_state = input_state;
+//     if (input_state.mouse_right) {
+//         self.yawPitch(input_state);
+//     }
+//     if (input_state.mouse_middle) {
+//         self.screenMove(input_state);
+//     }
+//     self.dolly(input_state.mouse_wheel);
+//     self.updateProjectionMatrix();
+//     self.updateTransform();
+//
+//     // return cursor raypoisition [-1, +1],[-1, +1]
+//     return .{
+//         .x = (input_state.mouse_x / input_state.screen_width) * 2 - 1,
+//         .y = -((input_state.mouse_y / input_state.screen_height) * 2 - 1),
+//     };
+// }
+
+pub fn resize(self: *@This(), size: Vec2) void {
+    if (std.meta.eql(self.screen, size)) {
+        return;
+    }
+    self.screen = size;
+    self.updateProjectionMatrix();
 }
 
 pub fn ray(self: @This(), mouse_cursor: Vec2) Ray {
