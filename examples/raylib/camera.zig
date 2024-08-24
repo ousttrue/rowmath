@@ -39,8 +39,6 @@ pub fn main() void {
     // Define the camera to look into our 3d world
     var camera = c.Camera{};
     var rowmath_camera = rowmath.Camera{};
-    camera.fovy = std.math.radiansToDegrees(rowmath_camera.yFov);
-    camera.projection = c.CAMERA_PERSPECTIVE;
     var right_drag = rowmath.makeYawPitchHandler(.right, &rowmath_camera);
     var middle_drag = rowmath.makeScreenMoveHandler(.middle, &rowmath_camera);
 
@@ -58,6 +56,17 @@ pub fn main() void {
             .x = @floatFromInt(screenWidth),
             .y = @floatFromInt(screenHeight),
         });
+
+        switch (rowmath_camera.projection) {
+            .perspective => |perspective| {
+                camera.fovy = std.math.radiansToDegrees(perspective.fov_y_radians);
+                camera.projection = c.CAMERA_PERSPECTIVE;
+            },
+            .orthographic => |_| {
+                // camera.fovy = std.math.radiansToDegrees(rowmath_camera.yFov);
+                camera.projection = c.CAMERA_ORTHOGRAPHIC;
+            },
+        }
 
         // update transform
         const input = rowmath.InputState{

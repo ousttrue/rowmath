@@ -12,7 +12,7 @@
     "base_name": "sokol_camera_simple"
   },
   {
-    "name": "sokol camera rendertarget",
+    "name": "sokol camera frustum",
     "base_name": "sokol_camera_rendertarget"
   },
   {

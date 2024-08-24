@@ -101,8 +101,8 @@ pub fn orthographic(
         .m = .{
             2 / w,               0,                   0,                       0,
             0,                   2 / h,               0,                       0,
-            0,                   0,                   2 / d,                   0,
-            -(left + right) / w, -(top + bottom) / h, -(farVal + nearVal) / d, 1,
+            0,                   0,                   -1 / d,                  0,
+            -(left + right) / w, -(top + bottom) / h, -(nearVal) / d, 1,
         },
     };
 }

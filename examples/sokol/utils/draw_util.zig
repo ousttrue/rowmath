@@ -48,7 +48,10 @@ pub fn draw_line(v0: Vec3, v1: Vec3) void {
 }
 
 pub fn draw_camera_frustum(camera: Camera, _cursor: ?Vec2) void {
-    const frustom = camera.frustum();
+    const frustom = switch (camera.projection) {
+        .perspective => |perspective| perspective.frustum(camera.getAspect()),
+        .orthographic => |orthographic| orthographic.frustum(camera.getAspect()),
+    };
 
     sokol.gl.pushMatrix();
     defer sokol.gl.popMatrix();
@@ -68,18 +71,42 @@ pub fn draw_camera_frustum(camera: Camera, _cursor: ?Vec2) void {
     draw_line(frustom.near_bottom_right, frustom.near_bottom_left);
     draw_line(frustom.near_bottom_left, frustom.near_top_left);
 
-    draw_line(Vec3.zero, frustom.far_top_left);
-    draw_line(Vec3.zero, frustom.far_top_right);
-    draw_line(Vec3.zero, frustom.far_bottom_left);
-    draw_line(Vec3.zero, frustom.far_bottom_right);
-
-    if (_cursor) |cursor| {
-        sokol.gl.c3f(1, 1, 0);
-        draw_line(Vec3.zero, .{
-            .x = frustom.far_top_right.x * cursor.x,
-            .y = frustom.far_top_right.y * cursor.y,
-            .z = frustom.far_top_right.z,
-        });
+    switch (camera.projection) {
+        .perspective => {
+            draw_line(Vec3.zero, frustom.far_top_left);
+            draw_line(Vec3.zero, frustom.far_top_right);
+            draw_line(Vec3.zero, frustom.far_bottom_left);
+            draw_line(Vec3.zero, frustom.far_bottom_right);
+            if (_cursor) |cursor| {
+                sokol.gl.c3f(1, 1, 0);
+                draw_line(Vec3.zero, .{
+                    .x = frustom.far_top_right.x * cursor.x,
+                    .y = frustom.far_top_right.y * cursor.y,
+                    .z = frustom.far_top_right.z,
+                });
+            }
+        },
+        .orthographic => {
+            draw_line(frustom.near_top_left, frustom.far_top_left);
+            draw_line(frustom.near_top_right, frustom.far_top_right);
+            draw_line(frustom.near_bottom_left, frustom.far_bottom_left);
+            draw_line(frustom.near_bottom_right, frustom.far_bottom_right);
+            if (_cursor) |cursor| {
+                sokol.gl.c3f(1, 1, 0);
+                draw_line(
+                    .{
+                        .x = frustom.near_top_right.x * cursor.x,
+                        .y = frustom.near_top_right.y * cursor.y,
+                        .z = frustom.near_top_right.z,
+                    },
+                    .{
+                        .x = frustom.far_top_right.x * cursor.x,
+                        .y = frustom.far_top_right.y * cursor.y,
+                        .z = frustom.far_top_right.z,
+                    },
+                );
+            }
+        },
     }
 }
 

@@ -5,7 +5,7 @@ const pw = require('playwright');
   const browser = await pw.chromium.launch(); // or 'chromium', 'firefox'
   const context = await browser.newContext();
   const page = await context.newPage();
-  page.setViewportSize({ "width": 400, "height": 300 });
+  page.setViewportSize({ "width": 300, "height": 157 });
 
   for(const item of list){
 

@@ -21,8 +21,12 @@ const state = struct {
     // background. without render target
     var screen = CameraView{
         .camera = .{
-            .near_clip = 0.5,
-            .far_clip = 15,
+            .projection = .{
+                .perspective = .{
+                    .near_clip = 0.5,
+                    .far_clip = 15,
+                },
+            },
             .transform = .{
                 .translation = .{
                     .x = 0,
@@ -86,8 +90,42 @@ export fn frame() void {
         ig.igSetNextWindowPos(.{ .x = 10, .y = 10 }, ig.ImGuiCond_Once, .{ .x = 0, .y = 0 });
         ig.igSetNextWindowSize(.{ .x = 400, .y = 100 }, ig.ImGuiCond_Once);
         _ = ig.igBegin("Hello Dear ImGui!", 0, ig.ImGuiWindowFlags_None);
+        defer ig.igEnd();
+
         _ = ig.igColorEdit3("Background", &state.screen.pass_action.colors[0].clear_value.r, ig.ImGuiColorEditFlags_None);
-        ig.igEnd();
+
+        // var mode: c_int = 0;
+        switch (state.screen.camera.projection) {
+            .perspective => |perspective| {
+                if (ig.igRadioButton_Bool("perspective", true)) {}
+                ig.igSameLine(0, 0);
+                if (ig.igRadioButton_Bool("orthographic", false)) {
+                    state.screen.camera.projection = Camera.Projection{
+                        .orthographic = .{
+                            .near_clip = perspective.near_clip,
+                            .far_clip = perspective.far_clip,
+                            .height = std.math.tan(perspective.fov_y_radians / 2) * perspective.far_clip * 2,
+                        },
+                    };
+                    state.screen.camera.updateProjectionMatrix();
+                }
+            },
+            .orthographic => |orthographic| {
+                if (ig.igRadioButton_Bool("perspective", false)) {
+                    // https://github.com/ziglang/zig/issues/19832
+                    state.screen.camera.projection = Camera.Projection{
+                        .perspective = .{
+                            .near_clip = orthographic.near_clip,
+                            .far_clip = orthographic.far_clip,
+                            .fov_y_radians = std.math.atan2(orthographic.height / 2, orthographic.far_clip) * 2,
+                        },
+                    };
+                    state.screen.camera.updateProjectionMatrix();
+                }
+                ig.igSameLine(0, 0);
+                if (ig.igRadioButton_Bool("orthographic", true)) {}
+            },
+        }
     }
 
     {

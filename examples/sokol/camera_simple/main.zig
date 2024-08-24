@@ -64,7 +64,7 @@ export fn frame() void {
         .swapchain = sokol.glue.swapchain(),
     });
     utils.gl_begin(.{
-        .projection = state.camera.projection,
+        .projection = state.camera.projection_matrix,
         .view = state.camera.transform.worldToLocal(),
     });
     utils.draw_grid();
