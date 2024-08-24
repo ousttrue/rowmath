@@ -24,6 +24,7 @@ pub fn gl_end() void {
 pub fn draw_grid() void {
     const n = 5.0;
     sokol.gl.beginLines();
+    defer sokol.gl.end();
     sokol.gl.c3f(1, 1, 1);
     {
         var x: f32 = -n;
@@ -39,7 +40,6 @@ pub fn draw_grid() void {
             sokol.gl.v3f(n, 0, z);
         }
     }
-    sokol.gl.end();
 }
 
 pub fn draw_line(v0: Vec3, v1: Vec3) void {
@@ -52,7 +52,7 @@ pub fn draw_camera_frustum(camera: Camera, _cursor: ?Vec2) void {
 
     sokol.gl.pushMatrix();
     defer sokol.gl.popMatrix();
-    sokol.gl.loadMatrix(&camera.transform.localToWorld().m[0]);
+    sokol.gl.multMatrix(&camera.transform.localToWorld().m[0]);
 
     sokol.gl.beginLines();
     defer sokol.gl.end();

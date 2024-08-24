@@ -17,8 +17,6 @@ const Vec3 = rowmath.Vec3;
 const Camera = rowmath.Camera;
 
 const state = struct {
-    var pass_action: sg.PassAction = .{};
-
     var allocator: std.mem.Allocator = undefined;
     // background. without render target
     var screen = CameraView{
@@ -43,7 +41,6 @@ const state = struct {
             },
         },
     };
-    var subview_cursor: Vec2 = .{ .x = 0, .y = 0 };
 };
 
 export fn init() void {
@@ -57,17 +54,18 @@ export fn init() void {
         .logger = .{ .func = sokol.log.func },
     });
 
-    // initial clear color
-    state.pass_action.colors[0] = .{
-        .load_action = .CLEAR,
-        .clear_value = .{ .r = 0.0, .g = 0.5, .b = 1.0, .a = 1.0 },
-    };
-
     sokol.gl.setup(.{
         .logger = .{ .func = sokol.log.func },
     });
 
     state.screen.init();
+
+    // initial clear color
+    state.screen.pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0.0, .g = 0.5, .b = 1.0, .a = 1.0 },
+    };
+
     state.subview.init();
 }
 
@@ -80,17 +78,15 @@ export fn frame() void {
         .dpi_scale = sokol.app.dpiScale(),
     });
 
-    {
-        const input = CameraView.inputFromScreen();
-        state.screen.update(input);
-    }
+    const input = CameraView.inputFromScreen();
+    state.screen.update(input);
 
     //=== UI CODE STARTS HERE
     {
         ig.igSetNextWindowPos(.{ .x = 10, .y = 10 }, ig.ImGuiCond_Once, .{ .x = 0, .y = 0 });
         ig.igSetNextWindowSize(.{ .x = 400, .y = 100 }, ig.ImGuiCond_Once);
         _ = ig.igBegin("Hello Dear ImGui!", 0, ig.ImGuiWindowFlags_None);
-        _ = ig.igColorEdit3("Background", &state.pass_action.colors[0].clear_value.r, ig.ImGuiColorEditFlags_None);
+        _ = ig.igColorEdit3("Background", &state.screen.pass_action.colors[0].clear_value.r, ig.ImGuiColorEditFlags_None);
         ig.igEnd();
     }
 
@@ -105,12 +101,13 @@ export fn frame() void {
             null,
             ig.ImGuiWindowFlags_NoScrollbar | ig.ImGuiWindowFlags_NoScrollWithMouse,
         )) {
-            if (state.subview.beginImageButton()) |render_context| {
+            if (state.subview.beginImageButton()) |_| {
                 defer state.subview.endImageButton();
-                state.subview_cursor = render_context.cursor;
 
                 // grid
                 utils.draw_grid();
+                // frustum
+                utils.draw_camera_frustum(state.screen.camera, input.cursorScreenPosition());
             }
         }
         ig.igEnd();

@@ -115,7 +115,7 @@ pub fn ray(self: @This(), mouse_cursor: Vec2) Ray {
 
 pub fn frustum(self: @This()) Frustum {
     const y = std.math.tan(self.yFov / 2);
-    const x = y * self.input_state.aspect();
+    const x = y * self.aspect();
     const near_x = x * self.near_clip;
     const near_y = y * self.near_clip;
     const far_x = x * self.far_clip;

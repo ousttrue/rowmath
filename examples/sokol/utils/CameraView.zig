@@ -85,9 +85,9 @@ pub fn begin(self: *@This(), _rendertarget: ?RenderTarget) void {
 
     sokol.gl.defaults();
     sokol.gl.matrixModeProjection();
-    sokol.gl.multMatrix(&self.camera.projection.m[0]);
+    sokol.gl.loadMatrix(&self.camera.projection.m[0]);
     sokol.gl.matrixModeModelview();
-    sokol.gl.multMatrix(&self.camera.transform.worldToLocal().m[0]);
+    sokol.gl.loadMatrix(&self.camera.transform.worldToLocal().m[0]);
 }
 
 pub fn end(self: *@This(), _rendertarget: ?RenderTarget) void {
