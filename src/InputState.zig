@@ -27,3 +27,11 @@ pub fn aspect(self: @This()) f32 {
 pub fn cursor(self: @This()) Vec2 {
     return .{ .x = self.mouse_x, .y = self.mouse_y };
 }
+
+/// return cursor raypoisition [-1, +1],[-1, +1]
+pub fn cursorScreenPosition(self: @This()) Vec2 {
+    return .{
+        .x = (self.mouse_x / self.screen_width) * 2 - 1,
+        .y = -((self.mouse_y / self.screen_height) * 2 - 1),
+    };
+}

@@ -88,25 +88,6 @@ pub fn screenMove(self: *@This(), input: InputState, prev: InputState) void {
     self.shift.y += dy * t * self.shift.z;
 }
 
-// pub fn update(self: *@This(), input_state: InputState) Vec2 {
-//     defer self.input_state = input_state;
-//     if (input_state.mouse_right) {
-//         self.yawPitch(input_state);
-//     }
-//     if (input_state.mouse_middle) {
-//         self.screenMove(input_state);
-//     }
-//     self.dolly(input_state.mouse_wheel);
-//     self.updateProjectionMatrix();
-//     self.updateTransform();
-//
-//     // return cursor raypoisition [-1, +1],[-1, +1]
-//     return .{
-//         .x = (input_state.mouse_x / input_state.screen_width) * 2 - 1,
-//         .y = -((input_state.mouse_y / input_state.screen_height) * 2 - 1),
-//     };
-// }
-
 pub fn resize(self: *@This(), size: Vec2) void {
     if (std.meta.eql(self.screen, size)) {
         return;

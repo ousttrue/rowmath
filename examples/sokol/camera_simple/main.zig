@@ -38,7 +38,10 @@ export fn init() void {
 }
 
 export fn frame() void {
+    // update projection
     state.camera.resize(state.input.screen_size());
+
+    // update transform
     state.drag_right.frame(state.input);
     state.drag_middle.frame(state.input);
     state.camera.dolly(state.input.mouse_wheel);

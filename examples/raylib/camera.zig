@@ -41,6 +41,8 @@ pub fn main() void {
     var rowmath_camera = rowmath.Camera{};
     camera.fovy = std.math.radiansToDegrees(rowmath_camera.yFov);
     camera.projection = c.CAMERA_PERSPECTIVE;
+    var right_drag = rowmath.makeYawPitchHandler(.right, &rowmath_camera);
+    var middle_drag = rowmath.makeScreenMoveHandler(.middle, &rowmath_camera);
 
     c.SetTargetFPS(60); // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -50,7 +52,15 @@ pub fn main() void {
     {
         const screenWidth = c.GetScreenWidth();
         const screenHeight = c.GetScreenHeight();
-        _ = rowmath_camera.update(.{
+
+        // update projection
+        rowmath_camera.resize(.{
+            .x = @floatFromInt(screenWidth),
+            .y = @floatFromInt(screenHeight),
+        });
+
+        // update transform
+        const input = rowmath.InputState{
             .screen_width = @floatFromInt(screenWidth),
             .screen_height = @floatFromInt(screenHeight),
             .mouse_x = @floatFromInt(c.GetMouseX()),
@@ -59,7 +69,12 @@ pub fn main() void {
             .mouse_middle = c.IsMouseButtonDown(c.MOUSE_BUTTON_MIDDLE),
             .mouse_right = c.IsMouseButtonDown(c.MOUSE_BUTTON_RIGHT),
             .mouse_wheel = c.GetMouseWheelMove(),
-        });
+        };
+        right_drag.frame(input);
+        middle_drag.frame(input);
+        rowmath_camera.dolly(input.mouse_wheel);
+        rowmath_camera.updateTransform();
+
         camera.up = to_raylib(rowmath_camera.transform.rotation.dirY());
         camera.position = to_raylib(rowmath_camera.transform.translation);
         camera.target = to_raylib(rowmath_camera.target());
