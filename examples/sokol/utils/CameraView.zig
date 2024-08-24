@@ -104,7 +104,24 @@ fn is_contain(pos: ig.ImVec2, size: ig.ImVec2, p: ig.ImVec2) bool {
     return (p.x >= pos.x and p.x <= (pos.x + size.x)) and (p.y >= pos.y and p.y <= (pos.y + size.y));
 }
 
-fn input_from_rendertarget(pos: ig.ImVec2, size: ig.ImVec2) InputState {
+pub fn inputFromScreen() InputState {
+    const io = ig.igGetIO().*;
+    var input = InputState{
+        .screen_width = io.DisplaySize.x,
+        .screen_height = io.DisplaySize.y,
+        .mouse_x = io.MousePos.x,
+        .mouse_y = io.MousePos.y,
+    };
+    if (!io.WantCaptureMouse) {
+        input.mouse_left = io.MouseDown[ig.ImGuiMouseButton_Left];
+        input.mouse_right = io.MouseDown[ig.ImGuiMouseButton_Right];
+        input.mouse_middle = io.MouseDown[ig.ImGuiMouseButton_Middle];
+        input.mouse_wheel = io.MouseWheel;
+    }
+    return input;
+}
+
+pub fn inputFromRendertarget(pos: ig.ImVec2, size: ig.ImVec2) InputState {
     const io = ig.igGetIO().*;
     var input = InputState{
         .screen_width = size.x,
@@ -154,7 +171,7 @@ pub fn beginImageButton(self: *@This()) ?RenderTargetImageButtonContext {
     );
 
     Custom_ButtonBehaviorMiddleRight();
-    const input =input_from_rendertarget(pos, size); 
+    const input = inputFromRendertarget(pos, size);
     self.update(input);
 
     // render offscreen

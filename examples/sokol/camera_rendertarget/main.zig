@@ -20,7 +20,8 @@ const state = struct {
     var pass_action: sg.PassAction = .{};
 
     var allocator: std.mem.Allocator = undefined;
-    var view1 = CameraView{
+    // background. without render target
+    var screen = CameraView{
         .camera = .{
             .near_clip = 0.5,
             .far_clip = 15,
@@ -34,14 +35,15 @@ const state = struct {
         },
     };
     var view1_cursor: Vec2 = .{ .x = 0, .y = 0 };
-    var view2 = CameraView{
+
+    var subview = CameraView{
         .camera = .{
             .transform = .{
                 .translation = .{ .x = 0, .y = 1, .z = 15 },
             },
         },
     };
-    var view2_cursor: Vec2 = .{ .x = 0, .y = 0 };
+    var subview_cursor: Vec2 = .{ .x = 0, .y = 0 };
 };
 
 export fn init() void {
@@ -65,8 +67,8 @@ export fn init() void {
         .logger = .{ .func = sokol.log.func },
     });
 
-    state.view1.init();
-    state.view2.init();
+    state.screen.init();
+    state.subview.init();
 }
 
 export fn frame() void {
@@ -78,33 +80,34 @@ export fn frame() void {
         .dpi_scale = sokol.app.dpiScale(),
     });
 
-    const io = ig.igGetIO().*;
-    if (!io.WantCaptureMouse) {
-        // camera update
+    {
+        const input = CameraView.inputFromScreen();
+        state.screen.update(input);
     }
 
     //=== UI CODE STARTS HERE
-    // {
-    //     ig.igSetNextWindowPos(.{ .x = 10, .y = 10 }, ig.ImGuiCond_Once, .{ .x = 0, .y = 0 });
-    //     ig.igSetNextWindowSize(.{ .x = 400, .y = 100 }, ig.ImGuiCond_Once);
-    //     _ = ig.igBegin("Hello Dear ImGui!", 0, ig.ImGuiWindowFlags_None);
-    //     _ = ig.igColorEdit3("Background", &state.pass_action.colors[0].clear_value.r, ig.ImGuiColorEditFlags_None);
-    //     ig.igEnd();
-    // }
+    {
+        ig.igSetNextWindowPos(.{ .x = 10, .y = 10 }, ig.ImGuiCond_Once, .{ .x = 0, .y = 0 });
+        ig.igSetNextWindowSize(.{ .x = 400, .y = 100 }, ig.ImGuiCond_Once);
+        _ = ig.igBegin("Hello Dear ImGui!", 0, ig.ImGuiWindowFlags_None);
+        _ = ig.igColorEdit3("Background", &state.pass_action.colors[0].clear_value.r, ig.ImGuiColorEditFlags_None);
+        ig.igEnd();
+    }
 
     {
-        ig.igSetNextWindowPos(.{ .x = 10, .y = 30 }, ig.ImGuiCond_Once, .{ .x = 0, .y = 0 });
+        const io = ig.igGetIO();
+        ig.igSetNextWindowPos(.{ .x = io.*.DisplaySize.x - 280, .y = 10 }, ig.ImGuiCond_Once, .{ .x = 0, .y = 0 });
         ig.igSetNextWindowSize(.{ .x = 256, .y = 256 }, ig.ImGuiCond_Once);
         ig.igPushStyleVar_Vec2(ig.ImGuiStyleVar_WindowPadding, .{ .x = 0, .y = 0 });
         defer ig.igPopStyleVar(1);
         if (ig.igBegin(
-            &"view1"[0],
+            &"subview"[0],
             null,
             ig.ImGuiWindowFlags_NoScrollbar | ig.ImGuiWindowFlags_NoScrollWithMouse,
         )) {
-            if (state.view1.beginImageButton()) |render_context| {
-                defer state.view1.endImageButton();
-                state.view1_cursor = render_context.cursor;
+            if (state.subview.beginImageButton()) |render_context| {
+                defer state.subview.endImageButton();
+                state.subview_cursor = render_context.cursor;
 
                 // grid
                 utils.draw_grid();
@@ -112,35 +115,16 @@ export fn frame() void {
         }
         ig.igEnd();
     }
-    {
-        ig.igSetNextWindowPos(.{ .x = 310, .y = 130 }, ig.ImGuiCond_Once, .{ .x = 0, .y = 0 });
-        ig.igSetNextWindowSize(.{ .x = 256, .y = 256 }, ig.ImGuiCond_Once);
-        ig.igPushStyleVar_Vec2(ig.ImGuiStyleVar_WindowPadding, .{ .x = 0, .y = 0 });
-        defer ig.igPopStyleVar(1);
-        if (ig.igBegin(
-            &"view2"[0],
-            null,
-            ig.ImGuiWindowFlags_NoScrollbar | ig.ImGuiWindowFlags_NoScrollWithMouse,
-        )) {
-            if (state.view2.beginImageButton()) |render_context| {
-                defer state.view2.endImageButton();
-                state.view2_cursor = render_context.cursor;
 
-                // grid
-                utils.draw_grid();
-            }
-        }
-        ig.igEnd();
-    }
     //=== UI CODE ENDS HERE
+    {
+        // call sokol.imgui.render() inside a sokol-gfx pass
+        state.screen.begin(null);
+        defer state.screen.end(null);
 
-    // call sokol.imgui.render() inside a sokol-gfx pass
-    sg.beginPass(.{
-        .action = state.pass_action,
-        .swapchain = sokol.glue.swapchain(),
-    });
-    sokol.imgui.render();
-    sg.endPass();
+        utils.draw_grid();
+    }
+
     sg.commit();
 }
 
