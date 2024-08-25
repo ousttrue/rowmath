@@ -30,4 +30,4 @@ pub usingnamespace @import("camera_handler.zig");
 
 pub const lines = @import("lines/lines.zig");
 
-pub usingnamespace @import("bvh/bvh.zig");
+pub usingnamespace @import("bvh/_bvh.zig");
