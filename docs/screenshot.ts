@@ -1,5 +1,6 @@
 const list = require('./src/components/HomepageFeatures/list.json');
 const pw = require('playwright');
+const fs = require('fs');
 
 (async () => {
 
@@ -17,6 +18,20 @@ const pw = require('playwright');
       console.error(ex);
     }
     await browser.close();
+
+    // inject html to ogp
+    const path = `static/wasm/${item.base_name}.html`
+    let src = fs.readFileSync(path, 'utf8');
+    console.log(src);
+    fs.writeFileSync(path, src.replace('<meta charset=utf-8>', `<meta charset=utf-8>
+<meta property="og:title" content="${item.name}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ousttrue.github.io/rowmath/wasm/${item.base_name}.html">
+<meta property="og:image" content="https://ousttrue.github.io/rowmath/wasm/${item.base_name}.jpg">
+<meta property="og:site_name" content="rowmath wasm examples">
+<meta property="og:description" content="${item.name}">
+`));
+
   }
 
 })();

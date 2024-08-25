@@ -119,7 +119,7 @@ float grid (vec2 vBC, float width) {
 void main()
 {
     vec4 border = vec4(vec3(grid(oUvBarycentric.zw, 1.0)), 1);
-    uint index = o_Palette_Flag_Flag.x;
+    int index = int(o_Palette_Flag_Flag.x);
     vec4 color = colors[index];
     vec4 texel = vec4(1, 1, 1, 1);
     // if(textures[index].x==0.0)
