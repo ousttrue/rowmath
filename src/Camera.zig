@@ -32,7 +32,7 @@ pub fn getAspect(self: @This()) f32 {
 }
 
 pub fn viewProjectionMatrix(self: @This()) Mat4 {
-    return self.transform.worldToLocal().mul(self.projection);
+    return self.transform.worldToLocal().mul(self.projection_matrix);
 }
 
 pub fn updateProjectionMatrix(self: *@This()) void {

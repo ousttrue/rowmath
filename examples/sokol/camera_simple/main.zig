@@ -26,15 +26,14 @@ export fn init() void {
     });
     state.input.screen_width = sokol.app.widthf();
     state.input.screen_height = sokol.app.heightf();
+    state.drag_right = rowmath.makeYawPitchHandler(.right, &state.camera);
+    state.drag_middle = rowmath.makeScreenMoveHandler(.middle, &state.camera);
 
     var debugtext_desc = sokol.debugtext.Desc{
         .logger = .{ .func = sokol.log.func },
     };
     debugtext_desc.fonts[0] = sokol.debugtext.fontOric();
     sokol.debugtext.setup(debugtext_desc);
-
-    state.drag_right = rowmath.makeYawPitchHandler(.right, &state.camera);
-    state.drag_middle = rowmath.makeScreenMoveHandler(.middle, &state.camera);
 }
 
 export fn frame() void {
