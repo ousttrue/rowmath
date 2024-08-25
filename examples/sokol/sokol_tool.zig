@@ -15,7 +15,7 @@ pub fn runShdcCommand(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
     shader: []const u8,
-) std.Build.LazyPath {
+) *std.Build.Step.Run {
     const tools = b.dependency("sokol-tools-bin", .{});
     const shdc_path = tools.path(subPath()).getPath(b);
     const glsl = if (target.result.isDarwin()) "glsl410" else "glsl430";
@@ -29,6 +29,7 @@ pub fn runShdcCommand(
         "-f",
         "sokol_zig",
         "-o",
+        b.fmt("{s}.zig", .{shader}),
     });
-    return tool_step.addOutputFileArg("shader.glsl.zig");
+    return tool_step;
 }

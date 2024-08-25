@@ -14,23 +14,26 @@ pub const Example = struct {
         sokol_dep: *std.Build.Dependency,
         compile: *std.Build.Step.Compile,
     ) void {
+        _ = sokol_dep; // autofix
         const shader = self.shader orelse {
             return;
         };
 
         // glsl to glsl.zig
-        const output = sokol_tool.runShdcCommand(
+        const run = sokol_tool.runShdcCommand(
             b,
             target,
             shader,
         );
 
-        const module = std.Build.Module.create(b, .{
-            .root_source_file = output,
-        });
-        compile.root_module.addImport(b.fmt("{s}.shader", .{self.name}), module);
+        // const module = std.Build.Module.create(b, .{
+        //     .root_source_file = output,
+        // });
+        // compile.root_module.addImport(b.fmt("{s}.shader", .{self.name}), module);
+        //
+        // module.addImport("sokol", sokol_dep.module("sokol"));
 
-        module.addImport("sokol", sokol_dep.module("sokol"));
+        compile.step.dependOn(&run.step);
     }
 };
 
