@@ -44,6 +44,8 @@ pub fn build(b: *std.Build) void {
         .target = b.host,
         .optimize = .Debug,
     });
+    doc_root.linkLibC();
+    doc_root.linkLibCpp();
     const install_docs = b.addInstallDirectory(.{
         .source_dir = doc_root.getEmittedDocs(),
         .install_dir = .prefix,
