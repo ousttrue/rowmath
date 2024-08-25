@@ -23,7 +23,7 @@ pub fn gl_end() void {
     sokol.gl.contextDraw(sokol.gl.defaultContext());
 }
 
-pub fn draw_lines(lines:[]const rowmath.lines.Line) void {
+pub fn draw_lines(lines: []const rowmath.lines.Line) void {
     sokol.gl.beginLines();
     defer sokol.gl.end();
 
@@ -45,66 +45,46 @@ pub fn draw_line(v0: Vec3, v1: Vec3) void {
 }
 
 pub fn draw_camera_frustum(camera: Camera, _cursor: ?Vec2) void {
-    const frustom = switch (camera.projection) {
-        .perspective => |perspective| perspective.frustum(camera.getAspect()),
-        .orthographic => |orthographic| orthographic.frustum(camera.getAspect()),
-    };
-
     sokol.gl.pushMatrix();
     defer sokol.gl.popMatrix();
     sokol.gl.multMatrix(&camera.transform.localToWorld().m[0]);
 
-    sokol.gl.beginLines();
-    defer sokol.gl.end();
-    sokol.gl.c3f(1, 1, 1);
+    draw_lines(&camera.frustum_lines);
 
-    draw_line(frustom.far_top_left, frustom.far_top_right);
-    draw_line(frustom.far_top_right, frustom.far_bottom_right);
-    draw_line(frustom.far_bottom_right, frustom.far_bottom_left);
-    draw_line(frustom.far_bottom_left, frustom.far_top_left);
+    // cursor
+    if (_cursor) |cursor| {
+        sokol.gl.beginLines();
+        defer sokol.gl.end();
 
-    draw_line(frustom.near_top_left, frustom.near_top_right);
-    draw_line(frustom.near_top_right, frustom.near_bottom_right);
-    draw_line(frustom.near_bottom_right, frustom.near_bottom_left);
-    draw_line(frustom.near_bottom_left, frustom.near_top_left);
-
-    switch (camera.projection) {
-        .perspective => {
-            draw_line(Vec3.zero, frustom.far_top_left);
-            draw_line(Vec3.zero, frustom.far_top_right);
-            draw_line(Vec3.zero, frustom.far_bottom_left);
-            draw_line(Vec3.zero, frustom.far_bottom_right);
-            if (_cursor) |cursor| {
-                sokol.gl.c3f(1, 1, 0);
+        sokol.gl.c3f(1, 1, 0);
+        switch (camera.projection) {
+            .perspective => |perspective| {
+                const frustum = perspective.frustum(camera.getAspect());
                 draw_line(Vec3.zero, .{
-                    .x = frustom.far_top_right.x * cursor.x,
-                    .y = frustom.far_top_right.y * cursor.y,
-                    .z = frustom.far_top_right.z,
+                    .x = frustum.far_top_right.x * cursor.x,
+                    .y = frustum.far_top_right.y * cursor.y,
+                    .z = frustum.far_top_right.z,
                 });
-            }
-        },
-        .orthographic => {
-            draw_line(frustom.near_top_left, frustom.far_top_left);
-            draw_line(frustom.near_top_right, frustom.far_top_right);
-            draw_line(frustom.near_bottom_left, frustom.far_bottom_left);
-            draw_line(frustom.near_bottom_right, frustom.far_bottom_right);
-            if (_cursor) |cursor| {
-                sokol.gl.c3f(1, 1, 0);
+            },
+            .orthographic => |orthographic| {
+                const frustum = orthographic.frustum(camera.getAspect());
                 draw_line(
                     .{
-                        .x = frustom.near_top_right.x * cursor.x,
-                        .y = frustom.near_top_right.y * cursor.y,
-                        .z = frustom.near_top_right.z,
+                        .x = frustum.near_top_right.x * cursor.x,
+                        .y = frustum.near_top_right.y * cursor.y,
+                        .z = frustum.near_top_right.z,
                     },
                     .{
-                        .x = frustom.far_top_right.x * cursor.x,
-                        .y = frustom.far_top_right.y * cursor.y,
-                        .z = frustom.far_top_right.z,
+                        .x = frustum.far_top_right.x * cursor.x,
+                        .y = frustum.far_top_right.y * cursor.y,
+                        .z = frustum.far_top_right.z,
                     },
                 );
-            }
-        },
+            },
+        }
     }
+
+    // gaze
 }
 
 pub fn draw_mouse_state(input: InputState, color: RgbU8) void {

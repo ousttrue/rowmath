@@ -88,17 +88,19 @@ export fn frame() void {
     //=== UI CODE STARTS HERE
     {
         ig.igSetNextWindowPos(.{ .x = 10, .y = 10 }, ig.ImGuiCond_Once, .{ .x = 0, .y = 0 });
-        ig.igSetNextWindowSize(.{ .x = 400, .y = 100 }, ig.ImGuiCond_Once);
+        // ig.igSetNextWindowSize(.{ .x = 400, .y = 100 }, ig.ImGuiCond_Once);
         _ = ig.igBegin("Hello Dear ImGui!", 0, ig.ImGuiWindowFlags_None);
         defer ig.igEnd();
 
+        // bg
         _ = ig.igColorEdit3("Background", &state.screen.pass_action.colors[0].clear_value.r, ig.ImGuiColorEditFlags_None);
 
         // var mode: c_int = 0;
         switch (state.screen.camera.projection) {
-            .perspective => |perspective| {
+            .perspective => |*perspective| {
                 if (ig.igRadioButton_Bool("perspective", true)) {}
                 ig.igSameLine(0, 0);
+                var updated = false;
                 if (ig.igRadioButton_Bool("orthographic", false)) {
                     state.screen.camera.projection = Camera.Projection{
                         .orthographic = .{
@@ -107,10 +109,23 @@ export fn frame() void {
                             .height = std.math.tan(perspective.fov_y_radians / 2) * perspective.far_clip * 2,
                         },
                     };
+                    updated = true;
+                }
+
+                // near / far
+                if (ig.igSliderFloat("near", &perspective.near_clip, 0, perspective.far_clip, null, 0)) {
+                    updated = true;
+                }
+                if (ig.igSliderFloat("far", &perspective.far_clip, perspective.near_clip, 100, null, 0)) {
+                    updated = true;
+                }
+
+                if (updated) {
                     state.screen.camera.updateProjectionMatrix();
                 }
             },
-            .orthographic => |orthographic| {
+            .orthographic => |*orthographic| {
+                var updated = false;
                 if (ig.igRadioButton_Bool("perspective", false)) {
                     // https://github.com/ziglang/zig/issues/19832
                     state.screen.camera.projection = Camera.Projection{
@@ -120,10 +135,22 @@ export fn frame() void {
                             .fov_y_radians = std.math.atan2(orthographic.height / 2, orthographic.far_clip) * 2,
                         },
                     };
-                    state.screen.camera.updateProjectionMatrix();
+                    updated = true;
                 }
                 ig.igSameLine(0, 0);
                 if (ig.igRadioButton_Bool("orthographic", true)) {}
+
+                // near / far
+                if (ig.igSliderFloat("near", &orthographic.near_clip, 0, orthographic.far_clip, null, 0)) {
+                    updated = true;
+                }
+                if (ig.igSliderFloat("far", &orthographic.far_clip, orthographic.near_clip, 100, null, 0)) {
+                    updated = true;
+                }
+
+                if (updated) {
+                    state.screen.camera.updateProjectionMatrix();
+                }
             },
         }
     }
