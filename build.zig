@@ -7,13 +7,14 @@ const tests = [_][]const u8{
     "src/Vec3.zig",
     "src/Vec4.zig",
     "src/Quat.zig",
-    "src/Rgba.zig",
+    "src/RgbaF32.zig",
     "src/Mat4.zig",
     "src/RigidTransform.zig",
     "src/Transform.zig",
     "src/InputState.zig",
     "src/Ray.zig",
     "src/Camera.zig",
+    "src/bvh/Tokenizer.zig",
 };
 
 pub fn build(b: *std.Build) void {

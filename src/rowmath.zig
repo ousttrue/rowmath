@@ -29,3 +29,5 @@ pub usingnamespace @import("drag_handler.zig");
 pub usingnamespace @import("camera_handler.zig");
 
 pub const lines = @import("lines/lines.zig");
+
+pub usingnamespace @import("bvh/bvh.zig");

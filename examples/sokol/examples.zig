@@ -47,4 +47,9 @@ pub const examples = [_]Example{
         .shader = "instancing/shader.glsl",
         .use_imgui = true,
     },
+    .{
+        .name = "bvh_player",
+        .src = "bvh_player/main.zig",
+        .shader = "instancing/shader.glsl",
+    },
 };
