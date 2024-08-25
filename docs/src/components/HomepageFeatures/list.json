@@ -21,6 +21,6 @@
   },
   {
     "name": "sokol imgui gizmo instancing",
-    "base_name": "sokol_imgui_gizmo_instancing"
+    "base_name": "sokol_instancing"
   }
 ]

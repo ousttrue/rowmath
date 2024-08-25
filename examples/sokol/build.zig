@@ -57,6 +57,8 @@ fn build_example(
         });
         b.installArtifact(lib);
 
+        example.injectShader(b, target, opts.dep_sokol, lib);
+
         // inject dependency(must inject before emLinkStep)
         opts.inject(lib);
         opts.injectWasmSysRoot(emsdk);
@@ -82,6 +84,8 @@ fn build_example(
             .root_source_file = b.path(example.src),
         });
         b.installArtifact(exe);
+
+        example.injectShader(b, target, opts.dep_sokol, exe);
 
         // inject dependency
         opts.inject(exe);
