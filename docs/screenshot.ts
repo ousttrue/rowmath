@@ -21,9 +21,9 @@ const fs = require('fs');
 
     // inject html to ogp
     const path = `static/wasm/${item.base_name}.html`
-    let src = fs.readFileSync(path, 'utf8');
-    console.log(src);
-    fs.writeFileSync(path, src.replace('<meta charset=utf-8>', `<meta charset=utf-8>
+    if(fs.existsSync(path)){ 
+      let src = fs.readFileSync(path, 'utf8');
+      fs.writeFileSync(path, src.replace('<meta charset=utf-8>', `<meta charset=utf-8>
 <meta property="og:title" content="${item.name}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://ousttrue.github.io/rowmath/wasm/${item.base_name}.html">
@@ -31,7 +31,7 @@ const fs = require('fs');
 <meta property="og:site_name" content="rowmath wasm examples">
 <meta property="og:description" content="${item.name}">
 `));
-
+    }
   }
 
 })();
