@@ -57,7 +57,7 @@ fn build_example(
         });
         b.installArtifact(lib);
 
-        example.injectShader(b, target, opts.dep_sokol, lib);
+        example.injectShader(b, target, lib);
 
         // inject dependency(must inject before emLinkStep)
         opts.inject(lib);
@@ -85,7 +85,7 @@ fn build_example(
         });
         b.installArtifact(exe);
 
-        example.injectShader(b, target, opts.dep_sokol, exe);
+        example.injectShader(b, target, exe);
 
         // inject dependency
         opts.inject(exe);

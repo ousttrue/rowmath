@@ -11,10 +11,8 @@ pub const Example = struct {
         self: @This(),
         b: *std.Build,
         target: std.Build.ResolvedTarget,
-        sokol_dep: *std.Build.Dependency,
         compile: *std.Build.Step.Compile,
     ) void {
-        _ = sokol_dep; // autofix
         const shader = self.shader orelse {
             return;
         };
@@ -25,14 +23,6 @@ pub const Example = struct {
             target,
             shader,
         );
-
-        // const module = std.Build.Module.create(b, .{
-        //     .root_source_file = output,
-        // });
-        // compile.root_module.addImport(b.fmt("{s}.shader", .{self.name}), module);
-        //
-        // module.addImport("sokol", sokol_dep.module("sokol"));
-
         compile.step.dependOn(&run.step);
     }
 };
