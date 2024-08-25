@@ -1,9 +1,11 @@
+const std = @import("std");
 const sokol = @import("sokol");
 const rowmath = @import("rowmath");
 const Vec2 = rowmath.Vec2;
 const Vec3 = rowmath.Vec3;
 const Mat4 = rowmath.Mat4;
 const RgbU8 = rowmath.RgbU8;
+const RgbF32 = rowmath.RgbF32;
 const Camera = rowmath.Camera;
 const InputState = rowmath.InputState;
 const DragHandle = rowmath.DragHandle;
@@ -21,24 +23,19 @@ pub fn gl_end() void {
     sokol.gl.contextDraw(sokol.gl.defaultContext());
 }
 
-pub fn draw_grid() void {
-    const n = 5.0;
+pub fn draw_lines(lines:[]const rowmath.lines.Line) void {
     sokol.gl.beginLines();
     defer sokol.gl.end();
-    sokol.gl.c3f(1, 1, 1);
-    {
-        var x: f32 = -n;
-        while (x <= n) : (x += 1) {
-            sokol.gl.v3f(x, 0, -n);
-            sokol.gl.v3f(x, 0, n);
+
+    var current: ?RgbF32 = null;
+
+    for (lines) |line| {
+        if (!(if (current) |color| std.meta.eql(color, line.color) else false)) {
+            current = line.color;
+            sokol.gl.c3f(line.color.r, line.color.g, line.color.b);
         }
-    }
-    {
-        var z: f32 = -n;
-        while (z <= n) : (z += 1) {
-            sokol.gl.v3f(-n, 0, z);
-            sokol.gl.v3f(n, 0, z);
-        }
+        sokol.gl.v3f(line.start.x, line.start.y, line.start.z);
+        sokol.gl.v3f(line.end.x, line.end.y, line.end.z);
     }
 }
 

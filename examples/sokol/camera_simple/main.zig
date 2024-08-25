@@ -67,7 +67,7 @@ export fn frame() void {
         .projection = state.camera.projection_matrix,
         .view = state.camera.transform.worldToLocal(),
     });
-    utils.draw_grid();
+    utils.draw_lines(&rowmath.lines.Grid(5).lines);
     utils.gl_end();
 
     sokol.debugtext.draw();

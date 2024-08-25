@@ -143,7 +143,7 @@ export fn frame() void {
                 defer state.subview.endImageButton();
 
                 // grid
-                utils.draw_grid();
+                utils.draw_lines(&rowmath.lines.Grid(5).lines);
                 // frustum
                 utils.draw_camera_frustum(state.screen.camera, input.cursorScreenPosition());
             }
@@ -157,7 +157,7 @@ export fn frame() void {
         state.screen.begin(null);
         defer state.screen.end(null);
 
-        utils.draw_grid();
+        utils.draw_lines(&rowmath.lines.Grid(5).lines);
     }
 
     sg.commit();
