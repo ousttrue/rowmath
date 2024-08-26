@@ -1,22 +1,6 @@
 const std = @import("std");
 const emsdk_zig = @import("emsdk-zig");
 
-const tests = [_][]const u8{
-    "src/rowmath.zig",
-    "src/Vec2.zig",
-    "src/Vec3.zig",
-    "src/Vec4.zig",
-    "src/Quat.zig",
-    "src/RgbaF32.zig",
-    "src/Mat4.zig",
-    "src/RigidTransform.zig",
-    "src/Transform.zig",
-    "src/InputState.zig",
-    "src/Ray.zig",
-    "src/Camera.zig",
-    "src/bvh/Tokenizer.zig",
-};
-
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -28,14 +12,12 @@ pub fn build(b: *std.Build) void {
 
     // tests
     const test_step = b.step("test", "rowmath tests");
-    for (tests) |src| {
-        const lib_unit_tests = b.addTest(.{
-            .root_source_file = b.path(src),
-            .target = target,
-            .optimize = optimize,
-        });
-        test_step.dependOn(&b.addRunArtifact(lib_unit_tests).step);
-    }
+    const lib_unit_tests = b.addTest(.{
+        .root_source_file = b.path("src/rowmath.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    test_step.dependOn(&b.addRunArtifact(lib_unit_tests).step);
 
     // docs
     const doc_root = b.addObject(.{

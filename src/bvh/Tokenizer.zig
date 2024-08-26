@@ -6,7 +6,7 @@ const Result = struct {
 };
 const Delimiter = fn ([]const u8) ?usize;
 
-fn is_space(str: []const u8) ?usize {
+pub fn is_space(str: []const u8) ?usize {
     if (!std.ascii.isWhitespace(str[0])) {
         return null;
     }
@@ -20,7 +20,7 @@ fn is_space(str: []const u8) ?usize {
     return str.len;
 }
 
-fn get_name(str: []const u8) ?usize {
+pub fn get_name(str: []const u8) ?usize {
     if (str[0] != '\n') {
         return null;
     }
@@ -78,25 +78,27 @@ pub fn number(self: *@This(), T: type, delimiter: *const Delimiter) ?T {
     };
 }
 
+pub const test_data =
+    \\HIERARCHY
+    \\ROOT Hips
+    \\{
+    \\  OFFSET 0.000000 0.000000 0.000000
+    \\  CHANNELS 6 Xposition Yposition Zposition Yrotation Xrotation Zrotation
+    \\  JOINT Chest
+    \\  {
+    \\    OFFSET 0.000000 10.678932 0.006280
+    \\    CHANNELS 3 Yrotation Xrotation Zrotation
+    \\    End Site
+    \\    {
+    \\      OFFSET 0.000000 16.966594 -0.014170
+    \\    }
+    \\  }
+    \\}
+;
+
 test {
     // https://qiita.com/matchyy/items/ee99fb28110e4614323f
-    const src =
-        \\HIERARCHY
-        \\ROOT Hips
-        \\{
-        \\  OFFSET 0.000000 0.000000 0.000000
-        \\  CHANNELS 6 Xposition Yposition Zposition Yrotation Xrotation Zrotation
-        \\  JOINT Chest
-        \\  {
-        \\    OFFSET 0.000000 10.678932 0.006280
-        \\    CHANNELS 3 Yrotation Xrotation Zrotation
-        \\    End Site
-        \\    {
-        \\      OFFSET 0.000000 16.966594 -0.014170
-        \\    }
-        \\  }
-        \\}
-    ;
+    const src = test_data;
 
     var t = Tokenizer.init(src);
 

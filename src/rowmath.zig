@@ -30,4 +30,20 @@ pub usingnamespace @import("camera_handler.zig");
 
 pub const lines = @import("lines/lines.zig");
 
-pub usingnamespace @import("bvh/_bvh.zig");
+pub usingnamespace @import("bvh/bvh.zig");
+
+test {
+    _ = @import("Vec2.zig");
+    _ = @import("Vec3.zig");
+    _ = @import("Vec4.zig");
+    _ = @import("Quat.zig");
+    _ = @import("RgbaF32.zig");
+    _ = @import("Mat4.zig");
+    _ = @import("RigidTransform.zig");
+    _ = @import("Transform.zig");
+    _ = @import("InputState.zig");
+    _ = @import("Ray.zig");
+    _ = @import("Camera.zig");
+    _ = @import("bvh/Tokenizer.zig");
+    _ = @import("bvh/BvhFormat.zig");
+}
