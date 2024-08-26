@@ -33,6 +33,8 @@ pub const lines = @import("lines/lines.zig");
 pub usingnamespace @import("bvh/bvh.zig");
 
 test {
+    // const std = @import("std");
+    // std.testing.refAllDecls(@This());
     _ = @import("Vec2.zig");
     _ = @import("Vec3.zig");
     _ = @import("Vec4.zig");

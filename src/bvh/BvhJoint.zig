@@ -3,9 +3,9 @@ pub const BvhChannels = @import("BvhChannels.zig");
 pub const BvhJoint = @This();
 
 name: []const u8,
-index: u16,
-parent: u16,
-localOffset: Vec3,
-worldOffset: Vec3,
-channels: BvhChannels,
+index: usize = 0,
+parent: ?usize,
+local_offset: Vec3,
+world_offset: Vec3 = Vec3.zero,
+channels: BvhChannels = undefined,
 // srht::HumanoidBones bone_ = {};

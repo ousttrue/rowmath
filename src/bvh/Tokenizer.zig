@@ -20,6 +20,16 @@ pub fn is_space(str: []const u8) ?usize {
     return str.len;
 }
 
+pub fn get_eol(str: []const u8) ?usize {
+    if (str[0] != '\n') {
+        return null;
+    }
+    // auto tail = it;
+    // ++it;
+    // return Result{ tail, it };
+    return 1;
+}
+
 pub fn get_name(str: []const u8) ?usize {
     if (str[0] != '\n') {
         return null;
@@ -73,11 +83,12 @@ pub fn number(self: *@This(), T: type, delimiter: *const Delimiter) ?T {
 
     return switch (T) {
         f32 => std.fmt.parseFloat(T, n) catch null,
-        i32 => std.fmt.parseInt(T, n, 10) catch null,
+        i32, u32, usize => std.fmt.parseInt(T, n, 10) catch null,
         else => unreachable,
     };
 }
 
+// https://qiita.com/matchyy/items/ee99fb28110e4614323f
 pub const test_data =
     \\HIERARCHY
     \\ROOT Hips
@@ -94,10 +105,16 @@ pub const test_data =
     \\    }
     \\  }
     \\}
+    \\MOTION
+    \\Frames: 4
+    \\Frame Time: 0.025000
+    \\-175.529838 82.277228 -66.927949 68.179206 -8.037345 -0.889211 -3.298920 4.742043 -0.173225
+    \\-175.518626 82.275554 -66.929694 68.236617 -8.013594 -0.886564 -3.338794 4.701175 -0.176779
+    \\-175.502486 82.277247 -66.921654 68.228915 -8.036525 -0.886247 -3.324198 4.706286 -0.166726
+    \\-175.504552 82.277358 -66.920266 68.271225 -7.966910 -0.881297 -3.351677 4.641765 -0.169587
 ;
 
 test {
-    // https://qiita.com/matchyy/items/ee99fb28110e4614323f
     const src = test_data;
 
     var t = Tokenizer.init(src);
@@ -140,5 +157,15 @@ test {
     try std.testing.expect(t.expect("}", &is_space));
     try std.testing.expect(t.expect("}", &is_space));
     try std.testing.expect(t.expect("}", &is_space));
+    try std.testing.expect(t.expect("MOTION", &is_space));
+    try std.testing.expect(t.expect("Frames:", &is_space));
+    try std.testing.expectEqual(4, t.number(i32, &is_space).?);
+    try std.testing.expect(t.expect("Frame", &is_space));
+    try std.testing.expect(t.expect("Time:", &is_space));
+    try std.testing.expectEqual(0.025000, t.number(f32, &is_space).?);
+    _ = t.token(get_eol);
+    _ = t.token(get_eol);
+    _ = t.token(get_eol);
+    _ = t.token(get_eol);
     try std.testing.expectEqual(0, t.remain.len);
 }
