@@ -132,16 +132,17 @@ pub const MouseCamera = struct {
         return self.camera.transform.worldToLocal();
     }
 
-    pub fn frame(state: *@This(), input: *InputState) void {
+    pub fn frame(state: *@This(), input: InputState) void {
         // update projection
         state.camera.resize(input.screen_size());
 
         // update transform
-        state.drag_right.frame(input.*);
-        state.drag_middle.frame(input.*);
+        state.drag_right.frame(input);
+        state.drag_middle.frame(input);
+
+        // consumed. input.mouse_wheel must be clear
         state.camera.dolly(input.mouse_wheel);
-        // consumed
-        input.mouse_wheel = 0;
+
         state.camera.updateTransform();
     }
 };

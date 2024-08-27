@@ -35,7 +35,8 @@ export fn init() void {
 export fn frame() void {
     state.input.screen_width = sokol.app.widthf();
     state.input.screen_height = sokol.app.heightf();
-    state.camera.frame(&state.input);
+    state.camera.frame(state.input);
+    state.input.mouse_wheel = 0;
 
     sokol.debugtext.canvas(sokol.app.widthf() * 0.5, sokol.app.heightf() * 0.5);
     sokol.debugtext.pos(0.5, 0.5);
