@@ -124,12 +124,16 @@ pub const MouseCamera = struct {
         state.drag_middle = makeScreenMoveHandler(.middle, &state.camera);
     }
 
-    pub fn projection_matrix(self: @This()) Mat4 {
+    pub fn projectionMatrix(self: @This()) Mat4 {
         return self.camera.projection_matrix;
     }
 
-    pub fn view_matrix(self: @This()) Mat4 {
+    pub fn viewMatrix(self: @This()) Mat4 {
         return self.camera.transform.worldToLocal();
+    }
+
+    pub fn viewProjectionMatrix(self: @This()) Mat4 {
+        return self.viewMatrix().mul(self.projectionMatrix());
     }
 
     pub fn frame(state: *@This(), input: InputState) void {

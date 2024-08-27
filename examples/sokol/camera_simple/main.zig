@@ -53,8 +53,8 @@ export fn frame() void {
         .swapchain = sokol.glue.swapchain(),
     });
     utils.gl_begin(.{
-        .projection = state.camera.projection_matrix(),
-        .view = state.camera.view_matrix(),
+        .projection = state.camera.projectionMatrix(),
+        .view = state.camera.viewMatrix(),
     });
     utils.draw_lines(&rowmath.lines.Grid(5).lines);
     utils.gl_end();
