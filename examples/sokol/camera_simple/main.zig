@@ -7,9 +7,7 @@ const utils = @import("utils");
 const state = struct {
     var pass_action = sg.PassAction{};
     var input = rowmath.InputState{};
-    var camera = rowmath.Camera{};
-    var drag_right = rowmath.CameraRightDragHandler{};
-    var drag_middle = rowmath.CameraMiddleDragHandler{};
+    var camera = rowmath.MouseCamera{};
 };
 
 export fn init() void {
@@ -24,29 +22,20 @@ export fn init() void {
     sokol.gl.setup(.{
         .logger = .{ .func = sokol.log.func },
     });
-    state.input.screen_width = sokol.app.widthf();
-    state.input.screen_height = sokol.app.heightf();
-    state.drag_right = rowmath.makeYawPitchHandler(.right, &state.camera);
-    state.drag_middle = rowmath.makeScreenMoveHandler(.middle, &state.camera);
 
     var debugtext_desc = sokol.debugtext.Desc{
         .logger = .{ .func = sokol.log.func },
     };
     debugtext_desc.fonts[0] = sokol.debugtext.fontOric();
     sokol.debugtext.setup(debugtext_desc);
+
+    state.camera.init();
 }
 
 export fn frame() void {
-    // update projection
-    state.camera.resize(state.input.screen_size());
-
-    // update transform
-    state.drag_right.frame(state.input);
-    state.drag_middle.frame(state.input);
-    state.camera.dolly(state.input.mouse_wheel);
-    // consumed
-    state.input.mouse_wheel = 0;
-    state.camera.updateTransform();
+    state.input.screen_width = sokol.app.widthf();
+    state.input.screen_height = sokol.app.heightf();
+    state.camera.frame(&state.input);
 
     sokol.debugtext.canvas(sokol.app.widthf() * 0.5, sokol.app.heightf() * 0.5);
     sokol.debugtext.pos(0.5, 0.5);
@@ -63,8 +52,8 @@ export fn frame() void {
         .swapchain = sokol.glue.swapchain(),
     });
     utils.gl_begin(.{
-        .projection = state.camera.projection_matrix,
-        .view = state.camera.transform.worldToLocal(),
+        .projection = state.camera.projection_matrix(),
+        .view = state.camera.view_matrix(),
     });
     utils.draw_lines(&rowmath.lines.Grid(5).lines);
     utils.gl_end();
@@ -76,10 +65,6 @@ export fn frame() void {
 
 export fn event(e: [*c]const sokol.app.Event) void {
     switch (e.*.type) {
-        .RESIZED => {
-            state.input.screen_width = @floatFromInt(e.*.window_width);
-            state.input.screen_height = @floatFromInt(e.*.window_height);
-        },
         .MOUSE_DOWN => {
             switch (e.*.mouse_button) {
                 .LEFT => {
@@ -131,7 +116,7 @@ pub fn main() void {
         .event_cb = event,
         .width = 800,
         .height = 600,
-        .window_title = "rowmath: examples-sokol-camera",
+        .window_title = "rowmath: examples/sokol/camera_simple",
         .icon = .{ .sokol_default = true },
         .logger = .{ .func = sokol.log.func },
     });

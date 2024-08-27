@@ -4,6 +4,7 @@ const DragHandle = drag_handler.DragHandle;
 const Camera = @import("Camera.zig");
 const InputState = @import("InputState.zig");
 const Vec2 = @import("Vec2.zig");
+const Mat4 = @import("Mat4.zig");
 
 pub const DragState = struct {
     camera: *Camera = undefined,
@@ -112,3 +113,35 @@ pub fn makeScreenMoveHandler(
 pub const CameraLeftDragHandler = DragHandle(.left, DragState);
 pub const CameraRightDragHandler = DragHandle(.right, DragState);
 pub const CameraMiddleDragHandler = DragHandle(.middle, DragState);
+
+pub const MouseCamera = struct {
+    camera: Camera = .{},
+    drag_right: CameraRightDragHandler = .{},
+    drag_middle: CameraMiddleDragHandler = .{},
+
+    pub fn init(state: *@This()) void {
+        state.drag_right = makeYawPitchHandler(.right, &state.camera);
+        state.drag_middle = makeScreenMoveHandler(.middle, &state.camera);
+    }
+
+    pub fn projection_matrix(self: @This()) Mat4 {
+        return self.camera.projection_matrix;
+    }
+
+    pub fn view_matrix(self: @This()) Mat4 {
+        return self.camera.transform.worldToLocal();
+    }
+
+    pub fn frame(state: *@This(), input: *InputState) void {
+        // update projection
+        state.camera.resize(input.screen_size());
+
+        // update transform
+        state.drag_right.frame(input.*);
+        state.drag_middle.frame(input.*);
+        state.camera.dolly(input.mouse_wheel);
+        // consumed
+        input.mouse_wheel = 0;
+        state.camera.updateTransform();
+    }
+};
