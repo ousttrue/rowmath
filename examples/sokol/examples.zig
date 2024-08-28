@@ -4,8 +4,9 @@ const sokol_tool = @import("sokol_tool.zig");
 pub const Example = struct {
     name: []const u8,
     src: []const u8,
-    use_imgui: bool = false,
     shader: ?[]const u8 = null,
+    use_imgui: bool = false,
+    use_ozz: bool = false,
 
     pub fn injectShader(
         self: @This(),
@@ -51,5 +52,11 @@ pub const examples = [_]Example{
         .name = "bvh_player",
         .src = "bvh_player/main.zig",
         .shader = "instancing/shader.glsl",
+    },
+    .{
+        .name = "ozz_anim",
+        .src = "ozz_anim/main.zig",
+        // .shader = "instancing/shader.glsl",
+        .use_ozz = true,
     },
 };

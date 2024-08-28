@@ -11,9 +11,10 @@ const emcc_extra_args = [_][]const u8{
 
 const BuildExampleOptions = struct {
     rowmath: *std.Build.Module,
-    dep_sokol: *std.Build.Dependency,
     cimgui: *std.Build.Dependency,
     utils: *std.Build.Module,
+    dep_sokol: *std.Build.Dependency,
+    ozz_wf: *std.Build.Step.WriteFile,
 
     fn inject(self: @This(), compile: *std.Build.Step.Compile) void {
         compile.root_module.addImport("sokol", self.dep_sokol.module("sokol"));
@@ -89,6 +90,14 @@ fn build_example(
 
         // inject dependency
         opts.inject(exe);
+
+        if (example.use_ozz) {
+            // std.debug.print("{s} => {}\n", .{ example.name, example.use_ozz });
+            // exe.step.dependOn(&opts.ozz_wf.step);
+            const libdir = opts.ozz_wf.getDirectory().path(b, "lib");
+            exe.addLibraryPath(libdir);
+            exe.linkSystemLibrary("ozz-animation");
+        }
     }
 }
 
@@ -130,6 +139,13 @@ pub fn build(b: *std.Build) void {
     utils.addImport("sokol", dep_sokol.module("sokol"));
     utils.addImport("cimgui", cimgui.module("cimgui"));
 
+    const ozz_dep = b.dependency("ozz-animation", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const ozz_wf = ozz_dep.namedWriteFiles("meson_build");
+    _ = b.addNamedWriteFiles("ozz-animation").addCopyDirectory(ozz_wf.getDirectory(), "", .{});
+
     for (examples) |example| {
         build_example(
             b,
@@ -139,9 +155,10 @@ pub fn build(b: *std.Build) void {
             example,
             .{
                 .rowmath = rowmath,
-                .dep_sokol = dep_sokol,
                 .cimgui = cimgui,
                 .utils = utils,
+                .dep_sokol = dep_sokol,
+                .ozz_wf = ozz_wf,
             },
         );
     }

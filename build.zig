@@ -48,6 +48,14 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
         });
+
+        const ozz_wf = d.namedWriteFiles("ozz-animation");
+        const ozz_install = b.addInstallDirectory(.{
+            .install_dir = .{ .prefix = void{} },
+            .install_subdir = "",
+            .source_dir = ozz_wf.getDirectory(),
+        });
+
         for (d.builder.install_tls.step.dependencies.items) |dep_step| {
             if (target.result.isWasm()) {
                 if (dep_step.cast(std.Build.Step.InstallDir)) |dir| {
@@ -60,13 +68,18 @@ pub fn build(b: *std.Build) void {
                 }
             } else {
                 const inst = dep_step.cast(std.Build.Step.InstallArtifact) orelse continue;
-                b.installArtifact(inst.artifact);
-                // run exe
-                const run = b.addRunArtifact(inst.artifact);
-                b.step(
+                const root = b.step(
                     b.fmt("run-{s}", .{inst.artifact.name}),
                     b.fmt("Run {s}", .{inst.artifact.name}),
-                ).dependOn(&run.step);
+                );
+
+                const run = b.addRunArtifact(inst.artifact);
+                run.setCwd(b.path("zig-out/bin"));
+                root.dependOn(&run.step);
+
+                const install = b.addInstallArtifact(inst.artifact, .{});
+                run.step.dependOn(&install.step);
+                run.step.dependOn(&ozz_install.step);
             }
         }
     }
