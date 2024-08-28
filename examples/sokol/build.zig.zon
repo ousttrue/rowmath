@@ -7,8 +7,8 @@
             .hash = "12209706d64fa2127cc2d48134c22790d70f561c40bdeb4589fa7f9c41c4f53fe9da",
         },
         .@"emsdk-zig" = .{
-            .url = "git+https://github.com/ousttrue/emsdk-zig.git#f36400831add3e00c94059f594a163f3e93b5742",
-            .hash = "122088fff71531cd275164d5d879952dfbf7a1aee70736462ce85f235f5cf7dfb03d",
+            .url = "git+https://github.com/ousttrue/emsdk-zig.git#4b3df5dc7824514a3ef99c1dee77ee3087019050",
+            .hash = "122062b769fe74a24375a9409bce954bdd378f79b4b9fd2adf7a23360634cf5ad55c",
         },
         .cimgui = .{
             .path = "cimgui",

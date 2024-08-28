@@ -1,5 +1,4 @@
 const std = @import("std");
-const sokol = @import("sokol");
 const emsdk_zig = @import("emsdk-zig");
 const examples = @import("examples.zig").examples;
 const Example = @import("examples.zig").Example;
@@ -55,8 +54,17 @@ fn build_example(
             .optimize = optimize,
             .name = example.name,
             .root_source_file = b.path(example.src),
+            .pic = true,
         });
+        // lib.step.dependOn(&opts.ozz_wf.step);
         b.installArtifact(lib);
+        if (example.use_ozz) {
+            const ozz_wrap = b.addModule("ozz_wrap", .{
+                .root_source_file = b.path("ozz_anim/ozz_wrap.zig"),
+            });
+            ozz_wrap.addImport("rowmath", opts.rowmath);
+            lib.root_module.addImport("ozz_wrap", ozz_wrap);
+        }
 
         example.injectShader(b, target, lib);
 
@@ -65,18 +73,37 @@ fn build_example(
         opts.injectWasmSysRoot(emsdk);
 
         // link emscripten
-        const link_step = try emsdk_zig.emLinkStep(b, emsdk, .{
+        const emcc = try emsdk_zig.emLinkCommand(b, emsdk, .{
             .lib_main = lib,
             .target = target,
             .optimize = optimize,
             .use_webgl2 = true,
             .use_emmalloc = true,
             .use_filesystem = false,
-            .shell_file_path = opts.dep_sokol.path("src/sokol/web/shell.html").getPath(b),
             .release_use_closure = false,
             .extra_before = &emcc_extra_args,
         });
-        b.getInstallStep().dependOn(&link_step.step);
+
+        emcc.addArg("-o");
+        const out_file = emcc.addOutputFileArg(b.fmt("{s}.html", .{lib.name}));
+
+        if (example.use_ozz) {
+            emcc.addArg("-sMAIN_MODULE=1");
+            emcc.addFileArg(opts.ozz_wf.getDirectory().path(b, "web/ozz-animation.wasm"));
+            emcc.addArg("-sERROR_ON_UNDEFINED_SYMBOLS=0");
+
+            lib.step.dependOn(&opts.ozz_wf.step);
+        }
+
+        // the emcc linker creates 3 output files (.html, .wasm and .js)
+        const install = b.addInstallDirectory(.{
+            .source_dir = out_file.dirname(),
+            .install_dir = .prefix,
+            .install_subdir = "web",
+        });
+        install.step.dependOn(&emcc.step);
+
+        b.getInstallStep().dependOn(&install.step);
     } else {
         const exe = b.addExecutable(.{
             .target = target,
@@ -92,8 +119,6 @@ fn build_example(
         opts.inject(exe);
 
         if (example.use_ozz) {
-            // std.debug.print("{s} => {}\n", .{ example.name, example.use_ozz });
-            // exe.step.dependOn(&opts.ozz_wf.step);
             const libdir = opts.ozz_wf.getDirectory().path(b, "lib");
             exe.addLibraryPath(libdir);
             exe.linkSystemLibrary("ozz-animation");
@@ -121,15 +146,34 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    // inject the cimgui header search path into the sokol C library compile step
-    const cimgui_root = cimgui.namedWriteFiles("cimgui").getDirectory();
-    dep_sokol.artifact("sokol_clib").addIncludePath(cimgui_root);
-
     // create a build step which invokes the Emscripten linker
     var emsdk: ?*std.Build.Dependency = null;
     if (target.result.isWasm()) {
         const _emsdk_zig = b.dependency("emsdk-zig", .{});
-        emsdk = _emsdk_zig.builder.dependency("emsdk", .{});
+        const _emsdk = _emsdk_zig.builder.dependency("emsdk", .{});
+        emsdk = _emsdk;
+
+        // inject the cimgui header search path into the sokol C library compile step
+        const cimgui_root = cimgui.namedWriteFiles("cimgui").getDirectory();
+        dep_sokol.artifact("sokol_clib").addIncludePath(cimgui_root);
+        // all C libraries need to depend on the sokol library, when building for
+        // WASM this makes sure that the Emscripten SDK has been setup before
+        // C compilation is attempted (since the sokol C library depends on the
+        // Emscripten SDK setup step)
+        // need to inject the Emscripten system header include path into
+        // the cimgui C library otherwise the C/C++ code won't find
+        // C stdlib headers
+        const emsdk_incl_path = _emsdk.path(
+            "upstream/emscripten/cache/sysroot/include",
+        );
+        // const emsdk_cpp_incl_path = dep_emsdk.path(
+        //     "upstream/emscripten/cache/sysroot/include/c++/v1",
+        // );
+
+        const cimgui_clib_artifact = cimgui.artifact("cimgui_clib");
+        cimgui_clib_artifact.addSystemIncludePath(emsdk_incl_path);
+        cimgui_clib_artifact.step.dependOn(&dep_sokol.artifact("sokol_clib").step);
+        cimgui_clib_artifact.pie = true;
     }
 
     var utils = b.addModule("utils", .{
