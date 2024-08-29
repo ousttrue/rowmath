@@ -48,16 +48,23 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         });
 
-        const ozz_wf = d.namedWriteFiles("ozz-animation");
-        const ozz_install = b.addInstallDirectory(.{
-            .install_dir = .{ .prefix = void{} },
-            .install_subdir = "",
-            .source_dir = ozz_wf.getDirectory(),
-        });
-        b.default_step.dependOn(&ozz_install.step);
+        // const ozz_wf = d.namedWriteFiles("ozz-animation");
+        // const ozz_install = b.addInstallDirectory(.{
+        //     .install_dir = .{ .prefix = void{} },
+        //     .install_subdir = "",
+        //     .source_dir = ozz_wf.getDirectory(),
+        // });
+        // b.default_step.dependOn(&ozz_install.step);
 
         for (d.builder.install_tls.step.dependencies.items) |dep_step| {
             if (target.result.isWasm()) {
+                if (dep_step.cast(std.Build.Step.InstallDir)) |dir| {
+                    b.installDirectory(.{
+                        .source_dir = dir.options.source_dir,
+                        .install_dir = .prefix,
+                        .install_subdir = dir.options.install_subdir,
+                    });
+                }
             } else {
                 const inst = dep_step.cast(std.Build.Step.InstallArtifact) orelse continue;
                 const root = b.step(
@@ -71,7 +78,7 @@ pub fn build(b: *std.Build) void {
 
                 const install = b.addInstallArtifact(inst.artifact, .{});
                 run.step.dependOn(&install.step);
-                run.step.dependOn(&ozz_install.step);
+                // run.step.dependOn(&ozz_install.step);
             }
         }
     }
