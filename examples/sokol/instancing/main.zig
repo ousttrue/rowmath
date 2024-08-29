@@ -15,7 +15,6 @@ const Cuber = cuber.Cuber(4);
 
 const state = struct {
     var pass_action = sg.PassAction{};
-
     var input = rowmath.InputState{};
     var camera = rowmath.MouseCamera{};
 
@@ -54,7 +53,7 @@ export fn frame() void {
     state.cuber.instances[1] = .{ .matrix = Mat4.translate(.{ .x = n, .y = 0, .z = -n }) };
     state.cuber.instances[2] = .{ .matrix = Mat4.translate(.{ .x = n, .y = 0, .z = n }) };
     state.cuber.instances[3] = .{ .matrix = Mat4.translate(.{ .x = -n, .y = 0, .z = n }) };
-    state.cuber.upload();
+    state.cuber.upload(4);
 
     // ...and draw
     {

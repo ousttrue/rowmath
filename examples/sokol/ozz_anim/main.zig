@@ -9,25 +9,30 @@
 const std = @import("std");
 const rowmath = @import("rowmath");
 const Vec3 = rowmath.Vec3;
+const Mat4 = rowmath.Mat4;
 const MouseCamera = rowmath.MouseCamera;
 const InputState = rowmath.InputState;
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const simgui = sokol.imgui;
 const ig = @import("cimgui");
-
+const cuber = @import("cuber");
+const Cuber = cuber.Cuber;
+const utils = @import("utils");
+const ozz_draw = @import("ozz_draw.zig");
 const ozz_wrap = @import("ozz_wrap.zig");
 
 const state = struct {
+    var pass_action = sg.PassAction{};
+    var input: InputState = .{};
+    var camera: MouseCamera = .{};
+
     var ozz: *anyopaque = undefined;
     const loaded = struct {
         var skeleton = false;
         var animation = false;
         var failed = false;
     };
-    var pass_action = sg.PassAction{};
-    var camera: MouseCamera = .{};
-    var input: InputState = .{};
     const time = struct {
         var frame: f64 = 0;
         var absolute: f64 = 0;
@@ -36,6 +41,8 @@ const state = struct {
         var anim_ratio_ui_override = false;
         var paused = false;
     };
+
+    var cuber = Cuber(512){};
 };
 
 // io buffers for skeleton and animation data files, we know the max file size upfront
@@ -77,6 +84,7 @@ export fn init() void {
 
     // initialize camera helper
     state.camera.init();
+    state.cuber.init();
 
     // start loading the skeleton and animation files
     _ = sokol.fetch.send(.{
@@ -96,6 +104,8 @@ export fn frame() void {
     sokol.fetch.dowork();
 
     state.time.frame = sokol.app.frameDuration();
+
+    // update camera
     state.input.screen_width = sokol.app.widthf();
     state.input.screen_height = sokol.app.heightf();
     state.camera.frame(state.input);
@@ -110,6 +120,7 @@ export fn frame() void {
     draw_ui();
 
     if (state.loaded.skeleton and state.loaded.animation) {
+        // update skeleton
         if (!state.time.paused) {
             state.time.absolute += state.time.frame * state.time.factor;
         }
@@ -125,16 +136,42 @@ export fn frame() void {
         }
 
         ozz_wrap.OZZ_eval_animation(state.ozz, state.time.anim_ratio);
-        draw_skeleton(state.ozz);
+
+        const num_joints = ozz_wrap.OZZ_num_joints(state.ozz);
+        const shape = Mat4.scale(Vec3.one.scale(0.03));
+        for (0..num_joints) |i| {
+            const m0 = ozz_wrap.OZZ_model_matrices(state.ozz, i);
+            state.cuber.instances[i] = .{ .matrix = shape.mul(m0.*) };
+        }
+        state.cuber.upload(@intCast(num_joints));
     }
 
-    sg.beginPass(.{
-        .action = state.pass_action,
-        .swapchain = sokol.glue.swapchain(),
-    });
-    sokol.gl.draw();
-    simgui.render();
-    sg.endPass();
+    {
+        sg.beginPass(.{
+            .action = state.pass_action,
+            .swapchain = sokol.glue.swapchain(),
+        });
+        defer sg.endPass();
+
+        {
+            utils.gl_begin(.{
+                .projection = state.camera.projectionMatrix(),
+                .view = state.camera.viewMatrix(),
+            });
+            defer utils.gl_end();
+
+            // grid
+            utils.draw_lines(&rowmath.lines.Grid(5).lines);
+            // skeleton
+            if (state.loaded.skeleton) {
+                ozz_draw.draw_skeleton(state.ozz);
+            }
+        }
+
+        sokol.gl.draw();
+        simgui.render();
+        state.cuber.draw(state.camera.viewProjectionMatrix());
+    }
     sg.commit();
 }
 
@@ -142,44 +179,7 @@ export fn event(e: [*c]const sokol.app.Event) void {
     if (simgui.handleEvent(e.*)) {
         return;
     }
-    switch (e.*.type) {
-        .MOUSE_DOWN => {
-            switch (e.*.mouse_button) {
-                .LEFT => {
-                    state.input.mouse_left = true;
-                },
-                .RIGHT => {
-                    state.input.mouse_right = true;
-                },
-                .MIDDLE => {
-                    state.input.mouse_middle = true;
-                },
-                .INVALID => {},
-            }
-        },
-        .MOUSE_UP => {
-            switch (e.*.mouse_button) {
-                .LEFT => {
-                    state.input.mouse_left = false;
-                },
-                .RIGHT => {
-                    state.input.mouse_right = false;
-                },
-                .MIDDLE => {
-                    state.input.mouse_middle = false;
-                },
-                .INVALID => {},
-            }
-        },
-        .MOUSE_MOVE => {
-            state.input.mouse_x = e.*.mouse_x;
-            state.input.mouse_y = e.*.mouse_y;
-        },
-        .MOUSE_SCROLL => {
-            state.input.mouse_wheel = e.*.scroll_y;
-        },
-        else => {},
-    }
+    utils.handle_camera_input(e, &state.input);
 }
 
 export fn cleanup() void {
@@ -190,84 +190,6 @@ export fn cleanup() void {
 
     // free C++ objects early, otherwise ozz-animation complains about memory leaks
     ozz_wrap.OZZ_shutdown(state.ozz);
-}
-
-fn draw_vec(vec: Vec3) void {
-    sokol.gl.v3f(vec.x, vec.y, vec.z);
-}
-
-fn draw_line(v0: Vec3, v1: Vec3) void {
-    draw_vec(v0);
-    draw_vec(v1);
-}
-
-// this draws a wireframe 3d rhombus between the current and parent joints
-fn draw_joint(ozz: *anyopaque, joint_index: usize, parent_joint_index: u16) void {
-    if (parent_joint_index == std.math.maxInt(u16)) {
-        return;
-    }
-
-    const m0 = ozz_wrap.OZZ_model_matrices(ozz, joint_index).*;
-    const m1 = ozz_wrap.OZZ_model_matrices(ozz, @intCast(parent_joint_index)).*;
-
-    const p0 = m0.row3().toVec3();
-    const p1 = m1.row3().toVec3();
-    const ny = m1.row1().toVec3();
-    const nz = m1.row2().toVec3();
-
-    const len = p1.sub(p0).norm() * 0.1;
-    const pmid = p0.add((p1.sub(p0)).scale(0.66));
-    const p2 = pmid.add(ny.scale(len));
-    const p3 = pmid.add(nz.scale(len));
-    const p4 = pmid.sub(ny.scale(len));
-    const p5 = pmid.sub(nz.scale(len));
-
-    sokol.gl.c3f(1.0, 1.0, 0.0);
-    draw_line(p0, p2);
-    draw_line(p0, p3);
-    draw_line(p0, p4);
-    draw_line(p0, p5);
-    draw_line(p1, p2);
-    draw_line(p1, p3);
-    draw_line(p1, p4);
-    draw_line(p1, p5);
-    draw_line(p2, p3);
-    draw_line(p3, p4);
-    draw_line(p4, p5);
-    draw_line(p5, p2);
-}
-
-fn draw_skeleton(ozz: *anyopaque) void {
-    if (!state.loaded.skeleton) {
-        return;
-    }
-    sokol.gl.defaults();
-    sokol.gl.matrixModeProjection();
-    sokol.gl.loadMatrix(&state.camera.projectionMatrix().m[0]);
-    sokol.gl.matrixModeModelview();
-    sokol.gl.loadMatrix(&state.camera.viewMatrix().m[0]);
-
-    const num_joints = ozz_wrap.OZZ_num_joints(ozz);
-    const joint_parents = ozz_wrap.OZZ_joint_parents(ozz);
-    sokol.gl.beginLines();
-
-    sokol.gl.c3f(1.0, 0.0, 0.0);
-    sokol.gl.v3f(0, 0, 0);
-    sokol.gl.v3f(1, 0, 0);
-    sokol.gl.c3f(0.0, 1.0, 0.0);
-    sokol.gl.v3f(0, 0, 0);
-    sokol.gl.v3f(0, 1, 0);
-    sokol.gl.c3f(0.0, 0.0, 1.0);
-    sokol.gl.v3f(0, 0, 0);
-    sokol.gl.v3f(0, 0, 1);
-
-    for (0..num_joints) |joint_index| {
-        if (joint_index == std.math.maxInt(u16)) {
-            continue;
-        }
-        draw_joint(ozz, joint_index, joint_parents[joint_index]);
-    }
-    sokol.gl.end();
 }
 
 fn draw_ui() void {

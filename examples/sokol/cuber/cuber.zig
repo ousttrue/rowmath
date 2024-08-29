@@ -22,6 +22,7 @@ pub fn Cuber(comptime MAX_PARTICLES: usize) type {
         pip: sg.Pipeline = .{},
         instances: [MAX_PARTICLES]Instance = undefined,
         fs_params: shader.FsParams = undefined,
+        draw_count: u32 = 0,
 
         pub fn init(state: *@This()) void {
             var builder = MeshBuilder.init(std.heap.c_allocator, false);
@@ -104,8 +105,12 @@ pub fn Cuber(comptime MAX_PARTICLES: usize) type {
 
         }
 
-        pub fn upload(state: @This()) void {
-            sg.updateBuffer(state.bind.vertex_buffers[1], sg.asRange(&state.instances));
+        pub fn upload(state: *@This(), draw_count: u32) void {
+            sg.updateBuffer(
+                state.bind.vertex_buffers[1],
+                sg.asRange(state.instances[0..draw_count]),
+            );
+            state.draw_count = draw_count;
         }
 
         pub fn draw(state: @This(), viewProjection: Mat4) void {
@@ -116,7 +121,7 @@ pub fn Cuber(comptime MAX_PARTICLES: usize) type {
             };
             sg.applyUniforms(.VS, shader.SLOT_vs_params, sg.asRange(&vs_params));
             sg.applyUniforms(.FS, shader.SLOT_fs_params, sg.asRange(&state.fs_params));
-            sg.draw(0, 36, 4);
+            sg.draw(0, 36, state.draw_count);
         }
     };
 }
