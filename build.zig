@@ -28,9 +28,9 @@ pub fn build(b: *std.Build) void {
     doc_root.linkLibC();
     doc_root.linkLibCpp();
     const install_docs = b.addInstallDirectory(.{
-        .source_dir = doc_root.getEmittedDocs(),
         .install_dir = .prefix,
         .install_subdir = "docs",
+        .source_dir = doc_root.getEmittedDocs(),
     });
     b.step(
         "docs",
@@ -54,17 +54,10 @@ pub fn build(b: *std.Build) void {
             .install_subdir = "",
             .source_dir = ozz_wf.getDirectory(),
         });
+        b.default_step.dependOn(&ozz_install.step);
 
         for (d.builder.install_tls.step.dependencies.items) |dep_step| {
             if (target.result.isWasm()) {
-                if (dep_step.cast(std.Build.Step.InstallDir)) |dir| {
-                    // b.installDirectory();
-                    b.installDirectory(.{
-                        .source_dir = dir.options.source_dir,
-                        .install_dir = .prefix,
-                        .install_subdir = "web",
-                    });
-                }
             } else {
                 const inst = dep_step.cast(std.Build.Step.InstallArtifact) orelse continue;
                 const root = b.step(

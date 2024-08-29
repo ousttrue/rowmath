@@ -104,7 +104,7 @@ fn build_example(
         const install = b.addInstallDirectory(.{
             .source_dir = out_file.dirname(),
             .install_dir = .prefix,
-            .install_subdir = "web",
+            .install_subdir = "",
         });
         install.step.dependOn(&emcc.step);
         b.getInstallStep().dependOn(&install.step);
