@@ -49,8 +49,8 @@ jobs:
         run: |
           cd docs
           npm install
-          npx playwright install --with-deps chromium
           npm start&
+          npx playwright install --with-deps chromium
           npm run ss
           npm run build
       # deploy
