@@ -49,7 +49,7 @@ fn build_example(
     optimize: std.builtin.OptimizeMode,
     example: Example,
     opts: BuildExampleOptions,
-) void {
+) *std.Build.Step.Compile {
     if (_emsdk) |emsdk| {
         const lib = b.addStaticLibrary(.{
             .target = target,
@@ -110,6 +110,8 @@ fn build_example(
         });
         install.step.dependOn(&emcc.step);
         b.getInstallStep().dependOn(&install.step);
+
+        return lib;
     } else {
         const exe = b.addExecutable(.{
             .target = target,
@@ -129,6 +131,8 @@ fn build_example(
             exe.addLibraryPath(libdir);
             exe.linkSystemLibrary("ozz-animation");
         }
+
+        return exe;
     }
 }
 
@@ -193,6 +197,13 @@ pub fn build(b: *std.Build) void {
     });
     cuber.addImport("rowmath", rowmath);
     cuber.addImport("sokol", dep_sokol.module("sokol"));
+    // glsl to glsl.zig
+    const sokol_tool = @import("sokol_tool.zig");
+    const cuber_shader = sokol_tool.runShdcCommand(
+        b,
+        target,
+        b.path("cuber/shader.glsl").getPath(b),
+    );
 
     const ozz_dep = b.dependency("ozz-animation", .{
         .target = target,
@@ -209,7 +220,7 @@ pub fn build(b: *std.Build) void {
     _ = b.addNamedWriteFiles("ozz-animation").addCopyDirectory(ozz_wf.getDirectory(), "", .{});
 
     for (examples) |example| {
-        build_example(
+        const compile = build_example(
             b,
             emsdk,
             target,
@@ -224,5 +235,6 @@ pub fn build(b: *std.Build) void {
                 .ozz_wf = ozz_wf,
             },
         );
+        compile.step.dependOn(&cuber_shader.step);
     }
 }

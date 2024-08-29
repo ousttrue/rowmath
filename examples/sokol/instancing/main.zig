@@ -6,12 +6,12 @@
 const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
-const shader = @import("shader.glsl.zig");
 const rowmath = @import("rowmath");
 const Vec2 = rowmath.Vec2;
 const Vec3 = rowmath.Vec3;
 const Mat4 = rowmath.Mat4;
 const cuber = @import("cuber");
+const shader = cuber.shader;
 const utils = @import("utils");
 
 const MAX_PARTICLES = 4;

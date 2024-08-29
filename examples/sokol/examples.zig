@@ -45,18 +45,15 @@ pub const examples = [_]Example{
     .{
         .name = "sokol_instancing",
         .src = "instancing/main.zig",
-        .shader = "instancing/shader.glsl",
         .use_imgui = true,
     },
     .{
         .name = "bvh_player",
         .src = "bvh_player/main.zig",
-        .shader = "instancing/shader.glsl",
     },
     .{
         .name = "ozz_anim",
         .src = "ozz_anim/main.zig",
-        // .shader = "instancing/shader.glsl",
         .use_ozz = true,
     },
 };
