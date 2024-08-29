@@ -4,7 +4,7 @@ import styles from './styles.module.css';
 import Link from '@docusaurus/Link';
 import ThemedImage from '@theme/ThemedImage';
 import useBaseUrl from '@docusaurus/useBaseUrl';
-import list from './list.json';
+import { list } from './list';
 
 type FeatureItem = {
   title: string;
