@@ -87,6 +87,7 @@ fn build_example(
             .use_webgl2 = true,
             .use_emmalloc = true,
             .use_filesystem = true,
+            .shell_file_path = opts.dep_sokol.path("src/sokol/web/shell.html").getPath(b),
             .release_use_closure = false,
             .extra_before = &emcc_extra_args,
         });
