@@ -86,7 +86,7 @@ fn build_example(
             .optimize = optimize,
             .use_webgl2 = true,
             .use_emmalloc = true,
-            .use_filesystem = false,
+            .use_filesystem = true,
             .release_use_closure = false,
             .extra_before = &emcc_extra_args,
         });

@@ -2,9 +2,13 @@
     .name = "examples",
     .version = "0.0.0",
     .dependencies = .{
+        // .sokol = .{
+        //     .url = "git+https://github.com/floooh/sokol-zig.git#9e4eabae83c74df29b24cdba7b31e985a2d8c33f",
+        //     .hash = "12209706d64fa2127cc2d48134c22790d70f561c40bdeb4589fa7f9c41c4f53fe9da",
+        // },
         .sokol = .{
-            .url = "git+https://github.com/floooh/sokol-zig.git#9e4eabae83c74df29b24cdba7b31e985a2d8c33f",
-            .hash = "12209706d64fa2127cc2d48134c22790d70f561c40bdeb4589fa7f9c41c4f53fe9da",
+            .url = "git+https://github.com/ousttrue/sokol-zig.git#38014bc673fd3c82f44612f02573d5af00dfc66f",
+            .hash = "12205b36041f858db146628cd3b25fae4cda5f161a6a52d48fa22cde0c03b689ccb8",
         },
         .@"emsdk-zig" = .{
             .url = "git+https://github.com/ousttrue/emsdk-zig.git#4b3df5dc7824514a3ef99c1dee77ee3087019050",

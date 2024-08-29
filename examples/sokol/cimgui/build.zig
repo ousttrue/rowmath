@@ -32,6 +32,9 @@ pub fn build(b: *std.Build) void {
             b.pathJoin(&.{ "imgui", "imgui_tables.cpp" }),
             b.pathJoin(&.{ "imgui", "imgui_demo.cpp" }),
         },
+        .flags = &.{
+            "-fPIC",
+        },
     });
     lib_cimgui.addIncludePath(root);
     lib_cimgui.addCSourceFile(.{

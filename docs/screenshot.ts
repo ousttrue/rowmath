@@ -33,3 +33,5 @@ for (const item of list) {
     fs.writeFileSync(path, src.replace('<meta charset=utf-8>', replace));
   }
 }
+
+process.exit(0);
