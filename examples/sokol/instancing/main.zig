@@ -25,14 +25,10 @@ const state = struct {
     var pass_action = sg.PassAction{};
 
     var input = rowmath.InputState{};
-    var camera = rowmath.Camera{};
-    var drag_right = rowmath.CameraRightDragHandler{};
-    var drag_middle = rowmath.CameraMiddleDragHandler{};
+    var camera = rowmath.MouseCamera{};
 
     var pip = sg.Pipeline{};
     var bind = sg.Bindings{};
-    // var ry: f32 = 0;
-    // var cur_num_particles: i32 = 0;
     var instances: [MAX_PARTICLES]Instance = undefined;
 
     var fs_params: shader.FsParams = undefined;
@@ -46,10 +42,7 @@ export fn init() void {
     sokol.gl.setup(.{
         .logger = .{ .func = sokol.log.func },
     });
-    state.input.screen_width = sokol.app.widthf();
-    state.input.screen_height = sokol.app.heightf();
-    state.drag_right = rowmath.makeYawPitchHandler(.right, &state.camera);
-    state.drag_middle = rowmath.makeScreenMoveHandler(.middle, &state.camera);
+    state.camera.init();
 
     // a pass action for the default render pass
     state.pass_action.colors[0] = .{
@@ -58,30 +51,16 @@ export fn init() void {
     };
 
     var builder = cuber.MeshBuilder.init(std.heap.c_allocator, false);
-    // defer builder.deinit();
+    defer builder.deinit();
     cuber.buildCube(&builder) catch @panic("buildCube");
 
     // vertex buffer for static geometry, goes into vertex-buffer-slot 0
-    // const r: f32 = 0.05;
-    // const vertices = [_]f32{
-    //     // positions            colors
-    //     0.0, -r,  0.0, 1.0, 0.0, 0.0, 1.0,
-    //     r,   0.0, r,   0.0, 1.0, 0.0, 1.0,
-    //     r,   0.0, -r,  0.0, 0.0, 1.0, 1.0,
-    //     -r,  0.0, -r,  1.0, 1.0, 0.0, 1.0,
-    //     -r,  0.0, r,   0.0, 1.0, 1.0, 1.0,
-    //     0.0, r,   0.0, 1.0, 0.0, 1.0, 1.0,
-    // };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
         .data = sg.asRange(builder.mesh.vertices.items),
         .label = "geometry-vertices",
     });
 
     // index buffer for static geometry
-    // const indices = [_]u16{
-    //     0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 1,
-    //     5, 1, 2, 5, 2, 3, 5, 3, 4, 5, 4, 1,
-    // };
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
         .data = sg.asRange(builder.mesh.indices.items),
@@ -151,36 +130,10 @@ export fn init() void {
 }
 
 export fn frame() void {
-    // update projection
-    state.camera.resize(state.input.screen_size());
-
-    // update transform
-    state.drag_right.frame(state.input);
-    state.drag_middle.frame(state.input);
-    state.camera.dolly(state.input.mouse_wheel);
-    // consumed
+    state.input.screen_width = sokol.app.widthf();
+    state.input.screen_height = sokol.app.heightf();
+    state.camera.frame(state.input);
     state.input.mouse_wheel = 0;
-    state.camera.updateTransform();
-
-    // const frame_time: f32 = @floatCast(sokol.app.frameDuration());
-    // emit new particles
-    // for (0..NUM_PARTICLES_EMITTED_PER_FRAME) |_| {
-    //     if (state.cur_num_particles < MAX_PARTICLES) {
-    //         state.instances[@intCast(state.cur_num_particles)] = .{
-    //             .x = 0.0,
-    //             .y = 0.0,
-    //             .z = 0.0,
-    //         };
-    //         state.vel[@intCast(state.cur_num_particles)] = .{
-    //             .x = state.rand.random().float(f32) - 0.5,
-    //             .y = state.rand.random().float(f32) * 0.5 + 2.0,
-    //             .z = state.rand.random().float(f32) - 0.5,
-    //         };
-    //         state.cur_num_particles += 1;
-    //     } else {
-    //         break;
-    //     }
-    // }
 
     // update instance data
     const n = 2;
@@ -197,15 +150,17 @@ export fn frame() void {
     });
 
     {
+        // grid
         utils.gl_begin(.{
-            .projection = state.camera.projection_matrix,
-            .view = state.camera.transform.worldToLocal(),
+            .projection = state.camera.projectionMatrix(),
+            .view = state.camera.viewMatrix(),
         });
         utils.draw_lines(&rowmath.lines.Grid(5).lines);
         utils.gl_end();
     }
 
     {
+        // render instancing
         sg.applyPipeline(state.pip);
         sg.applyBindings(state.bind);
         const vs_params = shader.VsParams{
@@ -221,48 +176,7 @@ export fn frame() void {
 }
 
 export fn event(e: [*c]const sokol.app.Event) void {
-    switch (e.*.type) {
-        .RESIZED => {
-            state.input.screen_width = @floatFromInt(e.*.window_width);
-            state.input.screen_height = @floatFromInt(e.*.window_height);
-        },
-        .MOUSE_DOWN => {
-            switch (e.*.mouse_button) {
-                .LEFT => {
-                    state.input.mouse_left = true;
-                },
-                .RIGHT => {
-                    state.input.mouse_right = true;
-                },
-                .MIDDLE => {
-                    state.input.mouse_middle = true;
-                },
-                .INVALID => {},
-            }
-        },
-        .MOUSE_UP => {
-            switch (e.*.mouse_button) {
-                .LEFT => {
-                    state.input.mouse_left = false;
-                },
-                .RIGHT => {
-                    state.input.mouse_right = false;
-                },
-                .MIDDLE => {
-                    state.input.mouse_middle = false;
-                },
-                .INVALID => {},
-            }
-        },
-        .MOUSE_MOVE => {
-            state.input.mouse_x = e.*.mouse_x;
-            state.input.mouse_y = e.*.mouse_y;
-        },
-        .MOUSE_SCROLL => {
-            state.input.mouse_wheel = e.*.scroll_y;
-        },
-        else => {},
-    }
+    utils.handle_camera_input(e, &state.input);
 }
 
 export fn cleanup() void {
