@@ -11,16 +11,38 @@ pub const cube = @import("cube.zig");
 const rowmath = @import("rowmath");
 const Mat4 = rowmath.Mat4;
 
+fn calc_shape() Mat4 {
+    // auto Y = Float3(tail->joint_.localOffset.x * scaling,
+    //                 tail->joint_.localOffset.y * scaling,
+    //                 tail->joint_.localOffset.z * scaling);
+    //
+    // auto length = Float3Len(Y);
+    // // std::cout << name_ << "=>" << tail->name_ << "=" << length << std::endl;
+    // Y = DirectX::XMVector3Normalize(Y);
+    // auto Z = Float3(0, 0, 1);
+    // auto X = DirectX::XMVector3Cross(Y, Z);
+    // Z = DirectX::XMVector3Cross(X, Y);
+    //
+    // auto center = DirectX::XMMatrixTranslation(0, 0.5f, 0);
+    // auto scale = DirectX::XMMatrixScaling(DEFAULT_SIZE, length, DEFAULT_SIZE);
+    // auto r = DirectX::XMMATRIX(X, Y, Z, Float4(0, 0, 0, 1));
+    //
+    // auto shape = center * scale * r;
+    // DirectX::XMStoreFloat4x4((DirectX::XMFLOAT4X4*)&shape_, shape);
+    unreachable;
+}
+
 const Instance = struct {
     matrix: Mat4 = Mat4.identity,
     positive_face_flag: [4]f32 = .{ 1, 2, 3, 0 },
     negative_face_flag: [4]f32 = .{ 4, 5, 6, 0 },
 };
-pub fn Cuber(comptime MAX_PARTICLES: usize) type {
+pub fn Cuber(comptime N: usize) type {
     return struct {
         bind: sg.Bindings = .{},
         pip: sg.Pipeline = .{},
-        instances: [MAX_PARTICLES]Instance = undefined,
+        instances: [N]Instance = undefined,
+        shapes: [N]Mat4 = undefined,
         fs_params: shader.FsParams = undefined,
         draw_count: u32 = 0,
 
