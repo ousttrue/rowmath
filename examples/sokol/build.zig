@@ -12,6 +12,7 @@ const BuildExampleOptions = struct {
     rowmath: *std.Build.Module,
     cimgui: *std.Build.Dependency,
     utils: *std.Build.Module,
+    cuber: *std.Build.Module,
     dep_sokol: *std.Build.Dependency,
     ozz_wf: *std.Build.Step.WriteFile,
 
@@ -20,6 +21,7 @@ const BuildExampleOptions = struct {
         compile.root_module.addImport("rowmath", self.rowmath);
         compile.root_module.addImport("cimgui", self.cimgui.module("cimgui"));
         compile.root_module.addImport("utils", self.utils);
+        compile.root_module.addImport("cuber", self.cuber);
     }
 
     fn injectWasmSysRoot(
@@ -149,6 +151,9 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    // inject the cimgui header search path into the sokol C library compile step
+    const cimgui_root = cimgui.namedWriteFiles("cimgui").getDirectory();
+    dep_sokol.artifact("sokol_clib").addIncludePath(cimgui_root);
 
     // create a build step which invokes the Emscripten linker
     var emsdk: ?*std.Build.Dependency = null;
@@ -157,9 +162,6 @@ pub fn build(b: *std.Build) void {
         const _emsdk = _emsdk_zig.builder.dependency("emsdk", .{});
         emsdk = _emsdk;
 
-        // inject the cimgui header search path into the sokol C library compile step
-        const cimgui_root = cimgui.namedWriteFiles("cimgui").getDirectory();
-        dep_sokol.artifact("sokol_clib").addIncludePath(cimgui_root);
         // all C libraries need to depend on the sokol library, when building for
         // WASM this makes sure that the Emscripten SDK has been setup before
         // C compilation is attempted (since the sokol C library depends on the
@@ -186,6 +188,12 @@ pub fn build(b: *std.Build) void {
     utils.addImport("sokol", dep_sokol.module("sokol"));
     utils.addImport("cimgui", cimgui.module("cimgui"));
 
+    var cuber = b.addModule("cuber", .{
+        .root_source_file = b.path("cuber/cuber.zig"),
+    });
+    cuber.addImport("rowmath", rowmath);
+    cuber.addImport("sokol", dep_sokol.module("sokol"));
+
     const ozz_dep = b.dependency("ozz-animation", .{
         .target = target,
         .optimize = optimize,
@@ -211,6 +219,7 @@ pub fn build(b: *std.Build) void {
                 .rowmath = rowmath,
                 .cimgui = cimgui,
                 .utils = utils,
+                .cuber = cuber,
                 .dep_sokol = dep_sokol,
                 .ozz_wf = ozz_wf,
             },

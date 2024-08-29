@@ -11,8 +11,7 @@ const rowmath = @import("rowmath");
 const Vec2 = rowmath.Vec2;
 const Vec3 = rowmath.Vec3;
 const Mat4 = rowmath.Mat4;
-const cube = @import("cube.zig");
-const MeshBuilder = @import("MeshBuilder.zig");
+const cuber = @import("cuber");
 const utils = @import("utils");
 
 const MAX_PARTICLES = 4;
@@ -58,9 +57,9 @@ export fn init() void {
         .clear_value = .{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 },
     };
 
-    var builder = MeshBuilder.init(std.heap.c_allocator, false);
+    var builder = cuber.MeshBuilder.init(std.heap.c_allocator, false);
     // defer builder.deinit();
-    cube.buildCube(&builder) catch @panic("buildCube");
+    cuber.buildCube(&builder) catch @panic("buildCube");
 
     // vertex buffer for static geometry, goes into vertex-buffer-slot 0
     // const r: f32 = 0.05;

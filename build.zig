@@ -48,37 +48,39 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         });
 
-        // const ozz_wf = d.namedWriteFiles("ozz-animation");
-        // const ozz_install = b.addInstallDirectory(.{
-        //     .install_dir = .{ .prefix = void{} },
-        //     .install_subdir = "",
-        //     .source_dir = ozz_wf.getDirectory(),
-        // });
-        // b.default_step.dependOn(&ozz_install.step);
+        // dummy empty step
+        var step = &b.addWriteFiles().step;
 
         for (d.builder.install_tls.step.dependencies.items) |dep_step| {
-            if (target.result.isWasm()) {
-                if (dep_step.cast(std.Build.Step.InstallDir)) |dir| {
-                    b.installDirectory(.{
-                        .source_dir = dir.options.source_dir,
-                        .install_dir = .prefix,
-                        .install_subdir = dir.options.install_subdir,
-                    });
-                }
-            } else {
-                const inst = dep_step.cast(std.Build.Step.InstallArtifact) orelse continue;
+            if (dep_step.cast(std.Build.Step.InstallDir)) |dir| {
+                const install = b.addInstallDirectory(.{
+                    .source_dir = dir.options.source_dir,
+                    .install_dir = .prefix,
+                    .install_subdir = dir.options.install_subdir,
+                });
+                install.step.dependOn(step);
+                step = &install.step;
+            }
+        }
+
+        if (!target.result.isWasm()) {
+            for (d.builder.install_tls.step.dependencies.items) |dep_step| {
+                const install_artifact = dep_step.cast(std.Build.Step.InstallArtifact) orelse continue;
+
                 const root = b.step(
-                    b.fmt("run-{s}", .{inst.artifact.name}),
-                    b.fmt("Run {s}", .{inst.artifact.name}),
+                    b.fmt("run-{s}", .{install_artifact.artifact.name}),
+                    b.fmt("Run {s}", .{install_artifact.artifact.name}),
                 );
 
-                const run = b.addRunArtifact(inst.artifact);
-                run.setCwd(b.path("zig-out/bin"));
+                const run = b.addRunArtifact(install_artifact.artifact);
                 root.dependOn(&run.step);
+                run.setCwd(b.path("zig-out/bin"));
 
-                const install = b.addInstallArtifact(inst.artifact, .{});
+                const install = b.addInstallArtifact(install_artifact.artifact, .{});
+                b.getInstallStep().dependOn(&install.step);
+                install.step.dependOn(&install_artifact.step);
                 run.step.dependOn(&install.step);
-                // run.step.dependOn(&ozz_install.step);
+                run.step.dependOn(step);
             }
         }
     }
