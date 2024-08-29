@@ -191,6 +191,13 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     const ozz_wf = ozz_dep.namedWriteFiles("meson_build");
+
+    b.installDirectory(.{
+        .install_dir = .{ .prefix = void{} },
+        .install_subdir = "",
+        .source_dir = ozz_wf.getDirectory(),
+    });
+
     _ = b.addNamedWriteFiles("ozz-animation").addCopyDirectory(ozz_wf.getDirectory(), "", .{});
 
     for (examples) |example| {
