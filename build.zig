@@ -1,5 +1,4 @@
 const std = @import("std");
-const emsdk_zig = @import("emsdk-zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});

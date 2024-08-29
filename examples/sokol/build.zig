@@ -56,23 +56,30 @@ fn build_example(
             .root_source_file = b.path(example.src),
             .pic = true,
         });
-        // lib.step.dependOn(&opts.ozz_wf.step);
-        b.installArtifact(lib);
         if (example.use_ozz) {
+            lib.step.dependOn(&opts.ozz_wf.step);
+
             const ozz_wrap = b.addModule("ozz_wrap", .{
                 .root_source_file = b.path("ozz_anim/ozz_wrap.zig"),
             });
             ozz_wrap.addImport("rowmath", opts.rowmath);
             lib.root_module.addImport("ozz_wrap", ozz_wrap);
         }
-
         example.injectShader(b, target, lib);
+        // if (example.shader) |shader| {
+        //     // glsl to glsl.zig
+        //     lib.step.dependOn(sokolShdc(
+        //         b,
+        //         target,
+        //         shader,
+        //     ));
+        // }
 
         // inject dependency(must inject before emLinkStep)
         opts.inject(lib);
-        opts.injectWasmSysRoot(emsdk);
+        // opts.injectWasmSysRoot(emsdk);
 
-        // link emscripten
+        // create a build step which invokes the Emscripten linker
         const emcc = try emsdk_zig.emLinkCommand(b, emsdk, .{
             .lib_main = lib,
             .target = target,
@@ -86,13 +93,10 @@ fn build_example(
 
         emcc.addArg("-o");
         const out_file = emcc.addOutputFileArg(b.fmt("{s}.html", .{lib.name}));
-
         if (example.use_ozz) {
             emcc.addArg("-sMAIN_MODULE=1");
             emcc.addFileArg(opts.ozz_wf.getDirectory().path(b, "web/ozz-animation.wasm"));
             emcc.addArg("-sERROR_ON_UNDEFINED_SYMBOLS=0");
-
-            lib.step.dependOn(&opts.ozz_wf.step);
         }
 
         // the emcc linker creates 3 output files (.html, .wasm and .js)
@@ -102,7 +106,6 @@ fn build_example(
             .install_subdir = "web",
         });
         install.step.dependOn(&emcc.step);
-
         b.getInstallStep().dependOn(&install.step);
     } else {
         const exe = b.addExecutable(.{
@@ -173,7 +176,6 @@ pub fn build(b: *std.Build) void {
         const cimgui_clib_artifact = cimgui.artifact("cimgui_clib");
         cimgui_clib_artifact.addSystemIncludePath(emsdk_incl_path);
         cimgui_clib_artifact.step.dependOn(&dep_sokol.artifact("sokol_clib").step);
-        cimgui_clib_artifact.pie = true;
     }
 
     var utils = b.addModule("utils", .{
