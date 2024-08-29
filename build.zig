@@ -59,7 +59,12 @@ pub fn build(b: *std.Build) void {
                     .install_subdir = dir.options.install_subdir,
                 });
                 install.step.dependOn(step);
-                step = &install.step;
+
+                if (target.result.isWasm()) {
+                    b.getInstallStep().dependOn(&install.step);
+                } else {
+                    step = &install.step;
+                }
             }
         }
 
