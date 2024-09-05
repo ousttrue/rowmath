@@ -138,11 +138,19 @@ pub fn Cuber(comptime N: usize) type {
         pub fn draw(state: @This(), viewProjection: Mat4) void {
             sg.applyPipeline(state.pip);
             sg.applyBindings(state.bind);
+
             const vs_params = shader.VsParams{
                 .VP = viewProjection.m,
             };
             sg.applyUniforms(.VS, shader.SLOT_vs_params, sg.asRange(&vs_params));
-            // sg.applyUniforms(.FS, shader.SLOT_fs_params, sg.asRange(&state.fs_params));
+
+            // WASM: require on stack ?
+            const fs_params = state.fs_params;//std.mem.zeroes(shader.FsParams);
+            sg.applyUniforms(.FS, shader.SLOT_fs_params, .{
+                .ptr = &fs_params,
+                .size = @sizeOf(@TypeOf(fs_params)),
+            });
+
             sg.draw(0, 36, state.draw_count);
         }
     };
