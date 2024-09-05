@@ -8,10 +8,6 @@
         .examples_raylib = .{
             .path = "examples/raylib",
         },
-        .@"ozz-animation" = .{
-            .url = "git+https://github.com/ousttrue/ozz-animation.git#5908950a3606ebcf89ec50e45169693923c010dc",
-            .hash = "12200916fbffe6501b5d52ac1e0593c671ff0a2f50e38fc4888280f3ec4d238b2538",
-        },
     },
     .paths = .{
         "build.zig",

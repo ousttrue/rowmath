@@ -66,7 +66,7 @@ pub fn Cuber(comptime N: usize) type {
 
             // empty, dynamic instance-data vertex buffer, goes into vertex-buffer-slot 1
             state.bind.vertex_buffers[1] = sg.makeBuffer(.{
-                .size = MAX_PARTICLES * @sizeOf(Instance),
+                .size = N * @sizeOf(Instance),
                 .usage = .STREAM,
                 .label = "instance-data",
             });

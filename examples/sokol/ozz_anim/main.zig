@@ -10,6 +10,7 @@ const std = @import("std");
 const rowmath = @import("rowmath");
 const Vec3 = rowmath.Vec3;
 const Mat4 = rowmath.Mat4;
+const Quat = rowmath.Quat;
 const MouseCamera = rowmath.MouseCamera;
 const InputState = rowmath.InputState;
 const sokol = @import("sokol");
@@ -100,6 +101,33 @@ export fn init() void {
     });
 }
 
+const TRS = struct {
+    t: Vec3 = undefined,
+    r: Quat = undefined,
+    s: Vec3 = undefined,
+};
+
+fn makeShape(i: usize, j: usize) Mat4 {
+    var head: TRS = undefined;
+    ozz_wrap.OZZ_skeleton_trs(state.ozz, i, &head.t.x, &head.r.x, &head.s.x);
+    var tail: TRS = undefined;
+    ozz_wrap.OZZ_skeleton_trs(state.ozz, j, &tail.t.x, &tail.r.x, &tail.s.x);
+
+    const n = 0.03;
+
+    const center = Mat4.translate(.{ .x = 0.5, .y = 0, .z = 0 });
+
+    const size = Mat4.scale(.{
+        .x = tail.t.x,
+        .y = n,
+        .z = n,
+    });
+
+    // const r = head.r.inverse().matrix();
+
+    return center.mul(size);
+}
+
 export fn frame() void {
     sokol.fetch.dowork();
 
@@ -138,10 +166,16 @@ export fn frame() void {
         ozz_wrap.OZZ_eval_animation(state.ozz, state.time.anim_ratio);
 
         const num_joints = ozz_wrap.OZZ_num_joints(state.ozz);
-        const shape = Mat4.scale(Vec3.one.scale(0.03));
+        const joint_parents = ozz_wrap.OZZ_joint_parents(state.ozz);
         for (0..num_joints) |i| {
-            const m0 = ozz_wrap.OZZ_model_matrices(state.ozz, i);
-            state.cuber.instances[i] = .{ .matrix = shape.mul(m0.*) };
+            for (joint_parents[0..num_joints], 0..) |parent, j| {
+                if (@as(usize, @intCast(parent)) == i) {
+                    const shape = makeShape(i, j);
+                    const m0 = ozz_wrap.OZZ_model_matrices(state.ozz, i);
+                    state.cuber.instances[i] = .{ .matrix = shape.mul(m0.*) };
+                    break;
+                }
+            }
         }
         state.cuber.upload(@intCast(num_joints));
     }
@@ -261,6 +295,15 @@ export fn skeleton_data_loaded(response: [*c]const sokol.fetch.Response) void {
             response.*.data.size,
         )) {
             state.loaded.skeleton = true;
+
+            // const num_joints = ozz_wrap.OZZ_num_joints(state.ozz);
+            // for (0..num_joints) |i| {
+            //     var t: [3]f32 = undefined;
+            //     var r: [4]f32 = undefined;
+            //     var s: [3]f32 = undefined;
+            //     ozz_wrap.OZZ_skeleton_trs(state.ozz, i, &t[0], &r[0], &s[0]);
+            //     std.debug.print("{any}, {any}, {any}\n", .{ t, r, s });
+            // }
         } else {
             state.loaded.failed = true;
         }
