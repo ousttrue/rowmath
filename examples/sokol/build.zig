@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const emsdk_zig = @import("emsdk-zig");
 const examples = @import("examples.zig").examples;
 const Example = @import("examples.zig").Example;
@@ -6,7 +7,7 @@ const Example = @import("examples.zig").Example;
 const emcc_extra_args = [_][]const u8{
     "-sTOTAL_MEMORY=200MB",
     "-sUSE_OFFSET_CONVERTER=1",
-};
+} ++ (if (builtin.mode == .Debug) [_][]const u8{"-sASSERTIONS"} else [_][]const u8{});
 
 const BuildExampleOptions = struct {
     rowmath: *std.Build.Module,

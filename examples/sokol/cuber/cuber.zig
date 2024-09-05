@@ -43,7 +43,7 @@ pub fn Cuber(comptime N: usize) type {
         pip: sg.Pipeline = .{},
         instances: [N]Instance = undefined,
         shapes: [N]Mat4 = undefined,
-        fs_params: shader.FsParams = undefined,
+        fs_params: shader.FsParams = std.mem.zeroes(shader.FsParams),
         draw_count: u32 = 0,
 
         pub fn init(state: *@This()) void {
@@ -142,7 +142,7 @@ pub fn Cuber(comptime N: usize) type {
                 .VP = viewProjection.m,
             };
             sg.applyUniforms(.VS, shader.SLOT_vs_params, sg.asRange(&vs_params));
-            sg.applyUniforms(.FS, shader.SLOT_fs_params, sg.asRange(&state.fs_params));
+            // sg.applyUniforms(.FS, shader.SLOT_fs_params, sg.asRange(&state.fs_params));
             sg.draw(0, 36, state.draw_count);
         }
     };
