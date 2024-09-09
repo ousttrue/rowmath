@@ -3,6 +3,7 @@ const builtin = @import("builtin");
 const emsdk_zig = @import("emsdk-zig");
 const examples = @import("examples.zig").examples;
 const Example = @import("examples.zig").Example;
+const sokol_tool = @import("sokol_tool.zig");
 
 const emcc_extra_args = [_][]const u8{
     "-sTOTAL_MEMORY=200MB",
@@ -140,6 +141,19 @@ fn build_example(
     }
 }
 
+fn build_ozz_sokol_framework(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+) *std.Build.Module {
+    const mod = b.addModule("ozz_sokol_framework", .{
+        .target = target,
+        .optimize = optimize,
+        .root_source_file = b.path("ozz_sokol_framework/ozz_sokol_framework.zig"),
+    });
+    return mod;
+}
+
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -201,13 +215,6 @@ pub fn build(b: *std.Build) void {
     });
     cuber.addImport("rowmath", rowmath);
     cuber.addImport("sokol", dep_sokol.module("sokol"));
-    // glsl to glsl.zig
-    const sokol_tool = @import("sokol_tool.zig");
-    const cuber_shader = sokol_tool.runShdcCommand(
-        b,
-        target,
-        b.path("cuber/shader.glsl").getPath(b),
-    );
 
     const meson_opt: []const u8 = "--wipe";
     _ = meson_opt;
@@ -226,6 +233,10 @@ pub fn build(b: *std.Build) void {
 
     _ = b.addNamedWriteFiles("ozz-animation").addCopyDirectory(ozz_wf.getDirectory(), "", .{});
 
+    const ozz_sokol_framework = build_ozz_sokol_framework(b, target, optimize);
+    ozz_sokol_framework.addImport("sokol", dep_sokol.module("sokol"));
+    ozz_sokol_framework.addImport("rowmath", rowmath);
+
     for (examples) |example| {
         const compile = build_example(
             b,
@@ -243,6 +254,23 @@ pub fn build(b: *std.Build) void {
                 .ozz_wf = ozz_wf,
             },
         );
-        compile.step.dependOn(&cuber_shader.step);
+
+        compile.root_module.addImport("ozz_sokol_framework", ozz_sokol_framework);
+
+        for (shaders) |glsl| {
+            const shader = sokol_tool.runShdcCommand(
+                b,
+                target,
+                b.path(glsl).getPath(b),
+            );
+            compile.step.dependOn(&shader.step);
+        }
     }
 }
+
+// glsl to glsl.zig
+const shaders: []const []const u8 = &.{
+    "cuber/shader.glsl",
+    "ozz_sokol_framework/bone.glsl",
+    "ozz_sokol_framework/joint.glsl",
+};
