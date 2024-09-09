@@ -5,10 +5,17 @@ const examples = @import("examples.zig").examples;
 const Example = @import("examples.zig").Example;
 const sokol_tool = @import("sokol_tool.zig");
 
+const debug_flags = [_][]const u8{
+    "-sASSERTIONS",
+    "-g3",
+};
+
+const release_flags = [_][]const u8{};
+
 const emcc_extra_args = [_][]const u8{
-    "-sTOTAL_MEMORY=200MB",
+    "-sTOTAL_MEMORY=1024MB",
     "-sUSE_OFFSET_CONVERTER=1",
-} ++ (if (builtin.mode == .Debug) [_][]const u8{"-sASSERTIONS"} else [_][]const u8{});
+} ++ (if (builtin.mode == .Debug) debug_flags else release_flags);
 
 const BuildExampleOptions = struct {
     rowmath: *std.Build.Module,
