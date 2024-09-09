@@ -15,6 +15,7 @@ const BuildExampleOptions = struct {
     utils: *std.Build.Module,
     cuber: *std.Build.Module,
     dep_sokol: *std.Build.Dependency,
+    ozz_dep: *std.Build.Dependency,
     ozz_wf: *std.Build.Step.WriteFile,
 
     fn inject(self: @This(), compile: *std.Build.Step.Compile) void {
@@ -59,6 +60,7 @@ fn build_example(
             .root_source_file = b.path(example.src),
             .pic = true,
         });
+        lib.addIncludePath(opts.ozz_dep.path(""));
         if (example.use_ozz) {
             lib.step.dependOn(&opts.ozz_wf.step);
 
@@ -120,6 +122,7 @@ fn build_example(
             .name = example.name,
             .root_source_file = b.path(example.src),
         });
+        exe.addIncludePath(opts.ozz_dep.path(""));
         b.installArtifact(exe);
 
         example.injectShader(b, target, exe);
@@ -206,9 +209,12 @@ pub fn build(b: *std.Build) void {
         b.path("cuber/shader.glsl").getPath(b),
     );
 
+    const meson_opt: []const u8 = "--wipe";
+    _ = meson_opt;
     const ozz_dep = b.dependency("ozz-animation", .{
         .target = target,
         .optimize = optimize,
+        // .meson = meson_opt,
     });
     const ozz_wf = ozz_dep.namedWriteFiles("meson_build");
 
@@ -233,6 +239,7 @@ pub fn build(b: *std.Build) void {
                 .utils = utils,
                 .cuber = cuber,
                 .dep_sokol = dep_sokol,
+                .ozz_dep = ozz_dep,
                 .ozz_wf = ozz_wf,
             },
         );

@@ -28,7 +28,7 @@ const state = struct {
     var input: InputState = .{};
     var camera: MouseCamera = .{};
 
-    var ozz: *anyopaque = undefined;
+    var ozz: ?*ozz_wrap.ozz_t = null;
     const loaded = struct {
         var skeleton = false;
         var animation = false;
@@ -167,12 +167,12 @@ export fn frame() void {
 
         const num_joints = ozz_wrap.OZZ_num_joints(state.ozz);
         const joint_parents = ozz_wrap.OZZ_joint_parents(state.ozz);
+        const matrices: [*]const Mat4 = @ptrCast(ozz_wrap.OZZ_model_matrices(state.ozz));
         for (0..num_joints) |i| {
             for (joint_parents[0..num_joints], 0..) |parent, j| {
                 if (@as(usize, @intCast(parent)) == i) {
                     const shape = makeShape(i, j);
-                    const m0 = ozz_wrap.OZZ_model_matrices(state.ozz, i);
-                    state.cuber.instances[i] = .{ .matrix = shape.mul(m0.*) };
+                    state.cuber.instances[i] = .{ .matrix = shape.mul(matrices[i]) };
                     break;
                 }
             }
