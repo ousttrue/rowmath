@@ -88,6 +88,10 @@ pub fn build(b: *std.Build) void {
                 run.step.dependOn(step);
             }
         }
+
+        const sokol_build = @import("examples_sokol");
+        const run = sokol_build.emrun(b, b.dependency("examples_sokol", .{}));
+        b.step("emrun", "run emrun").dependOn(&run.step);
     }
 
     // examples raylib

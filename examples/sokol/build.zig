@@ -115,6 +115,13 @@ fn build_example(
         install.step.dependOn(&emcc.step);
         b.getInstallStep().dependOn(&install.step);
 
+        if (_emsdk) |emsdk_dep| {
+            const emsdk_incl_path = emsdk_dep.path(
+                "upstream/emscripten/cache/sysroot/include",
+            );
+            lib.addSystemIncludePath(emsdk_incl_path);
+        }
+
         return lib;
     } else {
         const exe = b.addExecutable(.{
@@ -257,6 +264,20 @@ pub fn build(b: *std.Build) void {
 
         compile.root_module.addImport("ozz_sokol_framework", ozz_sokol_framework);
 
+        const root = b.path("");
+        compile.addIncludePath(root);
+        compile.linkLibCpp();
+        compile.linkLibC();
+        compile.addCSourceFiles(.{
+            .root = root,
+            .files = &.{
+                "myalloc.cpp",
+            },
+            .flags = &.{
+                "-std=c++17",
+            },
+        });
+
         for (shaders) |glsl| {
             const shader = sokol_tool.runShdcCommand(
                 b,
@@ -274,3 +295,10 @@ const shaders: []const []const u8 = &.{
     "ozz_sokol_framework/bone.glsl",
     "ozz_sokol_framework/joint.glsl",
 };
+
+pub fn emrun(b: *std.Build, dep: *std.Build.Dependency) *std.Build.Step.Run {
+    const emsdk_zig_dep = dep.builder.dependency("emsdk-zig", .{});
+    const emsdk_dep = emsdk_zig_dep.builder.dependency("emsdk", .{});
+    // ...and a special run step to start the web build output via 'emrun'
+    return emsdk_zig.emRunStep(b, emsdk_dep, .{ .name = "ozz_anim" });
+}

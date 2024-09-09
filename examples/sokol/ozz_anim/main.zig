@@ -38,9 +38,48 @@ const state = struct {
 var skel_data_buffer = [1]u8{0} ** (4 * 1024);
 var anim_data_buffer = [1]u8{0} ** (32 * 1024);
 
+const Header = struct {
+    unaligned: *anyopaque,
+    size: usize,
+};
+
+fn calc_align(_address: usize, _alignment: usize) usize {
+    return (_address + _alignment - 1) & @subWithOverflow(0, _alignment)[0];
+}
+
+export fn Allocate(_size: usize, _alignment: usize) ?*anyopaque {
+    // Allocates enough memory to store the header + required alignment space.
+    const to_allocate: usize = _size + @sizeOf(Header) + _alignment - 1;
+    std.debug.print("{} => {}", .{ _size, to_allocate });
+    const unaligned = std.c.malloc(to_allocate) orelse {
+        return null;
+    };
+    const addr: usize = calc_align(@intFromPtr(unaligned) + @sizeOf(Header), _alignment);
+    const aligned: *anyopaque = @ptrFromInt(addr);
+    // std.debug.assert(aligned + _size <= unaligned + to_allocate);  // Don't overrun.
+    // Set the header
+    const header: *Header = @ptrFromInt(addr - @sizeOf(Header));
+    // assert(reinterpret_cast<char*>(header) >= unaligned);
+    header.unaligned = unaligned;
+    header.size = _size;
+    // Allocation's succeeded.
+    // ++allocation_count_;
+    return aligned;
+}
+
+export fn Deallocate(_block: ?*anyopaque) void {
+    if (_block != null) {
+        const addr = @intFromPtr(_block) - @sizeOf(Header);
+        const header: *Header = @ptrFromInt(addr);
+        std.c.free(header.unaligned);
+    }
+}
+
 export fn init() void {
     state.ozz = c.OZZ_init();
     state.ozz_state.time.factor = 1.0;
+    // c.OZZ_set_allocator(&c.my_aligned_alloc, &c.my_free);
+    c.OZZ_set_allocator(&Allocate, &Deallocate);
 
     // setup sokol-gfx
     sg.setup(.{
@@ -303,7 +342,7 @@ export fn skeleton_data_loaded(response: [*c]const sokol.fetch.Response) void {
     if (response.*.fetched) {
         if (c.OZZ_load_skeleton(state.ozz, response.*.data.ptr, response.*.data.size)) {
             const num_joints = c.OZZ_num_joints(state.ozz);
-            var skeleton = Skeleton.init(std.heap.page_allocator, num_joints) catch unreachable;
+            var skeleton = Skeleton.init(std.heap.c_allocator, num_joints) catch unreachable;
             const parents = c.OZZ_joint_parents(state.ozz);
             const names: [*]const [*:0]const u8 = @ptrCast(c.OZZ_joint_names(state.ozz));
             for (0..num_joints) |i| {
