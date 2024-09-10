@@ -13,8 +13,9 @@ const debug_flags = [_][]const u8{
 const release_flags = [_][]const u8{};
 
 const emcc_extra_args = [_][]const u8{
-    "-sTOTAL_MEMORY=1024MB",
-    "-sTOTAL_STACK=256MB",
+    "-sTOTAL_MEMORY=200MB",
+    // default 64MB
+    "-sSTACK_SIZE=256MB",
     "-sALLOW_MEMORY_GROWTH=0",
     "-sUSE_OFFSET_CONVERTER=1",
 } ++ (if (builtin.mode == .Debug) debug_flags else release_flags);
