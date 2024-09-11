@@ -18,6 +18,7 @@ pub const Quat = @import("Quat.zig");
 pub const RgbF32 = @import("RgbF32.zig");
 pub const RgbaF32 = @import("RgbaF32.zig");
 pub const RgbU8 = @import("RgbU8.zig");
+pub const RgbaU8 = @import("RgbaU8.zig");
 
 pub const RigidTransform = @import("RigidTransform.zig");
 pub const Transform = @import("Transform.zig");

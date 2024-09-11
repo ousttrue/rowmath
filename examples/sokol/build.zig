@@ -278,15 +278,6 @@ pub fn build(b: *std.Build) void {
         compile.addIncludePath(root);
         compile.linkLibCpp();
         compile.linkLibC();
-        compile.addCSourceFiles(.{
-            .root = root,
-            .files = &.{
-                "myalloc.cpp",
-            },
-            .flags = &.{
-                "-std=c++17",
-            },
-        });
 
         for (shaders) |glsl| {
             const shader = sokol_tool.runShdcCommand(
