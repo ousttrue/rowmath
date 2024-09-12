@@ -4,6 +4,7 @@ const emsdk_zig = @import("emsdk-zig");
 const examples = @import("examples.zig").examples;
 const Example = @import("examples.zig").Example;
 const sokol_tool = @import("sokol_tool.zig");
+const ozz_build = @import("ozz-animation");
 
 const debug_flags = [_][]const u8{
     "-sASSERTIONS",
@@ -13,9 +14,10 @@ const debug_flags = [_][]const u8{
 const release_flags = [_][]const u8{};
 
 const emcc_extra_args = [_][]const u8{
-    "-sTOTAL_MEMORY=200MB",
     // default 64MB
-    "-sSTACK_SIZE=256MB",
+    "-sSTACK_SIZE=128MB",
+    // must TOTAL_MEMORY > STACK_SIZE
+    "-sTOTAL_MEMORY=256MB",
     "-sALLOW_MEMORY_GROWTH=0",
     "-sUSE_OFFSET_CONVERTER=1",
 } ++ (if (builtin.mode == .Debug) debug_flags else release_flags);
@@ -28,6 +30,7 @@ const BuildExampleOptions = struct {
     sokol_dep: *std.Build.Dependency,
     ozz_dep: *std.Build.Dependency,
     ozz_wf: *std.Build.Step.WriteFile,
+    cozz_lib: *std.Build.Step.Compile,
 
     fn inject(self: @This(), compile: *std.Build.Step.Compile) void {
         compile.root_module.addImport("sokol", self.sokol_dep.module("sokol"));
@@ -35,6 +38,7 @@ const BuildExampleOptions = struct {
         compile.root_module.addImport("cimgui", self.cimgui_dep.module("cimgui"));
         compile.root_module.addImport("utils", self.utils);
         compile.root_module.addImport("cuber", self.cuber);
+        compile.root_module.addImport("cozz", &self.cozz_lib.root_module);
     }
 
     fn injectWasmSysRoot(
@@ -72,15 +76,15 @@ fn build_example(
             .pic = true,
         });
         lib.addIncludePath(opts.ozz_dep.path(""));
-        if (example.use_ozz) {
-            lib.step.dependOn(&opts.ozz_wf.step);
-
-            const ozz_wrap = b.addModule("ozz_wrap", .{
-                .root_source_file = b.path("ozz_anim/ozz_wrap.zig"),
-            });
-            ozz_wrap.addImport("rowmath", opts.rowmath_mod);
-            lib.root_module.addImport("ozz_wrap", ozz_wrap);
-        }
+        // if (example.use_ozz) {
+        //     lib.step.dependOn(&opts.ozz_wf.step);
+        //
+        //     const ozz_wrap = b.addModule("ozz_wrap", .{
+        //         .root_source_file = b.path("ozz_anim/ozz_wrap.zig"),
+        //     });
+        //     ozz_wrap.addImport("rowmath", opts.rowmath_mod);
+        //     lib.root_module.addImport("ozz_wrap", ozz_wrap);
+        // }
         example.injectShader(b, target, lib);
         // if (example.shader) |shader| {
         //     // glsl to glsl.zig
@@ -230,7 +234,13 @@ pub fn build(b: *std.Build) void {
         // .meson = meson_opt,
     });
     const ozz_wf = ozz_dep.namedWriteFiles("build");
-    const cozz_lib = ozz_dep.artifact("cozz");
+    const cozz_lib = ozz_build.buildCozzLib(
+        b,
+        target,
+        optimize,
+        ozz_dep.builder.dependency("cozz", .{}),
+    );
+    cozz_lib.step.dependOn(&cozz_lib.step);
     cozz_lib.root_module.addImport("sokol", sokol_dep.module("sokol"));
     cozz_lib.root_module.addImport("rowmath", rowmath_mod);
 
@@ -257,6 +267,7 @@ pub fn build(b: *std.Build) void {
                 .sokol_dep = sokol_dep,
                 .ozz_dep = ozz_dep,
                 .ozz_wf = ozz_wf,
+                .cozz_lib = cozz_lib,
             },
         );
 
