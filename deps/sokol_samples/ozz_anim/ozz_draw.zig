@@ -1,6 +1,6 @@
 const std = @import("std");
 const sokol = @import("sokol");
-const ozz_wrap = @import("ozz_wrap.zig");
+const ozz_wrap = @import("cozz");
 const rowmath = @import("rowmath");
 const Vec3 = rowmath.Vec3;
 const Mat4 = rowmath.Mat4;

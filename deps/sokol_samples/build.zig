@@ -112,7 +112,7 @@ fn build_example(
         const out_file = emcc.addOutputFileArg(b.fmt("{s}.html", .{lib.name}));
         if (example.use_ozz) {
             emcc.addArg("-sMAIN_MODULE=1");
-            emcc.addFileArg(opts.ozz_wf.getDirectory().path(b, "web/ozz-animation.wasm"));
+            emcc.addFileArg(opts.ozz_wf.getDirectory().path(b, "web/cozz.wasm"));
             emcc.addArg("-sERROR_ON_UNDEFINED_SYMBOLS=0");
         }
 
@@ -151,24 +151,11 @@ fn build_example(
         if (example.use_ozz) {
             const libdir = opts.ozz_wf.getDirectory().path(b, "lib");
             exe.addLibraryPath(libdir);
-            exe.linkSystemLibrary("ozz-animation");
+            exe.linkSystemLibrary("cozz");
         }
 
         return exe;
     }
-}
-
-fn build_ozz_sokol_framework(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
-) *std.Build.Module {
-    const mod = b.addModule("ozz_sokol_framework", .{
-        .target = target,
-        .optimize = optimize,
-        .root_source_file = b.path("ozz_sokol_framework/ozz_sokol_framework.zig"),
-    });
-    return mod;
 }
 
 pub fn build(b: *std.Build) void {
@@ -242,7 +229,10 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
         // .meson = meson_opt,
     });
-    const ozz_wf = ozz_dep.namedWriteFiles("meson_build");
+    const ozz_wf = ozz_dep.namedWriteFiles("build");
+    const cozz_lib = ozz_dep.artifact("cozz");
+    cozz_lib.root_module.addImport("sokol", sokol_dep.module("sokol"));
+    cozz_lib.root_module.addImport("rowmath", rowmath_mod);
 
     b.installDirectory(.{
         .install_dir = .{ .prefix = void{} },
@@ -251,10 +241,6 @@ pub fn build(b: *std.Build) void {
     });
 
     _ = b.addNamedWriteFiles("ozz-animation").addCopyDirectory(ozz_wf.getDirectory(), "", .{});
-
-    const ozz_sokol_framework = build_ozz_sokol_framework(b, target, optimize);
-    ozz_sokol_framework.addImport("sokol", sokol_dep.module("sokol"));
-    ozz_sokol_framework.addImport("rowmath", rowmath_mod);
 
     for (examples) |example| {
         const compile = build_example(
@@ -274,7 +260,7 @@ pub fn build(b: *std.Build) void {
             },
         );
 
-        compile.root_module.addImport("ozz_sokol_framework", ozz_sokol_framework);
+        compile.root_module.addImport("cozz", &cozz_lib.root_module);
 
         const root = b.path("");
         compile.addIncludePath(root);
@@ -295,8 +281,6 @@ pub fn build(b: *std.Build) void {
 // glsl to glsl.zig
 const shaders: []const []const u8 = &.{
     "cuber/shader.glsl",
-    "ozz_sokol_framework/bone.glsl",
-    "ozz_sokol_framework/joint.glsl",
 };
 
 pub fn emrun(b: *std.Build, dep: *std.Build.Dependency) *std.Build.Step.Run {

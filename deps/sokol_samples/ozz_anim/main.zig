@@ -21,17 +21,16 @@ const cuber = @import("cuber");
 const Cuber = cuber.Cuber;
 const utils = @import("utils");
 const ozz_draw = @import("ozz_draw.zig");
-const c = @import("ozz_wrap.zig");
-const framework = @import("ozz_sokol_framework");
-const Skeleton = framework.Skeleton;
+const cozz = @import("cozz");
+const Skeleton = cozz.framework.Skeleton;
 
 const state = struct {
     var input: InputState = .{};
     var camera: MouseCamera = .{};
     var pass_action = sg.PassAction{};
     var cuber = Cuber(512){};
-    var ozz: ?*c.ozz_t = null;
-    var ozz_state = framework.State{};
+    var ozz: ?*cozz.ozz_t = null;
+    var ozz_state = cozz.framework.State{};
 };
 
 // io buffers for skeleton and animation data files, we know the max file size upfront
@@ -76,10 +75,10 @@ export fn Deallocate(_block: ?*anyopaque) void {
 }
 
 export fn init() void {
-    state.ozz = c.OZZ_init();
+    state.ozz = cozz.OZZ_init();
     state.ozz_state.time.factor = 1.0;
     // c.OZZ_set_allocator(&c.my_aligned_alloc, &c.my_free);
-    c.OZZ_set_allocator(&Allocate, &Deallocate);
+    cozz.OZZ_set_allocator(&Allocate, &Deallocate);
 
     // setup sokol-gfx
     sg.setup(.{
@@ -100,7 +99,7 @@ export fn init() void {
         .sample_count = sokol.app.sampleCount(),
         .logger = .{ .func = sokol.log.func },
     });
-    framework.gl_init();
+    cozz.framework.gl_init();
 
     // setup sokol-imgui
     simgui.setup(.{
@@ -137,9 +136,9 @@ const TRS = struct {
 
 fn makeShape(i: usize, j: usize) Mat4 {
     var head: TRS = undefined;
-    c.OZZ_skeleton_trs(state.ozz, i, &head.t.x, &head.r.x, &head.s.x);
+    cozz.OZZ_skeleton_trs(state.ozz, i, &head.t.x, &head.r.x, &head.s.x);
     var tail: TRS = undefined;
-    c.OZZ_skeleton_trs(state.ozz, j, &tail.t.x, &tail.r.x, &tail.s.x);
+    cozz.OZZ_skeleton_trs(state.ozz, j, &tail.t.x, &tail.r.x, &tail.s.x);
 
     const n = 0.03;
 
@@ -209,13 +208,13 @@ export fn frame() void {
     // }
 
     // draw axis & grid
-    framework.gl_begin(.{
+    cozz.framework.gl_begin(.{
         .view = state.camera.camera.transform.worldToLocal(),
         .projection = state.camera.camera.projection_matrix,
     });
-    framework.draw_axis();
-    framework.draw_grid(20, 1.0);
-    framework.gl_end();
+    cozz.framework.draw_axis();
+    cozz.framework.draw_grid(20, 1.0);
+    cozz.framework.gl_end();
 
     {
         sg.beginPass(.{
@@ -237,15 +236,15 @@ export fn frame() void {
             // if (state.loaded.skeleton) {
             //     ozz_draw.draw_skeleton(state.ozz);
             // }
-            framework.gl_draw();
+            cozz.framework.gl_draw();
             if (state.ozz_state.loaded.skeleton) |skeleton| {
                 if (state.ozz_state.loaded.animation) {
-                    const anim_ratio = state.ozz_state.update(c.OZZ_duration(state.ozz));
+                    const anim_ratio = state.ozz_state.update(cozz.OZZ_duration(state.ozz));
                     // const anim_duration = ;
-                    c.OZZ_eval_animation(state.ozz, anim_ratio);
+                    cozz.OZZ_eval_animation(state.ozz, anim_ratio);
                 }
 
-                const matrices: [*]const Mat4 = @ptrCast(c.OZZ_model_matrices(state.ozz));
+                const matrices: [*]const Mat4 = @ptrCast(cozz.OZZ_model_matrices(state.ozz));
                 skeleton.draw(
                     state.camera.viewProjectionMatrix(),
                     matrices,
@@ -274,7 +273,7 @@ export fn cleanup() void {
     sg.shutdown();
 
     // free C++ objects early, otherwise ozz-animation complains about memory leaks
-    c.OZZ_shutdown(state.ozz);
+    cozz.OZZ_shutdown(state.ozz);
 }
 
 fn draw_ui() void {
@@ -340,17 +339,17 @@ fn draw_ui() void {
 
 export fn skeleton_data_loaded(response: [*c]const sokol.fetch.Response) void {
     if (response.*.fetched) {
-        if (c.OZZ_load_skeleton(state.ozz, response.*.data.ptr, response.*.data.size)) {
-            const num_joints = c.OZZ_num_joints(state.ozz);
+        if (cozz.OZZ_load_skeleton(state.ozz, response.*.data.ptr, response.*.data.size)) {
+            const num_joints = cozz.OZZ_num_joints(state.ozz);
             var skeleton = Skeleton.init(std.heap.c_allocator, num_joints) catch unreachable;
-            const parents = c.OZZ_joint_parents(state.ozz);
-            const names: [*]const [*:0]const u8 = @ptrCast(c.OZZ_joint_names(state.ozz));
+            const parents = cozz.OZZ_joint_parents(state.ozz);
+            const names: [*]const [*:0]const u8 = @ptrCast(cozz.OZZ_joint_names(state.ozz));
             for (0..num_joints) |i| {
                 const parent: u16 = parents[i];
                 skeleton.joints[i] = .{
                     .name = names[i],
                     .parent = if (std.math.maxInt(u16) != parent) parent else null,
-                    .is_leaf = c.OZZ_joint_is_leaf(state.ozz, i),
+                    .is_leaf = cozz.OZZ_joint_is_leaf(state.ozz, i),
                 };
             }
             state.ozz_state.loaded.skeleton = skeleton;
@@ -364,7 +363,7 @@ export fn skeleton_data_loaded(response: [*c]const sokol.fetch.Response) void {
 
 export fn animation_data_loaded(response: [*c]const sokol.fetch.Response) void {
     if (response.*.fetched) {
-        if (c.OZZ_load_animation(state.ozz, response.*.data.ptr, response.*.data.size)) {
+        if (cozz.OZZ_load_animation(state.ozz, response.*.data.ptr, response.*.data.size)) {
             state.ozz_state.loaded.animation = true;
         } else {
             state.ozz_state.loaded.failed = true;

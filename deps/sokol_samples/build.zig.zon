@@ -5,6 +5,9 @@
         .rowmath = .{
             .path = "../rowmath",
         },
+        .cimgui = .{
+            .path = "../cimgui",
+        },
         // .sokol = .{
         //     .url = "git+https://github.com/floooh/sokol-zig.git#9e4eabae83c74df29b24cdba7b31e985a2d8c33f",
         //     .hash = "12209706d64fa2127cc2d48134c22790d70f561c40bdeb4589fa7f9c41c4f53fe9da",
@@ -17,16 +20,13 @@
             .url = "git+https://github.com/ousttrue/emsdk-zig.git#4b3df5dc7824514a3ef99c1dee77ee3087019050",
             .hash = "122062b769fe74a24375a9409bce954bdd378f79b4b9fd2adf7a23360634cf5ad55c",
         },
-        .cimgui = .{
-            .path = "cimgui",
-        },
         .@"sokol-tools-bin" = .{
             .url = "git+https://github.com/floooh/sokol-tools-bin.git#8cc8c257380c9a5e230a84aeebf09cd500903fbc",
             .hash = "12200f5129c997728160ab584adcc939b9dbca6f802d7273f386dad777de85e80421",
         },
         .@"ozz-animation" = .{
-            .url = "git+https://github.com/ousttrue/ozz-animation.git#9873df8534bc7469a330349b6430178f35be0db8",
-            .hash = "12200762f55d1388df6805c7039e99dd3a03d0d84e5851e4ae85164b24e40943f410",
+            .url = "git+https://github.com/ousttrue/ozz-animation.git#67a749aeab49eedea6682a19d11eb4b6eef0bd88",
+            .hash = "1220c5e403703f47e63221968cb614d5b58299d21df13a7c8bca04467e664c13d9a9",
         },
     },
     .paths = .{
