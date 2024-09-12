@@ -2,17 +2,19 @@
     .name = "rowmath",
     .version = "0.0.0",
     .dependencies = .{
-        .examples_sokol = .{
-            .path = "examples/sokol",
+        .rowmath = .{
+            .path = "deps/rowmath",
         },
-        .examples_raylib = .{
-            .path = "examples/raylib",
+        .sokol_samples = .{
+            .path = "deps/sokol_samples",
+        },
+        .raylib_samples = .{
+            .path = "deps/raylib_samples",
         },
     },
     .paths = .{
         "build.zig",
         "build.zig.zon",
-        "src",
-        "examples",
+        "deps",
     },
 }

@@ -8,10 +8,11 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const rowmath = b.addModule(
-        "rowmath",
-        .{ .root_source_file = b.path("../../src/rowmath.zig") },
-    );
+    const rowmath_dep = b.dependency("rowmath", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const rowmath_mod = rowmath_dep.module("rowmath");
 
     // create a build step which invokes the Emscripten linker
     var _emsdk: ?*std.Build.Dependency = null;
@@ -21,11 +22,11 @@ pub fn build(b: *std.Build) void {
         _emsdk = emsdk;
     }
 
-    var dep_raylib = b.dependency("raylib", .{
+    var raylib_dep = b.dependency("raylib", .{
         .target = target,
         .optimize = optimize,
     });
-    const raylib = dep_raylib.artifact("raylib");
+    const raylib_lib = raylib_dep.artifact("raylib");
 
     if (_emsdk) |emsdk| {
         const lib = b.addStaticLibrary(.{
@@ -41,8 +42,8 @@ pub fn build(b: *std.Build) void {
         lib.addSystemIncludePath(emsdk_incl_path);
 
         // inject dependency(must inject before emLinkStep)
-        lib.root_module.linkLibrary(raylib);
-        lib.root_module.addImport("rowmath", rowmath);
+        lib.root_module.linkLibrary(raylib_lib);
+        lib.root_module.addImport("rowmath", rowmath_mod);
 
         // link emscripten
         const link_step = try emsdk_zig.emLinkStep(b, emsdk, .{
@@ -71,8 +72,8 @@ pub fn build(b: *std.Build) void {
         b.installArtifact(exe);
 
         // inject dependency
-        exe.addIncludePath(dep_raylib.path("src"));
-        exe.root_module.linkLibrary(raylib);
-        exe.root_module.addImport("rowmath", rowmath);
+        exe.addIncludePath(raylib_dep.path("src"));
+        exe.root_module.linkLibrary(raylib_lib);
+        exe.root_module.addImport("rowmath", rowmath_mod);
     }
 }

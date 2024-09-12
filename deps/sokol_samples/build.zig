@@ -21,18 +21,18 @@ const emcc_extra_args = [_][]const u8{
 } ++ (if (builtin.mode == .Debug) debug_flags else release_flags);
 
 const BuildExampleOptions = struct {
-    rowmath: *std.Build.Module,
-    cimgui: *std.Build.Dependency,
     utils: *std.Build.Module,
     cuber: *std.Build.Module,
-    dep_sokol: *std.Build.Dependency,
+    rowmath_mod: *std.Build.Module,
+    cimgui_dep: *std.Build.Dependency,
+    sokol_dep: *std.Build.Dependency,
     ozz_dep: *std.Build.Dependency,
     ozz_wf: *std.Build.Step.WriteFile,
 
     fn inject(self: @This(), compile: *std.Build.Step.Compile) void {
-        compile.root_module.addImport("sokol", self.dep_sokol.module("sokol"));
-        compile.root_module.addImport("rowmath", self.rowmath);
-        compile.root_module.addImport("cimgui", self.cimgui.module("cimgui"));
+        compile.root_module.addImport("sokol", self.sokol_dep.module("sokol"));
+        compile.root_module.addImport("rowmath", self.rowmath_mod);
+        compile.root_module.addImport("cimgui", self.cimgui_dep.module("cimgui"));
         compile.root_module.addImport("utils", self.utils);
         compile.root_module.addImport("cuber", self.cuber);
     }
@@ -78,7 +78,7 @@ fn build_example(
             const ozz_wrap = b.addModule("ozz_wrap", .{
                 .root_source_file = b.path("ozz_anim/ozz_wrap.zig"),
             });
-            ozz_wrap.addImport("rowmath", opts.rowmath);
+            ozz_wrap.addImport("rowmath", opts.rowmath_mod);
             lib.root_module.addImport("ozz_wrap", ozz_wrap);
         }
         example.injectShader(b, target, lib);
@@ -103,7 +103,7 @@ fn build_example(
             .use_webgl2 = true,
             .use_emmalloc = true,
             .use_filesystem = true,
-            .shell_file_path = opts.dep_sokol.path("src/sokol/web/shell.html").getPath(b),
+            .shell_file_path = opts.sokol_dep.path("src/sokol/web/shell.html").getPath(b),
             .release_use_closure = false,
             .extra_before = &emcc_extra_args,
         });
@@ -175,24 +175,26 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const rowmath = b.addModule(
+    const rowmath_dep = b.dependency(
         "rowmath",
-        .{ .root_source_file = b.path("../../src/rowmath.zig") },
+        .{},
     );
+    const rowmath_mod = rowmath_dep.module("rowmath");
 
-    const dep_sokol = b.dependency("sokol", .{
+    const sokol_dep = b.dependency("sokol", .{
         .target = target,
         .optimize = optimize,
         .with_sokol_imgui = true,
     });
 
-    const cimgui = b.dependency("cimgui", .{
+    const cimgui_dep = b.dependency("cimgui", .{
         .target = target,
         .optimize = optimize,
     });
+
     // inject the cimgui header search path into the sokol C library compile step
-    const cimgui_root = cimgui.namedWriteFiles("cimgui").getDirectory();
-    dep_sokol.artifact("sokol_clib").addIncludePath(cimgui_root);
+    const cimgui_root = cimgui_dep.namedWriteFiles("cimgui").getDirectory();
+    sokol_dep.artifact("sokol_clib").addIncludePath(cimgui_root);
 
     // create a build step which invokes the Emscripten linker
     var emsdk: ?*std.Build.Dependency = null;
@@ -215,23 +217,23 @@ pub fn build(b: *std.Build) void {
         //     "upstream/emscripten/cache/sysroot/include/c++/v1",
         // );
 
-        const cimgui_clib_artifact = cimgui.artifact("cimgui_clib");
+        const cimgui_clib_artifact = cimgui_dep.artifact("cimgui_clib");
         cimgui_clib_artifact.addSystemIncludePath(emsdk_incl_path);
-        cimgui_clib_artifact.step.dependOn(&dep_sokol.artifact("sokol_clib").step);
+        cimgui_clib_artifact.step.dependOn(&sokol_dep.artifact("sokol_clib").step);
     }
 
     var utils = b.addModule("utils", .{
         .root_source_file = b.path("utils/utils.zig"),
     });
-    utils.addImport("rowmath", rowmath);
-    utils.addImport("sokol", dep_sokol.module("sokol"));
-    utils.addImport("cimgui", cimgui.module("cimgui"));
+    utils.addImport("rowmath", rowmath_mod);
+    utils.addImport("sokol", sokol_dep.module("sokol"));
+    utils.addImport("cimgui", cimgui_dep.module("cimgui"));
 
     var cuber = b.addModule("cuber", .{
         .root_source_file = b.path("cuber/cuber.zig"),
     });
-    cuber.addImport("rowmath", rowmath);
-    cuber.addImport("sokol", dep_sokol.module("sokol"));
+    cuber.addImport("rowmath", rowmath_mod);
+    cuber.addImport("sokol", sokol_dep.module("sokol"));
 
     const meson_opt: []const u8 = "--wipe";
     _ = meson_opt;
@@ -251,8 +253,8 @@ pub fn build(b: *std.Build) void {
     _ = b.addNamedWriteFiles("ozz-animation").addCopyDirectory(ozz_wf.getDirectory(), "", .{});
 
     const ozz_sokol_framework = build_ozz_sokol_framework(b, target, optimize);
-    ozz_sokol_framework.addImport("sokol", dep_sokol.module("sokol"));
-    ozz_sokol_framework.addImport("rowmath", rowmath);
+    ozz_sokol_framework.addImport("sokol", sokol_dep.module("sokol"));
+    ozz_sokol_framework.addImport("rowmath", rowmath_mod);
 
     for (examples) |example| {
         const compile = build_example(
@@ -262,11 +264,11 @@ pub fn build(b: *std.Build) void {
             optimize,
             example,
             .{
-                .rowmath = rowmath,
-                .cimgui = cimgui,
                 .utils = utils,
                 .cuber = cuber,
-                .dep_sokol = dep_sokol,
+                .rowmath_mod = rowmath_mod,
+                .cimgui_dep = cimgui_dep,
+                .sokol_dep = sokol_dep,
                 .ozz_dep = ozz_dep,
                 .ozz_wf = ozz_wf,
             },

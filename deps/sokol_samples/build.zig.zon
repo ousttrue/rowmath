@@ -2,6 +2,9 @@
     .name = "examples",
     .version = "0.0.0",
     .dependencies = .{
+        .rowmath = .{
+            .path = "../rowmath",
+        },
         // .sokol = .{
         //     .url = "git+https://github.com/floooh/sokol-zig.git#9e4eabae83c74df29b24cdba7b31e985a2d8c33f",
         //     .hash = "12209706d64fa2127cc2d48134c22790d70f561c40bdeb4589fa7f9c41c4f53fe9da",

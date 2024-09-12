@@ -2,6 +2,9 @@
     .name = "examples",
     .version = "0.0.0",
     .dependencies = .{
+        .rowmath = .{
+            .path = "../rowmath",
+        },
         .raylib = .{
             .url = "git+https://github.com/raysan5/raylib.git#6e644a27fc1c3d3499750a0e58a0ba5c2a4a0ed2",
             .hash = "12202255eda360df76a6b63dc588dc2420e644bcdc17d5147285f39342e5dd70e677",
