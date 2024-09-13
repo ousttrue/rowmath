@@ -49,6 +49,7 @@ pub fn build(b: *std.Build) void {
 
         if (target.result.isWasm()) {
             b.getInstallStep().dependOn(&install_wf.step);
+            b.getInstallStep().dependOn(&install_bvh.step);
         } else {
             for (sokol_dep.builder.install_tls.step.dependencies.items) |dep_step| {
                 // }
