@@ -66,6 +66,7 @@ fn build_example(
     optimize: std.builtin.OptimizeMode,
     example: Example,
     opts: BuildExampleOptions,
+    out_wf: *std.Build.Step.WriteFile,
 ) *std.Build.Step.Compile {
     if (_emsdk) |emsdk| {
         const lib = b.addStaticLibrary(.{
@@ -76,28 +77,9 @@ fn build_example(
             .pic = true,
         });
         lib.addIncludePath(opts.ozz_dep.path(""));
-        // if (example.use_ozz) {
-        //     lib.step.dependOn(&opts.ozz_wf.step);
-        //
-        //     const ozz_wrap = b.addModule("ozz_wrap", .{
-        //         .root_source_file = b.path("ozz_anim/ozz_wrap.zig"),
-        //     });
-        //     ozz_wrap.addImport("rowmath", opts.rowmath_mod);
-        //     lib.root_module.addImport("ozz_wrap", ozz_wrap);
-        // }
         example.injectShader(b, target, lib);
-        // if (example.shader) |shader| {
-        //     // glsl to glsl.zig
-        //     lib.step.dependOn(sokolShdc(
-        //         b,
-        //         target,
-        //         shader,
-        //     ));
-        // }
-
         // inject dependency(must inject before emLinkStep)
         opts.inject(lib);
-        // opts.injectWasmSysRoot(emsdk);
 
         // create a build step which invokes the Emscripten linker
         const emcc = try emsdk_zig.emLinkCommand(b, emsdk, .{
@@ -120,14 +102,7 @@ fn build_example(
             emcc.addArg("-sERROR_ON_UNDEFINED_SYMBOLS=0");
         }
 
-        // the emcc linker creates 3 output files (.html, .wasm and .js)
-        const install = b.addInstallDirectory(.{
-            .source_dir = out_file.dirname(),
-            .install_dir = .prefix,
-            .install_subdir = "web",
-        });
-        install.step.dependOn(&emcc.step);
-        b.getInstallStep().dependOn(&install.step);
+        _ = out_wf.addCopyDirectory(out_file.dirname(), "web", .{});
 
         if (_emsdk) |emsdk_dep| {
             const emsdk_incl_path = emsdk_dep.path(
@@ -242,13 +217,11 @@ pub fn build(b: *std.Build) void {
     );
     cozz_lib.step.dependOn(&cozz_lib.step);
     cozz_lib.root_module.addImport("sokol", sokol_dep.module("sokol"));
+    cozz_lib.root_module.addImport("cimgui", cimgui_dep.module("cimgui"));
     cozz_lib.root_module.addImport("rowmath", rowmath_mod);
 
-    b.installDirectory(.{
-        .install_dir = .{ .prefix = void{} },
-        .install_subdir = "",
-        .source_dir = ozz_wf.getDirectory(),
-    });
+    const out_wf = b.addNamedWriteFiles("build");
+    _ = out_wf.addCopyDirectory(ozz_wf.getDirectory(), "", .{});
 
     _ = b.addNamedWriteFiles("ozz-animation").addCopyDirectory(ozz_wf.getDirectory(), "", .{});
 
@@ -269,6 +242,7 @@ pub fn build(b: *std.Build) void {
                 .ozz_wf = ozz_wf,
                 .cozz_lib = cozz_lib,
             },
+            out_wf,
         );
 
         compile.root_module.addImport("cozz", &cozz_lib.root_module);

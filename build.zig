@@ -36,23 +36,26 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         });
 
-        for (sokol_dep.builder.install_tls.step.dependencies.items) |dep_step| {
-            if (dep_step.cast(std.Build.Step.InstallDir)) |dir| {
-                // TODO: ozz dependency
-                const install = b.addInstallDirectory(.{
-                    .source_dir = dir.options.source_dir,
-                    .install_dir = .prefix,
-                    .install_subdir = dir.options.install_subdir,
-                });
-                install.step.dependOn(dep_step);
-                b.getInstallStep().dependOn(&install.step);
-            }
+        const wf = sokol_dep.namedWriteFiles("build");
 
-            if (!target.result.isWasm()) {
+        const install_wf = b.addInstallDirectory(.{
+            .source_dir = wf.getDirectory(),
+            .install_dir = .{ .prefix = void{} },
+            .install_subdir = "",
+        });
+
+        if (target.result.isWasm()) {
+            b.getInstallStep().dependOn(&install_wf.step);
+        } else {
+            for (sokol_dep.builder.install_tls.step.dependencies.items) |dep_step| {
+                // }
+
                 if (dep_step.cast(std.Build.Step.InstallArtifact)) |install_artifact| {
+                    // exe
                     const run = b.addRunArtifact(install_artifact.artifact);
                     run.setCwd(b.path("zig-out/bin"));
                     run.step.dependOn(&install_artifact.step);
+                    run.step.dependOn(&install_wf.step);
 
                     b.step(
                         b.fmt("run-{s}", .{install_artifact.artifact.name}),

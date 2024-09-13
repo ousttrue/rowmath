@@ -50,6 +50,7 @@ pub const examples = [_]Example{
     .{
         .name = "bvh_player",
         .src = "bvh_player/main.zig",
+        .use_ozz = true,
     },
     .{
         .name = "ozz_anim",
