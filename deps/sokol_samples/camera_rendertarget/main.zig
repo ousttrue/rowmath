@@ -1,10 +1,3 @@
-// TODO:
-//
-// - frustum
-// - gaze cross
-// - text status
-// - perse ortho
-//
 const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
@@ -177,8 +170,8 @@ export fn frame() void {
         }
         ig.igEnd();
     }
-
     //=== UI CODE ENDS HERE
+
     {
         // call sokol.imgui.render() inside a sokol-gfx pass
         state.screen.begin(null);
@@ -186,7 +179,6 @@ export fn frame() void {
 
         utils.draw_lines(&rowmath.lines.Grid(5).lines);
     }
-
     sg.commit();
 }
 

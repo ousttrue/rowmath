@@ -92,21 +92,57 @@ pub fn resize(self: *@This(), size: Vec2) void {
     self.updateProjectionMatrix();
 }
 
-pub fn ray(self: @This(), mouse_cursor: Vec2) Ray {
-    const y = std.math.tan(self.yFov / 2);
-    const x = y * self.input_state.aspect();
-    const dir = Vec3{
-        .x = x * (mouse_cursor.x / self.input_state.screen_width * 2 - 1),
-        .y = y * -(mouse_cursor.y / self.input_state.screen_height * 2 - 1),
-        .z = -1,
-    };
+pub fn getRay(self: @This(), mouse_cursor: Vec2) Ray {
+    switch (self.projection) {
+        .perspective => |perspective| {
+            // local
+            const y = std.math.tan(perspective.fov_y_radians / 2);
+            const x = y * self.getAspect();
+            const dir = Vec3{
+                .x = x * mouse_cursor.x,
+                .y = y * mouse_cursor.y,
+                .z = -1,
+            };
+            // world
+            const dir_cursor = self.transform.rotation.rotatePoint(dir.normalize());
+            return .{
+                .origin = self.transform.translation,
+                .direction = dir_cursor,
+            };
+        },
+        .orthographic => |orthographic| {
+            const dir = Vec3{
+                .x = 0,
+                .y = 0,
+                .z = -1,
+            };
+            const y = (orthographic.height / 2) * mouse_cursor.y;
+            const x = (orthographic.height / 2) * self.getAspect() * mouse_cursor.x;
+            // world
+            const dir_cursor = self.transform.rotation.rotatePoint(dir);
+            const origin_offset = self.transform.rotation.rotatePoint(Vec3{
+                .x = x,
+                .y = y,
+                .z = 0,
+            });
+            return .{
+                .origin = self.transform.translation.add(origin_offset),
+                .direction = dir_cursor,
+            };
+        },
+    }
+}
 
-    const dir_cursor = self.transform.rotation.rotatePoint(dir.normalize());
-    // std.debug.print("{d:.3}, {d:.3}, {d:.3}\n", .{dir_cursor.x, dir_cursor.y, dir_cursor.z});
-    return .{
-        .origin = self.transform.translation,
-        .direction = dir_cursor,
-    };
+pub fn getRayClip(self: @This(), ray: Ray) struct { f32, f32 } {
+    switch (self.projection) {
+        .perspective => |perspective| {
+            const f: f32 = -1.0 / self.transform.rotation.dirZ().dot(ray.direction);
+            return .{ perspective.near_clip * f, perspective.far_clip * f };
+        },
+        .orthographic => |orthographic| {
+            return .{ orthographic.near_clip, orthographic.far_clip };
+        },
+    }
 }
 
 pub fn target(self: @This()) Vec3 {

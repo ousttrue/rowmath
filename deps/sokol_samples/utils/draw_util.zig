@@ -9,6 +9,7 @@ const RgbF32 = rowmath.RgbF32;
 const Camera = rowmath.Camera;
 const InputState = rowmath.InputState;
 const DragHandle = rowmath.DragHandle;
+const Ray = rowmath.Ray;
 
 pub fn gl_begin(opts: struct { projection: Mat4, view: Mat4 }) void {
     sokol.gl.setContext(sokol.gl.defaultContext());
@@ -45,46 +46,37 @@ pub fn draw_line(v0: Vec3, v1: Vec3) void {
 }
 
 pub fn draw_camera_frustum(camera: Camera, _cursor: ?Vec2) void {
-    sokol.gl.pushMatrix();
-    defer sokol.gl.popMatrix();
-    sokol.gl.multMatrix(&camera.transform.localToWorld().m[0]);
-
-    draw_lines(&camera.frustum_lines);
+    {
+        sokol.gl.pushMatrix();
+        defer sokol.gl.popMatrix();
+        sokol.gl.multMatrix(&camera.transform.localToWorld().m[0]);
+        draw_lines(&camera.frustum_lines);
+    }
 
     // cursor
     if (_cursor) |cursor| {
-        sokol.gl.beginLines();
-        defer sokol.gl.end();
-
-        sokol.gl.c3f(1, 1, 0);
-        switch (camera.projection) {
-            .perspective => |perspective| {
-                const frustum = perspective.frustum(camera.getAspect());
-                draw_line(Vec3.zero, .{
-                    .x = frustum.far_top_right.x * cursor.x,
-                    .y = frustum.far_top_right.y * cursor.y,
-                    .z = frustum.far_top_right.z,
-                });
-            },
-            .orthographic => |orthographic| {
-                const frustum = orthographic.frustum(camera.getAspect());
-                draw_line(
-                    .{
-                        .x = frustum.near_top_right.x * cursor.x,
-                        .y = frustum.near_top_right.y * cursor.y,
-                        .z = frustum.near_top_right.z,
-                    },
-                    .{
-                        .x = frustum.far_top_right.x * cursor.x,
-                        .y = frustum.far_top_right.y * cursor.y,
-                        .z = frustum.far_top_right.z,
-                    },
-                );
-            },
-        }
+        const ray = camera.getRay(cursor);
+        const min, const max = camera.getRayClip(ray);
+        draw_ray(ray, min, max);
     }
 
     // gaze
+}
+
+pub fn draw_ray(ray: Ray, min: f32, max: f32) void {
+    sokol.gl.beginLines();
+    defer sokol.gl.end();
+
+    {
+        const v0 = ray.point(min);
+        sokol.gl.c3f(1, 1, 0);
+        sokol.gl.v3f(v0.x, v0.y, v0.z);
+    }
+    {
+        const v1 = ray.point(max);
+        sokol.gl.c3f(1, 0, 0);
+        sokol.gl.v3f(v1.x, v1.y, v1.z);
+    }
 }
 
 pub fn draw_mouse_state(input: InputState, color: RgbU8) void {
