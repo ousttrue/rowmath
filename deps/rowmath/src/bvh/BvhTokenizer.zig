@@ -1,5 +1,5 @@
 const std = @import("std");
-pub const Tokenizer = @This();
+pub const BvhTokenizer = @This();
 const Result = struct {
     token: []const u8,
     next: []const u8,
@@ -117,7 +117,7 @@ pub const test_data =
 test {
     const src = test_data;
 
-    var t = Tokenizer.init(src);
+    var t = BvhTokenizer.init(src);
 
     try std.testing.expect(t.expect("HIERARCHY", &is_space));
     try std.testing.expect(t.expect("ROOT", &is_space));

@@ -5,20 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Chrome",
+            "name": "wasm",
             "request": "launch",
             "type": "chrome",
             "url": "http://localhost:8080",
             "webRoot": "${workspaceFolder}"
         },        
         {
-            "name": "(Windows) Launch",
+            "name": "exe",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/zig-out/bin/ozz_anim.exe",
+            "program": "${workspaceFolder}/zig-out/bin/bvh_player.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/zig-out/bin",
+            "cwd": "${workspaceFolder}/zig-out/web",
             "environment": [],
             "console": "externalTerminal"
         }

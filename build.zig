@@ -36,13 +36,16 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         });
 
-        const wf = sokol_dep.namedWriteFiles("build");
-
+        const sokol_wf = sokol_dep.namedWriteFiles("build");
         const install_wf = b.addInstallDirectory(.{
-            .source_dir = wf.getDirectory(),
+            .source_dir = sokol_wf.getDirectory(),
             .install_dir = .{ .prefix = void{} },
             .install_subdir = "",
         });
+
+        const univrm_dep = b.dependency("univrm", .{});
+        const bvh = univrm_dep.path("Assets/VRM10_Samples/VRM10Viewer/Motions/vrm10viewer_test_motion.txt");
+        const install_bvh = b.addInstallFile(bvh, "web/univrm.bvh");
 
         if (target.result.isWasm()) {
             b.getInstallStep().dependOn(&install_wf.step);
@@ -53,7 +56,7 @@ pub fn build(b: *std.Build) void {
                 if (dep_step.cast(std.Build.Step.InstallArtifact)) |install_artifact| {
                     // exe
                     const run = b.addRunArtifact(install_artifact.artifact);
-                    run.setCwd(b.path("zig-out/bin"));
+                    run.setCwd(b.path("zig-out/web"));
                     run.step.dependOn(&install_artifact.step);
                     run.step.dependOn(&install_wf.step);
 
@@ -66,6 +69,7 @@ pub fn build(b: *std.Build) void {
                     b.getInstallStep().dependOn(&install.step);
                     install.step.dependOn(&install_artifact.step);
                     run.step.dependOn(&install.step);
+                    run.step.dependOn(&install_bvh.step);
                 }
             }
         }

@@ -1,14 +1,14 @@
 const std = @import("std");
-const Tokenizer = @import("Tokenizer.zig");
-const is_space = Tokenizer.is_space;
-const get_eol = Tokenizer.get_eol;
-const get_name = Tokenizer.get_name;
+const BvhTokenizer = @import("BvhTokenizer.zig");
+const is_space = BvhTokenizer.is_space;
+const get_eol = BvhTokenizer.get_eol;
+const get_name = BvhTokenizer.get_name;
 const BvhFormat = @This();
 const BvhJoint = @import("BvhJoint.zig");
 const BvhChannels = @import("BvhChannels.zig");
 const Vec3 = @import("../Vec3.zig");
 
-token: Tokenizer,
+token: BvhTokenizer,
 joints: std.ArrayList(BvhJoint),
 endsites: std.ArrayList(BvhJoint),
 frames: std.ArrayList(f32),
@@ -20,7 +20,7 @@ stack: std.ArrayList(usize),
 
 pub fn init(allocator: std.mem.Allocator, src: []const u8) @This() {
     return .{
-        .token = Tokenizer.init(src),
+        .token = BvhTokenizer.init(src),
         .joints = std.ArrayList(BvhJoint).init(allocator),
         .endsites = std.ArrayList(BvhJoint).init(allocator),
         .frames = std.ArrayList(f32).init(allocator),
@@ -74,7 +74,7 @@ pub fn parse(self: *@This()) !bool {
             return false;
         };
 
-        var line_token = Tokenizer.init(line);
+        var line_token = BvhTokenizer.init(line);
         for (0..self.channel_count) |_| {
             if (line_token.number(f32, is_space)) |value| {
                 try self.frames.append(value);
@@ -235,9 +235,57 @@ fn parseChannels(self: *@This()) ?BvhChannels {
     return channels;
 }
 
+var path_buffer: [32]u16 = undefined;
+
+fn siblingIndex(self: @This(), joint_index: u16) u16 {
+    const joint = self.joints.items[joint_index];
+    var sibling_index: u16 = 0;
+    if (joint.parent) |parent_index| {
+        // const parent = self.joints.items[parent_index];
+        for (self.joints.items, 0..) |child, child_index| {
+            if (child.parent) |child_parent_index| {
+                if (child_parent_index == parent_index) {
+                    if (child_index == joint_index) {
+                        return sibling_index;
+                    }
+                    sibling_index += 1;
+                }
+            }
+        }
+        unreachable;
+    } else {
+        return 0;
+    }
+}
+
+pub fn jointPath(self: @This(), joint_index: u16) [:std.math.maxInt(u16)]u16 {
+    var joint = self.joints.items[joint_index];
+
+    var i: usize = 0;
+    var current = joint_index;
+    while (joint.parent) |parent_index| {
+        path_buffer[i] = self.siblingIndex(@intCast(parent_index));
+        joint = self.joints.items[parent_index];
+        current = @intCast(parent_index);
+        i += 1;
+    }
+    std.mem.reverse(u16, path_buffer[0..i]);
+    path_buffer[i] = std.math.maxInt(u16);
+    return @ptrCast(path_buffer[0..i]);
+}
+
 test {
-    const src = Tokenizer.test_data;
+    const src = BvhTokenizer.test_data;
     var bvh = BvhFormat.init(std.testing.allocator, src);
     defer bvh.deinit();
     try std.testing.expect(try bvh.parse());
+
+    // for (bvh.joints.items, 0..) |_, i| {
+    //     const path = bvh.jointPath(@intCast(i));
+    //     std.debug.print("[{}]{s} => {any}\n", .{ i, bvh.joints.items[i].name, path });
+    // }
+    try std.testing.expectEqualSlices(u16, &[_]u16{}, bvh.jointPath(0));
+    try std.testing.expectEqualSlices(u16, &[_]u16{0}, bvh.jointPath(1));
+    const path = bvh.jointPath(1);
+    try std.testing.expectEqual(std.math.maxInt(u16), path[path.len]);
 }

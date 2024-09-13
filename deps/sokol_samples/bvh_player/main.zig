@@ -8,66 +8,12 @@ const MouseCamera = rowmath.MouseCamera;
 const Mat4 = rowmath.Mat4;
 const Vec3 = rowmath.Vec3;
 const Quat = rowmath.Quat;
+const bvh = rowmath.bvh;
 const cozz = @import("cozz");
 const Skeleton = cozz.framework.Skeleton;
 
-const slice_count_ = 26;
-
-// The following constants are used to define the millipede skeleton and
-// animation.
-// Skeleton constants.
-const kTransUp = Vec3{ .x = 0.0, .y = 0.0, .z = 0.0 };
-const kTransDown = Vec3{ .x = 0.0, .y = 0.0, .z = 1.0 };
-const kTransFoot = Vec3{ .x = 1.0, .y = 0.0, .z = 0.0 };
-
-const kRotLeftUp =
-    Quat.axisAngle(Vec3.up, -std.math.pi / 2.0);
-const kRotLeftDown =
-    Quat.axisAngle(Vec3.right, std.math.pi / 2.0).mul(Quat.axisAngle(Vec3.up, -std.math.pi / 2.0));
-const kRotRightUp =
-    Quat.axisAngle(Vec3.up, std.math.pi / 2.0);
-const kRotRightDown =
-    Quat.axisAngle(Vec3.right, std.math.pi / 2.0).mul(Quat.axisAngle(Vec3.up, -std.math.pi / 2.0));
-
-// Animation constants.
-const kDuration: f32 = 6.0;
-const kSpinLength: f32 = 0.5;
-const kWalkCycleLength: f32 = 2.0;
-const kWalkCycleCount = 4;
-const kSpinLoop: f32 = 2.0 * kWalkCycleCount * kWalkCycleLength / kSpinLength;
-
-// Defines a raw translation key frame.
-const TranslationKey = struct {
-    // Key frame time.
-    time: f32,
-
-    // Key frame value.
-    // typedef math::Float3 Value;
-    value: Vec3,
-
-    // Provides identity transformation for a translation key.
-    // static math::Float3 identity() { return math::Float3::zero(); }
-};
-
-const kPrecomputedKeys = [_]TranslationKey{
-    .{ .time = 0.0 * kDuration, .value = .{ .x = 0.25 * kWalkCycleLength, .y = 0.0, .z = 0.0 } },
-    .{ .time = 0.125 * kDuration, .value = .{ .x = -0.25 * kWalkCycleLength, .y = 0.0, .z = 0.0 } },
-    .{ .time = 0.145 * kDuration, .value = .{ .x = -0.17 * kWalkCycleLength, .y = 0.3, .z = 0.0 } },
-    .{ .time = 0.23 * kDuration, .value = .{ .x = 0.17 * kWalkCycleLength, .y = 0.3, .z = 0.0 } },
-    .{ .time = 0.25 * kDuration, .value = .{ .x = 0.25 * kWalkCycleLength, .y = 0.0, .z = 0.0 } },
-    .{ .time = 0.375 * kDuration, .value = .{ .x = -0.25 * kWalkCycleLength, .y = 0.0, .z = 0.0 } },
-    .{ .time = 0.395 * kDuration, .value = .{ .x = -0.17 * kWalkCycleLength, .y = 0.3, .z = 0.0 } },
-    .{ .time = 0.48 * kDuration, .value = .{ .x = 0.17 * kWalkCycleLength, .y = 0.3, .z = 0.0 } },
-    .{ .time = 0.5 * kDuration, .value = .{ .x = 0.25 * kWalkCycleLength, .y = 0.0, .z = 0.0 } },
-    .{ .time = 0.625 * kDuration, .value = .{ .x = -0.25 * kWalkCycleLength, .y = 0.0, .z = 0.0 } },
-    .{ .time = 0.645 * kDuration, .value = .{ .x = -0.17 * kWalkCycleLength, .y = 0.3, .z = 0.0 } },
-    .{ .time = 0.73 * kDuration, .value = .{ .x = 0.17 * kWalkCycleLength, .y = 0.3, .z = 0.0 } },
-    .{ .time = 0.75 * kDuration, .value = .{ .x = 0.25 * kWalkCycleLength, .y = 0.0, .z = 0.0 } },
-    .{ .time = 0.875 * kDuration, .value = .{ .x = -0.25 * kWalkCycleLength, .y = 0.0, .z = 0.0 } },
-    .{ .time = 0.895 * kDuration, .value = .{ .x = -0.17 * kWalkCycleLength, .y = 0.3, .z = 0.0 } },
-    .{ .time = 0.98 * kDuration, .value = .{ .x = 0.17 * kWalkCycleLength, .y = 0.3, .z = 0.0 } },
-};
-// const kPrecomputedKeyCount = kPrecomputedKeys.len;
+// io buffers for skeleton and animation data files, we know the max file size upfront
+var bvh_buffer = [1]u8{0} ** (4 * 1024 * 1024);
 
 const state = struct {
     var input: InputState = .{};
@@ -103,297 +49,84 @@ export fn init() void {
 
     state.camera.init();
 
-    build();
+    // setup sokol-fetch
+    sokol.fetch.setup(.{
+        .max_requests = 2,
+        .num_channels = 1,
+        .num_lanes = 2,
+        .logger = .{ .func = sokol.log.func },
+    });
+    // start loading the skeleton and animation files
+    _ = sokol.fetch.send(.{
+        .path = "univrm.bvh",
+        .callback = bvh_loaded,
+        .buffer = sokol.fetch.asRange(&bvh_buffer),
+    });
 }
 
-const JointPathPointer = [*:std.math.maxInt(u16)]const u16;
-// const JointPath= [:std.math.maxInt(u16)];
-const Current = struct {
-    list: std.ArrayList(u16),
+export fn bvh_loaded(response: [*c]const sokol.fetch.Response) void {
+    if (response.*.fetched) {
+        std.debug.print("{}bytes\n", .{response.*.data.size});
 
-    fn init(allocator: std.mem.Allocator) @This() {
-        return .{
-            .list = std.ArrayList(u16).init(allocator),
-        };
-    }
+        const p: [*]const u8 = @ptrCast(response.*.data.ptr);
+        const src: []const u8 = p[0..response.*.data.size];
 
-    fn set(self: *@This(), ptr: JointPathPointer) []u16 {
-        self.list.clearRetainingCapacity();
-        for (std.mem.span(ptr)) |i| {
-            self.list.append(i) catch unreachable;
+        // const src = bvh.BvhTokenizer.test_data;
+        var bvh_fromat = bvh.BvhFormat.init(std.heap.c_allocator, src);
+        defer bvh_fromat.deinit();
+        if (bvh_fromat.parse() catch {
+            @panic("bvh parse catched");
+        }) {
+            std.debug.print("{}joints\n", .{bvh_fromat.joints.items.len});
+            build(&bvh_fromat);
+        } else {
+            @panic("bvh parse failed");
         }
-        self.list.append(std.math.maxInt(u16)) catch unreachable;
-        return self.list.items;
-    }
-};
-
-/// A millipede slice is 2 legs and a spine.
-/// Each slice is made of 7 joints, organized as follows.
-///          * root
-///             |
-///           spine                                   spine
-///         |       |                                   |
-///     left_up    right_up        left_down - left_u - . - right_u - right_down
-///       |           |                  |                                    |
-///   left_down     right_down     left_foot         * root            right_foot
-///     |               |
-/// left_foot        right_foot
-fn create_skeleton() void {
-    const root_translation = Vec3{ .x = 0.0, .y = 1.0, .z = -slice_count_ * kSpinLength };
-    const root_rotation = Quat.identity;
-    const root_scale = Vec3.one;
-
-    var buffer: [1000]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buffer);
-    var currentList = Current.init(fba.allocator());
-
-    const _root = cozz.OZZ_raw_skeleton_add_trs(
-        state.ozz,
-        null,
-        "root",
-        &root_translation.x,
-        &root_rotation.x,
-        &root_scale.x,
-    );
-    var root = currentList.set(@ptrCast(_root));
-
-    var number: [32]u8 = undefined;
-    for (0..slice_count_) |i| {
-        // Left leg.
-        // RawSkeleton::Joint& lu = root->children[0];
-        var lu: [*:std.math.maxInt(u16)]const u16 = undefined;
-        {
-            const name = std.fmt.bufPrintZ(&number, "lu{}", .{i}) catch unreachable;
-            const translation = kTransUp;
-            const rotation = kRotLeftUp;
-            const scale = Vec3.one;
-            lu = @ptrCast(cozz.OZZ_raw_skeleton_add_trs(
-                state.ozz,
-                &root[0],
-                &name[0],
-                &translation.x,
-                &rotation.x,
-                &scale.x,
-            ));
-        }
-
-        //   lu.children.resize(1);
-        //   RawSkeleton::Joint& ld = lu.children[0];
-        var ld: [*:std.math.maxInt(u16)]const u16 = undefined;
-        {
-            const name = std.fmt.bufPrintZ(&number, "ld{}", .{i}) catch unreachable;
-            const translation = kTransDown;
-            const rotation = kRotLeftDown;
-            const scale = Vec3.one;
-            ld = @ptrCast(cozz.OZZ_raw_skeleton_add_trs(
-                state.ozz,
-                &lu[0],
-                &name[0],
-                &translation.x,
-                &rotation.x,
-                &scale.x,
-            ));
-        }
-
-        //   ld.children.resize(1);
-        //   RawSkeleton::Joint& lf = ld.children[0];
-        var lf: [*:std.math.maxInt(u16)]const u16 = undefined;
-        {
-            const name = std.fmt.bufPrintZ(&number, "lf{}", .{i}) catch unreachable;
-            const translation = Vec3.right;
-            const rotation = Quat.identity;
-            const scale = Vec3.one;
-            lf = @ptrCast(cozz.OZZ_raw_skeleton_add_trs(
-                state.ozz,
-                &ld[0],
-                &name[0],
-                &translation.x,
-                &rotation.x,
-                &scale.x,
-            ));
-        }
-
-        // Right leg.
-        //   RawSkeleton::Joint& ru = root->children[1];
-        var ru: [*:std.math.maxInt(u16)]const u16 = undefined;
-        {
-            const name = std.fmt.bufPrintZ(&number, "ru{}", .{i}) catch unreachable;
-            const translation = kTransUp;
-            const rotation = kRotRightUp;
-            const scale = Vec3.one;
-            ru = @ptrCast(cozz.OZZ_raw_skeleton_add_trs(
-                state.ozz,
-                &root[0],
-                &name[0],
-                &translation.x,
-                &rotation.x,
-                &scale.x,
-            ));
-        }
-
-        //   ru.children.resize(1);
-        //   RawSkeleton::Joint& rd = ru.children[0];
-        var rd: [*:std.math.maxInt(u16)]const u16 = undefined;
-        {
-            const name = std.fmt.bufPrintZ(&number, "rd{}", .{i}) catch unreachable;
-            const translation = kTransDown;
-            const rotation = kRotRightDown;
-            const scale = Vec3.one;
-            rd = @ptrCast(cozz.OZZ_raw_skeleton_add_trs(
-                state.ozz,
-                &ru[0],
-                &name[0],
-                &translation.x,
-                &rotation.x,
-                &scale.x,
-            ));
-        }
-
-        //   rd.children.resize(1);
-        //   RawSkeleton::Joint& rf = rd.children[0];
-        var rf: [*:std.math.maxInt(u16)]const u16 = undefined;
-        {
-            const name = std.fmt.bufPrintZ(&number, "rf{}", .{i}) catch unreachable;
-            const translation = Vec3.right;
-            const rotation = Quat.identity;
-            const scale = Vec3.one;
-            rf = @ptrCast(cozz.OZZ_raw_skeleton_add_trs(
-                state.ozz,
-                &rd[0],
-                &name[0],
-                &translation.x,
-                &rotation.x,
-                &scale.x,
-            ));
-        }
-
-        // Spine.
-        //   RawSkeleton::Joint& sp = root->children[2];
-        var sp: [*:std.math.maxInt(u16)]const u16 = undefined;
-        {
-            const name = std.fmt.bufPrintZ(&number, "sp{}", .{i}) catch unreachable;
-            const translation = Vec3{ .x = 0.0, .y = 0.0, .z = kSpinLength };
-            const rotation = Quat.identity;
-            const scale = Vec3.one;
-            sp = @ptrCast(cozz.OZZ_raw_skeleton_add_trs(
-                state.ozz,
-                &root[0],
-                &name[0],
-                &translation.x,
-                &rotation.x,
-                &scale.x,
-            ));
-        }
-
-        root = currentList.set(sp);
+    } else if (response.*.failed) {
+        @panic("bvh fetch failed");
     }
 }
 
-fn create_animation(skeleton: Skeleton) void {
+fn create_skeleton(src: *bvh.BvhFormat) void {
+    for (src.joints.items, 0..) |joint, i| {
+        const path = src.jointPath(@intCast(i));
+        std.debug.print("{s} => {any}\n", .{
+            joint.name, path,
+        });
+        _ = cozz.OZZ_raw_skeleton_add_trs(
+            state.ozz,
+            if (path.len > 0) &path[0] else null,
+            &joint.name[0],
+            &joint.local_offset.x,
+            &Quat.identity.x,
+            &Vec3.one.x,
+        );
+    }
+}
+
+fn create_animation(skeleton: Skeleton, src: *bvh.BvhFormat) void {
+    const kDuration = src.frame_time * @as(f32, @floatFromInt(src.frame_count));
     cozz.OZZ_raw_animation(state.ozz, kDuration, skeleton.joints.len);
-
-    for (skeleton.joints, 0..) |joint, i| {
-        // RawAnimation::JointTrack& track = _animation->tracks[i];
-        // const char* joint_name = skeleton_->joint_names()[i];
-
-        if (std.mem.startsWith(
-            u8,
-            std.mem.span(joint.name),
-            "ld",
-        ) or std.mem.startsWith(
-            u8,
-            std.mem.span(joint.name),
-            "rd",
-        )) {
-            const left = joint.name[0] == 'l'; // First letter of "ld".
-
-            // Copy original keys while taking into consideration the spine number
-            // as a phase.
-            const spine_number = std.fmt.parseInt(i32, std.mem.span(joint.name)[2..], 0) catch unreachable;
-            const offset = kDuration * @as(f32, @floatFromInt(slice_count_ - spine_number)) / kSpinLoop;
-            const phase = std.math.mod(f32, offset, kDuration) catch unreachable;
-
-            // Loop to find animation start.
-            var i_offset: usize = 0;
-            while (i_offset < kPrecomputedKeys.len and
-                kPrecomputedKeys[i_offset].time < phase)
-            {
-                i_offset += 1;
-            }
-
-            // Push key with their corrected time.
-            // track.translations.reserve(kPrecomputedKeyCount);
-            for (i_offset..i_offset + kPrecomputedKeys.len) |j| {
-                const rkey = kPrecomputedKeys[j % kPrecomputedKeys.len];
-                var new_time = rkey.time - phase;
-                if (new_time < 0.0) {
-                    new_time = kDuration - phase + rkey.time;
-                }
-
-                if (left) {
-                    const tkey = kTransDown.add(rkey.value);
-                    cozz.OZZ_track_push_translation(state.ozz, i, new_time, &tkey.x);
-                } else {
-                    const tkey = Vec3{
-                        .x = kTransDown.x - rkey.value.x,
-                        .y = kTransDown.y + rkey.value.y,
-                        .z = kTransDown.z + rkey.value.z,
-                    };
-                    cozz.OZZ_track_push_translation(state.ozz, i, new_time, &tkey.x);
-                }
-            }
-
-            // Pushes rotation key-frame.
-            if (left) {
-                const rkey = kRotLeftDown;
-                cozz.OZZ_track_push_rotation(state.ozz, i, 0, &rkey.x);
-            } else {
-                const rkey = kRotRightDown;
-                cozz.OZZ_track_push_rotation(state.ozz, i, 0, &rkey.x);
-            }
-        } else if (std.mem.startsWith(u8, std.mem.span(joint.name), "lu")) {
-            const tkey = kTransUp;
-            cozz.OZZ_track_push_translation(state.ozz, i, 0, &tkey.x);
-            const rkey = kRotLeftUp;
-            cozz.OZZ_track_push_rotation(state.ozz, i, 0, &rkey.x);
-        } else if (std.mem.startsWith(u8, std.mem.span(joint.name), "ru")) {
-            const tkey0 = kTransUp;
-            cozz.OZZ_track_push_translation(state.ozz, i, 0, &tkey0.x);
-            const rkey0 = kRotRightUp;
-            cozz.OZZ_track_push_rotation(state.ozz, i, 0, &rkey0.x);
-        } else if (std.mem.startsWith(u8, std.mem.span(joint.name), "lf")) {
-            const tkey = kTransFoot;
-            cozz.OZZ_track_push_translation(state.ozz, i, 0, &tkey.x);
-        } else if (std.mem.startsWith(u8, std.mem.span(joint.name), "rf")) {
-            const tkey0 = kTransFoot;
-            cozz.OZZ_track_push_translation(state.ozz, i, 0, &tkey0.x);
-        } else if (std.mem.startsWith(u8, std.mem.span(joint.name), "sp")) {
-            const skey = Vec3{ .x = 0.0, .y = 0.0, .z = kSpinLength };
-            cozz.OZZ_track_push_translation(state.ozz, i, 0, &skey.x);
-            const rkey = Quat.identity;
-            cozz.OZZ_track_push_rotation(state.ozz, i, 0, &rkey.x);
-        } else if (std.mem.startsWith(u8, std.mem.span(joint.name), "root")) {
-            const tkey0 = Vec3{
-                .x = 0.0,
-                .y = 1.0,
-                .z = -slice_count_ * kSpinLength,
-            };
-            cozz.OZZ_track_push_translation(state.ozz, i, 0, &tkey0.x);
-            const tkey1 = Vec3{
-                .x = 0.0,
-                .y = 1.0,
-                .z = kWalkCycleCount * kWalkCycleLength + tkey0.z,
-            };
-            cozz.OZZ_track_push_translation(state.ozz, i, kDuration, &tkey1.x);
+    var time: f32 = 0;
+    for (0..src.frame_count) |i| {
+        const begin = i * src.channel_count;
+        const bvh_frame = bvh.BvhFrame.init(src.frames.items[begin .. begin + src.channel_count]);
+        for (src.joints.items, 0..) |joint, j| {
+            const transform = bvh_frame.resolve(joint.channels);
+            // cm to meter
+            const pos = transform.translation.scale(0.01);
+            cozz.OZZ_track_push_rotation(state.ozz, j, time, &transform.rotation.x);
+            cozz.OZZ_track_push_translation(state.ozz, j, time, &pos.x);
         }
+        time += src.frame_time;
     }
 }
 
 // Procedurally builds millipede skeleton and walk animation
-fn build() void {
+fn build(src: *bvh.BvhFormat) void {
     // Initializes the root. The root pointer will change from a spine to the
     // next for each slice.
-    create_skeleton();
+    create_skeleton(src);
     // const num_joints = cozz.OZZ_raw_num_joints(state.ozz);
 
     // Build the run time skeleton.
@@ -417,7 +150,7 @@ fn build() void {
 
     // Build a walk animation.
     // RawAnimation raw_animation;
-    create_animation(skeleton);
+    create_animation(skeleton, src);
     // Build the run time animation from the raw animation.
     if (!cozz.OZZ_animation_build(state.ozz)) {
         @panic("OZZ_animation_build");
@@ -426,6 +159,8 @@ fn build() void {
 }
 
 export fn frame() void {
+    sokol.fetch.dowork();
+
     const fb_width = sokol.app.width();
     const fb_height = sokol.app.height();
     state.ozz_state.time.frame = sokol.app.frameDuration();
@@ -490,6 +225,7 @@ export fn input(e: [*c]const sokol.app.Event) void {
 }
 
 export fn cleanup() void {
+    sokol.fetch.shutdown();
     sokol.imgui.shutdown();
     sokol.gl.shutdown();
     sg.shutdown();

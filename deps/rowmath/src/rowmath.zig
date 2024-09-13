@@ -31,7 +31,7 @@ pub usingnamespace @import("camera_handler.zig");
 
 pub const lines = @import("lines/lines.zig");
 
-pub usingnamespace @import("bvh/bvh.zig");
+pub const bvh = @import("bvh/bvh.zig");
 
 test {
     // const std = @import("std");
@@ -47,6 +47,6 @@ test {
     _ = @import("InputState.zig");
     _ = @import("Ray.zig");
     _ = @import("Camera.zig");
-    _ = @import("bvh/Tokenizer.zig");
+    _ = @import("bvh/BvhTokenizer.zig");
     _ = @import("bvh/BvhFormat.zig");
 }

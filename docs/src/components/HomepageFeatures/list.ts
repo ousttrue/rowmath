@@ -27,4 +27,8 @@ export const list = [
     "name": "ozz animation",
     "base_name": "ozz_anim"
   },
+  {
+    "name": "ozz load bvh",
+    "base_name": "bvh_player"
+  },
 ];

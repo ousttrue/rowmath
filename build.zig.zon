@@ -11,6 +11,10 @@
         .raylib_samples = .{
             .path = "deps/raylib_samples",
         },
+        .univrm = .{
+            .url = "git+https://github.com/vrm-c/UniVRM.git#13b5c0727ab16d3406777ff1ecc2d5052a296a03",
+            .hash = "12208cbf2f2b2daf483a0cdc007874756a47faf2435e7a2f42d067efd39472b145fe",
+        },
     },
     .paths = .{
         "build.zig",
