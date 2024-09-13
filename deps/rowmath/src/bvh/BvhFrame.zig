@@ -36,15 +36,15 @@ pub fn resolve(self: @This(), channels: BvhChannels) Transform {
             },
             .Xrotation => {
                 const r = Quat.axisAngle(Vec3.right, toRadians(self.values[index]));
-                t.rotation = t.rotation.mul(r);
+                t.rotation = r.mul(t.rotation);
             },
             .Yrotation => {
                 const r = Quat.axisAngle(Vec3.up, toRadians(self.values[index]));
-                t.rotation = t.rotation.mul(r);
+                t.rotation = r.mul(t.rotation);
             },
             .Zrotation => {
                 const r = Quat.axisAngle(Vec3.forward, toRadians(self.values[index]));
-                t.rotation = t.rotation.mul(r);
+                t.rotation = r.mul(t.rotation);
             },
             .None => {},
         }

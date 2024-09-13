@@ -49,11 +49,17 @@ pub fn inverse(q: @This()) @This() {
 }
 
 pub fn mul(a: @This(), b: @This()) @This() {
+    // return .{
+    //     .x = a.x * b.w + a.w * b.x + a.y * b.z - a.z * b.y,
+    //     .y = a.y * b.w + a.w * b.y + a.z * b.x - a.x * b.z,
+    //     .z = a.z * b.w + a.w * b.z + a.x * b.y - a.y * b.x,
+    //     .w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
+    // };
     return .{
-        .x = a.x * b.w + a.w * b.x + a.y * b.z - a.z * b.y,
-        .y = a.y * b.w + a.w * b.y + a.z * b.x - a.x * b.z,
-        .z = a.z * b.w + a.w * b.z + a.x * b.y - a.y * b.x,
         .w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
+        .x = a.w * b.x + a.x * b.w + a.z * b.y - a.y * b.z,
+        .y = a.w * b.y + a.y * b.w + a.x * b.z - a.z * b.x,
+        .z = a.w * b.z + a.z * b.w + a.y * b.x - a.x * b.y,
     };
 }
 

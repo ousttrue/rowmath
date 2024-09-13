@@ -11,7 +11,6 @@ const lines = @import("lines/lines.zig");
 const Frustum = @import("Frustum.zig");
 pub const Projection = @import("camera_projection.zig").CameraProjection;
 
-
 projection: Projection = .{ .perspective = .{} },
 projection_matrix: Mat4 = Mat4.identity,
 screen: Vec2 = .{ .x = 1, .y = 1 },
@@ -51,7 +50,7 @@ pub fn updateProjectionMatrix(self: *@This()) void {
 pub fn updateTransform(self: *@This()) void {
     const yaw = Quat.axisAngle(.{ .x = 0, .y = 1, .z = 0 }, self.yaw);
     const pitch = Quat.axisAngle(.{ .x = 1, .y = 0, .z = 0 }, self.pitch);
-    self.transform.rotation = yaw.mul(pitch); //.matrix();
+    self.transform.rotation = pitch.mul(yaw); //.matrix();
     const m = Mat4.translate(self.shift).mul(self.transform.rotation.matrix());
     self.transform.translation.x = m.m[12];
     self.transform.translation.y = m.m[13];
