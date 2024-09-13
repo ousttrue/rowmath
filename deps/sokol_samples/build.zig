@@ -17,7 +17,7 @@ const emcc_extra_args = [_][]const u8{
     // default 64MB
     "-sSTACK_SIZE=128MB",
     // must TOTAL_MEMORY > STACK_SIZE
-    "-sTOTAL_MEMORY=256MB",
+    "-sTOTAL_MEMORY=512MB",
     "-sALLOW_MEMORY_GROWTH=0",
     "-sUSE_OFFSET_CONVERTER=1",
 } ++ (if (builtin.mode == .Debug) debug_flags else release_flags);
