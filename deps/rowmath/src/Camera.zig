@@ -57,9 +57,13 @@ pub fn screenMove(self: *@This(), input: InputState, prev: InputState) void {
         input.mouse_x - prev.mouse_x,
         input.mouse_y - prev.mouse_y,
     );
+    const s = switch (self.projection.projection_type) {
+        .perspective => self.shift.z,
+        .orthographic => self.projection.far_clip,
+    };
     self.shift = self.shift.add(.{
-        .x = d.x * self.shift.z,
-        .y = d.y * self.shift.z,
+        .x = d.x * s,
+        .y = d.y * s,
         .z = 0,
     });
 }

@@ -72,9 +72,9 @@ pub fn updateProjectionMatrix(self: *@This()) void {
 }
 
 pub fn screenMove(self: *@This(), dx: f32, dy: f32) Vec2 {
-    const x = dx / self.screen.y;
-    const y = dy / self.screen.y;
-    const t = std.math.tan(self.fov_y_radians / 2);
+    const x = dx / (self.screen.x);
+    const y = dy / (self.screen.y);
+    const t = std.math.tan(self.fov_y_radians / 2) * 2;
     return .{
         .x = -x * t,
         .y = y * t,
