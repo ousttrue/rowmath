@@ -64,7 +64,7 @@ fn get_or_create(self: *@This(), width: i32, height: i32) RenderTarget {
 }
 
 pub fn update(self: *@This(), input: InputState) void {
-    self.camera.resize(input.screen_size());
+    self.camera.projection.resize(input.screen_size());
     self.drag_right.frame(input);
     self.drag_middle.frame(input);
     self.camera.dolly(input.mouse_wheel);
@@ -85,7 +85,7 @@ pub fn begin(self: *@This(), _rendertarget: ?RenderTarget) void {
 
     sokol.gl.defaults();
     sokol.gl.matrixModeProjection();
-    sokol.gl.loadMatrix(&self.camera.projection_matrix.m[0]);
+    sokol.gl.loadMatrix(&self.camera.projection.matrix.m[0]);
     sokol.gl.matrixModeModelview();
     sokol.gl.loadMatrix(&self.camera.transform.worldToLocal().m[0]);
 }

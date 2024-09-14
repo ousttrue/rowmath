@@ -25,6 +25,13 @@ pub fn sub(lhs: @This(), rhs: @This()) @This() {
     };
 }
 
+pub fn scale(v: Vec2, s: f32) Vec2 {
+    return .{
+        .x = v.x * s,
+        .y = v.y * s,
+    };
+}
+
 test "Vec2" {
     try std.testing.expectEqual(8, @sizeOf(Vec2));
 

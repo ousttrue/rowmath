@@ -15,10 +15,8 @@ const state = struct {
     var screen = CameraView{
         .camera = .{
             .projection = .{
-                .perspective = .{
-                    .near_clip = 0.5,
-                    .far_clip = 15,
-                },
+                .near_clip = 0.5,
+                .far_clip = 15,
             },
             .transform = .{
                 .translation = .{
@@ -88,63 +86,56 @@ export fn frame() void {
         // bg
         _ = ig.igColorEdit3("Background", &state.screen.pass_action.colors[0].clear_value.r, ig.ImGuiColorEditFlags_None);
 
+        var updated = false;
+
+        // near / far
+        if (ig.igSliderFloat(
+            "near",
+            &state.screen.camera.projection.near_clip,
+            0,
+            state.screen.camera.projection.far_clip,
+            null,
+            0,
+        )) {
+            updated = true;
+        }
+        if (ig.igSliderFloat(
+            "far",
+            &state.screen.camera.projection.far_clip,
+            state.screen.camera.projection.near_clip,
+            100,
+            null,
+            0,
+        )) {
+            updated = true;
+        }
+
+        if (updated) {
+            state.screen.camera.projection.updateProjectionMatrix();
+        }
+
         // var mode: c_int = 0;
-        switch (state.screen.camera.projection) {
-            .perspective => |*perspective| {
+        switch (state.screen.camera.projection.projection_type) {
+            .perspective => {
                 if (ig.igRadioButton_Bool("perspective", true)) {}
                 ig.igSameLine(0, 0);
-                var updated = false;
                 if (ig.igRadioButton_Bool("orthographic", false)) {
-                    state.screen.camera.projection = Camera.Projection{
-                        .orthographic = .{
-                            .near_clip = perspective.near_clip,
-                            .far_clip = perspective.far_clip,
-                            .height = std.math.tan(perspective.fov_y_radians / 2) * perspective.far_clip * 2,
-                        },
-                    };
+                    state.screen.camera.projection.projection_type = .orthographic;
                     updated = true;
-                }
-
-                // near / far
-                if (ig.igSliderFloat("near", &perspective.near_clip, 0, perspective.far_clip, null, 0)) {
-                    updated = true;
-                }
-                if (ig.igSliderFloat("far", &perspective.far_clip, perspective.near_clip, 100, null, 0)) {
-                    updated = true;
-                }
-
-                if (updated) {
-                    state.screen.camera.updateProjectionMatrix();
                 }
             },
-            .orthographic => |*orthographic| {
-                var updated = false;
+            .orthographic => {
                 if (ig.igRadioButton_Bool("perspective", false)) {
                     // https://github.com/ziglang/zig/issues/19832
-                    state.screen.camera.projection = Camera.Projection{
-                        .perspective = .{
-                            .near_clip = orthographic.near_clip,
-                            .far_clip = orthographic.far_clip,
-                            .fov_y_radians = std.math.atan2(orthographic.height / 2, orthographic.far_clip) * 2,
-                        },
-                    };
+                    state.screen.camera.projection.projection_type = .perspective;
                     updated = true;
                 }
                 ig.igSameLine(0, 0);
                 if (ig.igRadioButton_Bool("orthographic", true)) {}
-
-                // near / far
-                if (ig.igSliderFloat("near", &orthographic.near_clip, 0, orthographic.far_clip, null, 0)) {
-                    updated = true;
-                }
-                if (ig.igSliderFloat("far", &orthographic.far_clip, orthographic.near_clip, 100, null, 0)) {
-                    updated = true;
-                }
-
-                if (updated) {
-                    state.screen.camera.updateProjectionMatrix();
-                }
             },
+        }
+        if (updated) {
+            state.screen.camera.projection.updateProjectionMatrix();
         }
     }
 

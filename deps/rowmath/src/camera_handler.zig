@@ -125,7 +125,7 @@ pub const MouseCamera = struct {
     }
 
     pub fn projectionMatrix(self: @This()) Mat4 {
-        return self.camera.projection_matrix;
+        return self.camera.projection.matrix;
     }
 
     pub fn viewMatrix(self: @This()) Mat4 {
@@ -138,7 +138,7 @@ pub const MouseCamera = struct {
 
     pub fn frame(state: *@This(), input: InputState) void {
         // update projection
-        state.camera.resize(input.screen_size());
+        state.camera.projection.resize(input.screen_size());
 
         // update transform
         state.drag_right.frame(input);

@@ -52,17 +52,19 @@ pub fn main() void {
         const screenHeight = c.GetScreenHeight();
 
         // update projection
-        rowmath_camera.resize(.{
+        rowmath_camera.projection.resize(.{
             .x = @floatFromInt(screenWidth),
             .y = @floatFromInt(screenHeight),
         });
 
-        switch (rowmath_camera.projection) {
-            .perspective => |perspective| {
-                camera.fovy = std.math.radiansToDegrees(perspective.fov_y_radians);
+        switch (rowmath_camera.projection.projection_type) {
+            .perspective => {
+                camera.fovy = std.math.radiansToDegrees(
+                    rowmath_camera.projection.fov_y_radians,
+                );
                 camera.projection = c.CAMERA_PERSPECTIVE;
             },
-            .orthographic => |_| {
+            .orthographic => {
                 // camera.fovy = std.math.radiansToDegrees(rowmath_camera.yFov);
                 camera.projection = c.CAMERA_ORTHOGRAPHIC;
             },

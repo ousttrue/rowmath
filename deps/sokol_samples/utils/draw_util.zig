@@ -50,7 +50,7 @@ pub fn draw_camera_frustum(camera: Camera, _cursor: ?Vec2) void {
         sokol.gl.pushMatrix();
         defer sokol.gl.popMatrix();
         sokol.gl.multMatrix(&camera.transform.localToWorld().m[0]);
-        draw_lines(&camera.frustum_lines);
+        draw_lines(&camera.projection.frustum_lines);
     }
 
     // cursor

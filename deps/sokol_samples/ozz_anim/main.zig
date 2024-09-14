@@ -210,7 +210,7 @@ export fn frame() void {
     // draw axis & grid
     cozz.framework.gl_begin(.{
         .view = state.camera.camera.transform.worldToLocal(),
-        .projection = state.camera.camera.projection_matrix,
+        .projection = state.camera.camera.projection.matrix,
     });
     cozz.framework.draw_axis();
     cozz.framework.draw_grid(20, 1.0);
