@@ -109,6 +109,18 @@ export fn frame() void {
         )) {
             updated = true;
         }
+        var degrees: f32 = state.screen.camera.projection.fov_y_radians / std.math.pi * 180;
+        if (ig.igSliderFloat(
+            "fov_Y",
+            &degrees,
+            1,
+            179,
+            null,
+            0,
+        )) {
+            state.screen.camera.projection.fov_y_radians = degrees * std.math.pi / 180;
+            updated = true;
+        }
 
         if (updated) {
             state.screen.camera.projection.updateProjectionMatrix();
