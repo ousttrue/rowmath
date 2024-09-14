@@ -17,7 +17,6 @@ far_clip: f32 = 50.0,
 fov_y_radians: f32 = std.math.degreesToRadians(60.0),
 projection_type: CameraProjectionType = .perspective,
 matrix: Mat4 = Mat4.identity,
-frustum_lines: [Frustum.line_num]lines.Line = undefined,
 
 /// height of far clip
 ///  +--+
@@ -53,7 +52,6 @@ pub fn updateProjectionMatrix(self: *@This()) void {
                 self.near_clip,
                 self.far_clip,
             );
-            self.frustum_lines = self.perspectiveFrustum().toLines();
         },
         .orthographic => {
             const aspect = self.getAspectRatio();
@@ -66,7 +64,6 @@ pub fn updateProjectionMatrix(self: *@This()) void {
                 self.near_clip,
                 self.far_clip,
             );
-            self.frustum_lines = self.orthographicFrustum().toLines();
         },
     }
 }
@@ -116,6 +113,7 @@ pub fn getRay(self: @This(), mouse_cursor: Vec2) Ray {
         },
     }
 }
+
 pub fn perspectiveFrustum(self: @This()) Frustum {
     const y = std.math.tan(self.fov_y_radians / 2);
     const x = y * self.getAspectRatio();

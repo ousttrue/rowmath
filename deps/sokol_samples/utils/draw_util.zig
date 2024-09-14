@@ -50,7 +50,11 @@ pub fn draw_camera_frustum(camera: Camera, _cursor: ?Vec2) void {
         sokol.gl.pushMatrix();
         defer sokol.gl.popMatrix();
         sokol.gl.multMatrix(&camera.transform.localToWorld().m[0]);
-        draw_lines(&camera.projection.frustum_lines);
+        const frustum_lines = switch (camera.projection.projection_type) {
+            .perspective => camera.projection.perspectiveFrustum().toLines(),
+            .orthographic => camera.projection.orthographicFrustum().toLines(),
+        };
+        draw_lines(&frustum_lines);
     }
 
     // cursor
@@ -60,7 +64,13 @@ pub fn draw_camera_frustum(camera: Camera, _cursor: ?Vec2) void {
         draw_ray(ray, min, max);
     }
 
-    // gaze
+    // pivot
+    {
+        sokol.gl.beginLines();
+        defer sokol.gl.end();
+        sokol.gl.c3f(1, 1, 0);
+        draw_line(camera.transform.translation, camera.pivot);
+    }
 }
 
 pub fn draw_ray(ray: Ray, min: f32, max: f32) void {

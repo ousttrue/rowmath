@@ -193,7 +193,7 @@ pub fn trs(t: Vec3, r: Quat, s: Vec3) Mat4 {
 }
 
 pub fn transformPoint(self: @This(), coord: Vec3) Vec3 {
-    const r = self.apply(Vec4.fromVec3(coord, 1));
+    const r = self.transform(Vec4.fromVec3(coord, 1));
     return .{
         .x = r.x / r.w,
         .y = r.y / r.w,
@@ -202,7 +202,7 @@ pub fn transformPoint(self: @This(), coord: Vec3) Vec3 {
 }
 
 pub fn transformDirection(self: @This(), vector: Vec3) Vec3 {
-    return self.apply(Vec4.fromVec3(vector, 0)).toVec3();
+    return self.transform(Vec4.fromVec3(vector, 0)).toVec3();
 }
 
 pub fn transform(self: @This(), v: Vec4) Vec4 {

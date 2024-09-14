@@ -15,11 +15,9 @@ projection: Projection = .{},
 // transform
 pitch: f32 = 0,
 yaw: f32 = 0,
-shift: Vec3 = .{
-    .x = 0,
-    .y = 2,
-    .z = 10,
-},
+pivot: Vec3 = .{ .x = 0, .y = 2, .z = 0 },
+shift: Vec3 = .{ .x = 0, .y = 0, .z = 10 },
+
 transform: RigidTransform = .{},
 
 pub fn viewProjectionMatrix(self: @This()) Mat4 {
@@ -30,7 +28,11 @@ pub fn updateTransform(self: *@This()) void {
     const yaw = Quat.axisAngle(.{ .x = 0, .y = 1, .z = 0 }, self.yaw);
     const pitch = Quat.axisAngle(.{ .x = 1, .y = 0, .z = 0 }, self.pitch);
     self.transform.rotation = pitch.mul(yaw); //.matrix();
-    const m = Mat4.translate(self.shift).mul(self.transform.rotation.matrix());
+    const m = Mat4.translate(self.shift).mul(
+        self.transform.rotation.matrix(),
+    ).mul(
+        Mat4.translate(self.pivot),
+    );
     self.transform.translation.x = m.m[12];
     self.transform.translation.y = m.m[13];
     self.transform.translation.z = m.m[14];
@@ -61,6 +63,9 @@ pub fn screenMove(self: *@This(), input: InputState, prev: InputState) void {
         .perspective => self.shift.z,
         .orthographic => self.projection.far_clip,
     };
+    // const x_dir = self.transform.rotation.dirX().scale(d.x * s);
+    // const y_dir = self.transform.rotation.dirY().scale(d.y * s);
+    // self.pivot = self.pivot.add(x_dir).add(y_dir);
     self.shift = self.shift.add(.{
         .x = d.x * s,
         .y = d.y * s,
