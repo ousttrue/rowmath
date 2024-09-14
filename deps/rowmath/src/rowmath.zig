@@ -30,6 +30,7 @@ pub const OrbitCamera = @import("OrbitCamera.zig");
 pub usingnamespace @import("drag_handler.zig");
 
 pub const lines = @import("lines/lines.zig");
+pub const Frustum = @import("Frustum.zig");
 
 pub const bvh = @import("bvh/bvh.zig");
 
