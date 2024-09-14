@@ -15,7 +15,7 @@
             "name": "exe",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/zig-out/bin/bvh_player.exe",
+            "program": "${workspaceFolder}/zig-out/bin/sokol_mouse.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/zig-out/web",

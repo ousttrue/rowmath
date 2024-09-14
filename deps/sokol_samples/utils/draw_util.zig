@@ -95,36 +95,6 @@ pub fn draw_mouse_state(input: InputState, color: RgbU8) void {
     );
 }
 
-pub fn draw_button(
-    name: []const u8,
-    color: RgbU8,
-    _start: ?Vec2,
-    input: InputState,
-) void {
-    sokol.debugtext.color3b(color.r, color.g, color.b);
-    sokol.gl.c3b(color.r, color.g, color.b);
-    if (_start) |start| {
-        const delta = input.cursor().sub(start);
-        sokol.debugtext.print(
-            "{s} {d:0.0}, {d:0.0} => {d:0.0}, {d:0.0}:\n",
-            .{
-                name,
-                start.x,
-                start.y,
-                delta.x,
-                delta.y,
-            },
-        );
-        sokol.gl.v3f(start.x, start.y, 0);
-        sokol.gl.v3f(input.mouse_x, input.mouse_y, 0);
-    } else {
-        sokol.debugtext.print(
-            "{s} :\n",
-            .{name},
-        );
-    }
-}
-
 pub fn inputEvent(e: [*c]const sokol.app.Event, input: *InputState) void {
     switch (e.*.type) {
         .MOUSE_DOWN => {

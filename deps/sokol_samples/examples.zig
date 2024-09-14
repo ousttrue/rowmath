@@ -36,6 +36,7 @@ pub const examples = [_]Example{
     .{
         .name = "sokol_mouse",
         .src = "mouse/main.zig",
+        .use_imgui = true,
     },
     .{
         .name = "sokol_camera_rendertarget",
