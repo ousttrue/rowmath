@@ -13,16 +13,18 @@ const state = struct {
     var allocator: std.mem.Allocator = undefined;
     // background. without render target
     var screen = CameraView{
-        .camera = .{
-            .projection = .{
-                .near_clip = 0.5,
-                .far_clip = 15,
-            },
-            .transform = .{
-                .translation = .{
-                    .x = 0,
-                    .y = 1,
-                    .z = 5,
+        .orbit = .{
+            .camera = .{
+                .projection = .{
+                    .near_clip = 0.5,
+                    .far_clip = 15,
+                },
+                .transform = .{
+                    .translation = .{
+                        .x = 0,
+                        .y = 1,
+                        .z = 5,
+                    },
                 },
             },
         },
@@ -30,9 +32,11 @@ const state = struct {
     var view1_cursor: Vec2 = .{ .x = 0, .y = 0 };
 
     var subview = CameraView{
-        .camera = .{
-            .transform = .{
-                .translation = .{ .x = 0, .y = 1, .z = 15 },
+        .orbit = .{
+            .camera = .{
+                .transform = .{
+                    .translation = .{ .x = 0, .y = 1, .z = 15 },
+                },
             },
         },
     };
@@ -74,7 +78,7 @@ export fn frame() void {
     });
 
     const input = CameraView.inputFromScreen();
-    state.screen.update(input);
+    state.screen.orbit.frame(input);
 
     //=== UI CODE STARTS HERE
     {
@@ -91,9 +95,9 @@ export fn frame() void {
         // near / far
         if (ig.igSliderFloat(
             "near",
-            &state.screen.camera.projection.near_clip,
+            &state.screen.orbit.camera.projection.near_clip,
             0,
-            state.screen.camera.projection.far_clip,
+            state.screen.orbit.camera.projection.far_clip,
             null,
             0,
         )) {
@@ -101,15 +105,15 @@ export fn frame() void {
         }
         if (ig.igSliderFloat(
             "far",
-            &state.screen.camera.projection.far_clip,
-            state.screen.camera.projection.near_clip,
+            &state.screen.orbit.camera.projection.far_clip,
+            state.screen.orbit.camera.projection.near_clip,
             100,
             null,
             0,
         )) {
             updated = true;
         }
-        var degrees: f32 = state.screen.camera.projection.fov_y_radians / std.math.pi * 180;
+        var degrees: f32 = state.screen.orbit.camera.projection.fov_y_radians / std.math.pi * 180;
         if (ig.igSliderFloat(
             "fov_Y",
             &degrees,
@@ -118,28 +122,28 @@ export fn frame() void {
             null,
             0,
         )) {
-            state.screen.camera.projection.fov_y_radians = degrees * std.math.pi / 180;
+            state.screen.orbit.camera.projection.fov_y_radians = degrees * std.math.pi / 180;
             updated = true;
         }
 
         if (updated) {
-            state.screen.camera.projection.updateProjectionMatrix();
+            state.screen.orbit.camera.projection.updateProjectionMatrix();
         }
 
         // var mode: c_int = 0;
-        switch (state.screen.camera.projection.projection_type) {
+        switch (state.screen.orbit.camera.projection.projection_type) {
             .perspective => {
                 if (ig.igRadioButton_Bool("perspective", true)) {}
                 ig.igSameLine(0, 0);
                 if (ig.igRadioButton_Bool("orthographic", false)) {
-                    state.screen.camera.projection.projection_type = .orthographic;
+                    state.screen.orbit.camera.projection.projection_type = .orthographic;
                     updated = true;
                 }
             },
             .orthographic => {
                 if (ig.igRadioButton_Bool("perspective", false)) {
                     // https://github.com/ziglang/zig/issues/19832
-                    state.screen.camera.projection.projection_type = .perspective;
+                    state.screen.orbit.camera.projection.projection_type = .perspective;
                     updated = true;
                 }
                 ig.igSameLine(0, 0);
@@ -147,7 +151,7 @@ export fn frame() void {
             },
         }
         if (updated) {
-            state.screen.camera.projection.updateProjectionMatrix();
+            state.screen.orbit.camera.projection.updateProjectionMatrix();
         }
     }
 
@@ -168,7 +172,10 @@ export fn frame() void {
                 // grid
                 utils.draw_lines(&rowmath.lines.Grid(5).lines);
                 // frustum
-                utils.draw_camera_frustum(state.screen.camera, input.cursorScreenPosition());
+                utils.draw_camera_frustum(
+                    state.screen.orbit,
+                    input.cursorScreenPosition(),
+                );
             }
         }
         ig.igEnd();

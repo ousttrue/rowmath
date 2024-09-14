@@ -11,7 +11,7 @@ const rowmath = @import("rowmath");
 const Vec3 = rowmath.Vec3;
 const Mat4 = rowmath.Mat4;
 const Quat = rowmath.Quat;
-const MouseCamera = rowmath.MouseCamera;
+const OrbitCamera = rowmath.OrbitCamera;
 const InputState = rowmath.InputState;
 const sokol = @import("sokol");
 const sg = sokol.gfx;
@@ -26,7 +26,7 @@ const Skeleton = cozz.framework.Skeleton;
 
 const state = struct {
     var input: InputState = .{};
-    var camera: MouseCamera = .{};
+    var orbit: OrbitCamera = .{};
     var pass_action = sg.PassAction{};
     var cuber = Cuber(512){};
     var ozz: ?*cozz.ozz_t = null;
@@ -111,7 +111,7 @@ export fn init() void {
     state.pass_action.colors[0].clear_value = .{ .r = 0.0, .g = 0.1, .b = 0.2, .a = 1.0 };
 
     // initialize camera helper
-    state.camera.init();
+    state.orbit.init();
     state.cuber.init();
 
     // start loading the skeleton and animation files
@@ -163,7 +163,7 @@ export fn frame() void {
     // update camera
     state.input.screen_width = sokol.app.widthf();
     state.input.screen_height = sokol.app.heightf();
-    state.camera.frame(state.input);
+    state.orbit.frame(state.input);
     state.input.mouse_wheel = 0;
 
     simgui.newFrame(.{
@@ -209,8 +209,8 @@ export fn frame() void {
 
     // draw axis & grid
     cozz.framework.gl_begin(.{
-        .view = state.camera.camera.transform.worldToLocal(),
-        .projection = state.camera.camera.projection.matrix,
+        .view = state.orbit.camera.transform.worldToLocal(),
+        .projection = state.orbit.camera.projection.matrix,
     });
     cozz.framework.draw_axis();
     cozz.framework.draw_grid(20, 1.0);
@@ -224,18 +224,6 @@ export fn frame() void {
         defer sg.endPass();
 
         {
-            // utils.gl_begin(.{
-            //     .projection = state.camera.projectionMatrix(),
-            //     .view = state.camera.viewMatrix(),
-            // });
-            // defer utils.gl_end();
-            //
-            // // grid
-            // utils.draw_lines(&rowmath.lines.Grid(5).lines);
-            // skeleton
-            // if (state.loaded.skeleton) {
-            //     ozz_draw.draw_skeleton(state.ozz);
-            // }
             cozz.framework.gl_draw();
             if (state.ozz_state.loaded.skeleton) |skeleton| {
                 if (state.ozz_state.loaded.animation) {
@@ -246,7 +234,7 @@ export fn frame() void {
 
                 const matrices: [*]const Mat4 = @ptrCast(cozz.OZZ_model_matrices(state.ozz));
                 skeleton.draw(
-                    state.camera.viewProjectionMatrix(),
+                    state.orbit.viewProjectionMatrix(),
                     matrices,
                 );
             }
@@ -254,7 +242,7 @@ export fn frame() void {
 
         sokol.gl.draw();
         simgui.render();
-        state.cuber.draw(state.camera.viewProjectionMatrix());
+        state.cuber.draw(state.orbit.viewProjectionMatrix());
     }
     sg.commit();
 }
@@ -291,30 +279,6 @@ fn draw_ui() void {
             ig.igText("Camera Controls:");
             ig.igText("  LMB + Mouse Move: Look");
             ig.igText("  Mouse Wheel: Zoom");
-            // ig.igSliderFloat(
-            //     "Distance",
-            //     &state.camera.distance,
-            //     state.camera.min_dist,
-            //     state.camera.max_dist,
-            //     "%.1f",
-            //     1.0,
-            // );
-            // ig.igSliderFloat(
-            //     "Latitude",
-            //     &state.camera.latitude,
-            //     state.camera.min_lat,
-            //     state.camera.max_lat,
-            //     "%.1f",
-            //     1.0,
-            // );
-            // ig.igSliderFloat(
-            //     "Longitude",
-            //     &state.camera.longitude,
-            //     0.0,
-            //     360.0,
-            //     "%.1f",
-            //     1.0,
-            // );
             ig.igSeparator();
             ig.igText("Time Controls:");
             _ = ig.igCheckbox("Paused", &state.ozz_state.time.paused);

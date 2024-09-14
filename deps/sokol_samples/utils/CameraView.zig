@@ -3,7 +3,7 @@ const builtin = @import("builtin");
 const sg = sokol.gfx;
 const rowmath = @import("rowmath");
 const Vec2 = rowmath.Vec2;
-const Camera = rowmath.Camera;
+const OrbitCamera = rowmath.OrbitCamera;
 const InputState = rowmath.InputState;
 const ig = @import("cimgui");
 const RenderTarget = @import("RenderTarget.zig");
@@ -11,9 +11,7 @@ pub const RenderView = @This();
 
 extern fn Custom_ButtonBehaviorMiddleRight() void;
 
-camera: Camera = Camera{},
-drag_right: rowmath.CameraRightDragHandler = undefined,
-drag_middle: rowmath.CameraMiddleDragHandler = undefined,
+orbit: OrbitCamera = .{},
 
 pip: sg.Pipeline = .{},
 pass_action: sg.PassAction = .{
@@ -32,6 +30,7 @@ sgl_ctx: sokol.gl.Context = .{},
 rendertarget: ?RenderTarget = null,
 
 pub fn init(self: *@This()) void {
+    self.orbit.init();
     // create a sokol-gl context compatible with the view1 render pass
     // (specific color pixel format, no depth-stencil-surface, no MSAA)
     self.sgl_ctx = sokol.gl.makeContext(.{
@@ -41,8 +40,6 @@ pub fn init(self: *@This()) void {
         .depth_format = .DEPTH,
         .sample_count = 1,
     });
-    self.drag_right = rowmath.makeYawPitchHandler(.right, &self.camera);
-    self.drag_middle = rowmath.makeScreenMoveHandler(.middle, &self.camera);
 }
 
 pub const RenderTargetImageButtonContext = struct {
@@ -63,14 +60,6 @@ fn get_or_create(self: *@This(), width: i32, height: i32) RenderTarget {
     return rendertarget;
 }
 
-pub fn update(self: *@This(), input: InputState) void {
-    self.camera.projection.resize(input.screen_size());
-    self.drag_right.frame(input);
-    self.drag_middle.frame(input);
-    self.camera.dolly(input.mouse_wheel);
-    self.camera.updateTransform();
-}
-
 pub fn begin(self: *@This(), _rendertarget: ?RenderTarget) void {
     if (_rendertarget) |rendertarget| {
         sg.beginPass(rendertarget.pass);
@@ -85,9 +74,9 @@ pub fn begin(self: *@This(), _rendertarget: ?RenderTarget) void {
 
     sokol.gl.defaults();
     sokol.gl.matrixModeProjection();
-    sokol.gl.loadMatrix(&self.camera.projection.matrix.m[0]);
+    sokol.gl.loadMatrix(&self.orbit.camera.projection.matrix.m[0]);
     sokol.gl.matrixModeModelview();
-    sokol.gl.loadMatrix(&self.camera.transform.worldToLocal().m[0]);
+    sokol.gl.loadMatrix(&self.orbit.camera.transform.worldToLocal().m[0]);
 }
 
 pub fn end(self: *@This(), _rendertarget: ?RenderTarget) void {
@@ -172,7 +161,7 @@ pub fn beginImageButton(self: *@This()) ?RenderTargetImageButtonContext {
 
     Custom_ButtonBehaviorMiddleRight();
     const input = inputFromRendertarget(pos, size);
-    self.update(input);
+    self.orbit.frame(input);
 
     // render offscreen
     self.begin(rendertarget);

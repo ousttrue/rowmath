@@ -6,7 +6,7 @@ const Vec3 = rowmath.Vec3;
 const Mat4 = rowmath.Mat4;
 const RgbU8 = rowmath.RgbU8;
 const RgbF32 = rowmath.RgbF32;
-const Camera = rowmath.Camera;
+const OrbitCamera = rowmath.OrbitCamera;
 const InputState = rowmath.InputState;
 const DragHandle = rowmath.DragHandle;
 const Ray = rowmath.Ray;
@@ -45,22 +45,22 @@ pub fn draw_line(v0: Vec3, v1: Vec3) void {
     sokol.gl.v3f(v1.x, v1.y, v1.z);
 }
 
-pub fn draw_camera_frustum(camera: Camera, _cursor: ?Vec2) void {
+pub fn draw_camera_frustum(orbit: OrbitCamera, _cursor: ?Vec2) void {
     {
         sokol.gl.pushMatrix();
         defer sokol.gl.popMatrix();
-        sokol.gl.multMatrix(&camera.transform.localToWorld().m[0]);
-        const frustum_lines = switch (camera.projection.projection_type) {
-            .perspective => camera.projection.perspectiveFrustum().toLines(),
-            .orthographic => camera.projection.orthographicFrustum().toLines(),
+        sokol.gl.multMatrix(&orbit.camera.transform.localToWorld().m[0]);
+        const frustum_lines = switch (orbit.camera.projection.projection_type) {
+            .perspective => orbit.camera.projection.perspectiveFrustum().toLines(),
+            .orthographic => orbit.camera.projection.orthographicFrustum().toLines(),
         };
         draw_lines(&frustum_lines);
     }
 
     // cursor
     if (_cursor) |cursor| {
-        const ray = camera.getRay(cursor);
-        const min, const max = camera.getRayClip(ray);
+        const ray = orbit.camera.getRay(cursor);
+        const min, const max = orbit.camera.getRayClip(ray);
         draw_ray(ray, min, max);
     }
 
@@ -69,7 +69,7 @@ pub fn draw_camera_frustum(camera: Camera, _cursor: ?Vec2) void {
         sokol.gl.beginLines();
         defer sokol.gl.end();
         sokol.gl.c3f(1, 1, 0);
-        draw_line(camera.transform.translation, camera.pivot);
+        draw_line(orbit.camera.transform.translation, orbit.pivot);
     }
 }
 

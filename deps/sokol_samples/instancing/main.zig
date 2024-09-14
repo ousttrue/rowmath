@@ -16,7 +16,7 @@ const Cuber = cuber.Cuber(4);
 const state = struct {
     var pass_action = sg.PassAction{};
     var input = rowmath.InputState{};
-    var camera = rowmath.MouseCamera{};
+    var orbit = rowmath.OrbitCamera{};
 
     var cuber = Cuber{};
 };
@@ -36,15 +36,15 @@ export fn init() void {
         .clear_value = .{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 },
     };
 
-    state.camera.init();
+    state.orbit.init();
     state.cuber.init();
 }
 
 export fn frame() void {
-    // update camera
+    // update orbit
     state.input.screen_width = sokol.app.widthf();
     state.input.screen_height = sokol.app.heightf();
-    state.camera.frame(state.input);
+    state.orbit.frame(state.input);
     state.input.mouse_wheel = 0;
 
     // update instance data
@@ -66,15 +66,15 @@ export fn frame() void {
         {
             // grid
             utils.gl_begin(.{
-                .projection = state.camera.projectionMatrix(),
-                .view = state.camera.viewMatrix(),
+                .projection = state.orbit.projectionMatrix(),
+                .view = state.orbit.viewMatrix(),
             });
             defer utils.gl_end();
 
             utils.draw_lines(&rowmath.lines.Grid(5).lines);
         }
 
-        state.cuber.draw(state.camera.viewProjectionMatrix());
+        state.cuber.draw(state.orbit.viewProjectionMatrix());
     }
     sg.commit();
 }

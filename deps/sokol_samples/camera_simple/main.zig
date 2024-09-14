@@ -7,7 +7,7 @@ const utils = @import("utils");
 const state = struct {
     var pass_action = sg.PassAction{};
     var input = rowmath.InputState{};
-    var camera = rowmath.MouseCamera{};
+    var orbit = rowmath.OrbitCamera{};
 };
 
 export fn init() void {
@@ -29,19 +29,19 @@ export fn init() void {
     debugtext_desc.fonts[0] = sokol.debugtext.fontOric();
     sokol.debugtext.setup(debugtext_desc);
 
-    state.camera.init();
+    state.orbit.init();
 }
 
 export fn frame() void {
     state.input.screen_width = sokol.app.widthf();
     state.input.screen_height = sokol.app.heightf();
-    state.camera.frame(state.input);
+    state.orbit.frame(state.input);
     state.input.mouse_wheel = 0;
 
     sokol.debugtext.canvas(sokol.app.widthf() * 0.5, sokol.app.heightf() * 0.5);
     sokol.debugtext.pos(0.5, 0.5);
     sokol.debugtext.puts(
-        \\mouse camera:
+        \\orbit camera:
         \\
         \\  right drag : yaw, pitch
         \\  middle drag: shift
@@ -53,8 +53,8 @@ export fn frame() void {
         .swapchain = sokol.glue.swapchain(),
     });
     utils.gl_begin(.{
-        .projection = state.camera.projectionMatrix(),
-        .view = state.camera.viewMatrix(),
+        .projection = state.orbit.projectionMatrix(),
+        .view = state.orbit.viewMatrix(),
     });
     utils.draw_lines(&rowmath.lines.Grid(5).lines);
     utils.gl_end();

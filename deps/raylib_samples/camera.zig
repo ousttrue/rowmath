@@ -38,9 +38,7 @@ pub fn main() void {
 
     // Define the camera to look into our 3d world
     var camera = c.Camera{};
-    var rowmath_camera = rowmath.Camera{};
-    var right_drag = rowmath.makeYawPitchHandler(.right, &rowmath_camera);
-    var middle_drag = rowmath.makeScreenMoveHandler(.middle, &rowmath_camera);
+    var orbit = rowmath.OrbitCamera{};
 
     c.SetTargetFPS(60); // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -52,23 +50,15 @@ pub fn main() void {
         const screenHeight = c.GetScreenHeight();
 
         // update projection
-        rowmath_camera.projection.resize(.{
+        orbit.camera.projection.resize(.{
             .x = @floatFromInt(screenWidth),
             .y = @floatFromInt(screenHeight),
         });
 
-        switch (rowmath_camera.projection.projection_type) {
-            .perspective => {
-                camera.fovy = std.math.radiansToDegrees(
-                    rowmath_camera.projection.fov_y_radians,
-                );
-                camera.projection = c.CAMERA_PERSPECTIVE;
-            },
-            .orthographic => {
-                // camera.fovy = std.math.radiansToDegrees(rowmath_camera.yFov);
-                camera.projection = c.CAMERA_ORTHOGRAPHIC;
-            },
-        }
+        camera.fovy = std.math.radiansToDegrees(
+            orbit.camera.projection.fov_y_radians,
+        );
+        camera.projection = c.CAMERA_PERSPECTIVE;
 
         // update transform
         const input = rowmath.InputState{
@@ -81,14 +71,11 @@ pub fn main() void {
             .mouse_right = c.IsMouseButtonDown(c.MOUSE_BUTTON_RIGHT),
             .mouse_wheel = c.GetMouseWheelMove(),
         };
-        right_drag.frame(input);
-        middle_drag.frame(input);
-        rowmath_camera.dolly(input.mouse_wheel);
-        rowmath_camera.updateTransform();
+        orbit.frame(input);
 
-        camera.up = to_raylib(rowmath_camera.transform.rotation.dirY());
-        camera.position = to_raylib(rowmath_camera.transform.translation);
-        camera.target = to_raylib(rowmath_camera.target());
+        camera.up = to_raylib(orbit.camera.transform.rotation.dirY());
+        camera.position = to_raylib(orbit.camera.transform.translation);
+        camera.target = to_raylib(orbit.target());
 
         // Update
         //----------------------------------------------------------------------------------

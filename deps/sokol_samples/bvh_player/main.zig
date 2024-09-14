@@ -4,7 +4,7 @@ const sg = sokol.gfx;
 const cimgui = @import("cimgui");
 const rowmath = @import("rowmath");
 const InputState = rowmath.InputState;
-const MouseCamera = rowmath.MouseCamera;
+const OrbitCamera = rowmath.OrbitCamera;
 const Mat4 = rowmath.Mat4;
 const Vec3 = rowmath.Vec3;
 const Quat = rowmath.Quat;
@@ -17,7 +17,7 @@ var bvh_buffer = [1]u8{0} ** (4 * 1024 * 1024);
 
 const state = struct {
     var input: InputState = .{};
-    var camera: MouseCamera = .{};
+    var orbit: OrbitCamera = .{};
     var ozz: ?*cozz.ozz_t = null;
     var pass_action = sg.PassAction{};
     var ozz_state = cozz.framework.State{};
@@ -47,7 +47,7 @@ export fn init() void {
         .clear_value = .{ .r = 0.0, .g = 0.1, .b = 0.2, .a = 1.0 },
     };
 
-    state.camera.init();
+    state.orbit.init();
 
     // setup sokol-fetch
     sokol.fetch.setup(.{
@@ -165,10 +165,10 @@ export fn frame() void {
     const fb_height = sokol.app.height();
     state.ozz_state.time.frame = sokol.app.frameDuration();
 
-    // update camera
+    // update orbit
     state.input.screen_width = sokol.app.widthf();
     state.input.screen_height = sokol.app.heightf();
-    state.camera.frame(state.input);
+    state.orbit.frame(state.input);
     state.input.mouse_wheel = 0;
 
     // draw ui
@@ -178,12 +178,12 @@ export fn frame() void {
         .delta_time = state.ozz_state.time.frame,
         .dpi_scale = sokol.app.dpiScale(),
     });
-    cozz.framework.draw_ui(&state.ozz_state, &state.camera.camera);
+    cozz.framework.draw_ui(&state.ozz_state, &state.orbit);
 
     // draw axis & grid
     cozz.framework.gl_begin(.{
-        .view = state.camera.camera.transform.worldToLocal(),
-        .projection = state.camera.camera.projection.matrix,
+        .view = state.orbit.camera.transform.worldToLocal(),
+        .projection = state.orbit.camera.projection.matrix,
     });
     cozz.framework.draw_axis();
     cozz.framework.draw_grid(20, 1.0);
@@ -207,7 +207,7 @@ export fn frame() void {
 
             const matrices: [*]const Mat4 = @ptrCast(cozz.OZZ_model_matrices(state.ozz));
             skeleton.draw(
-                state.camera.viewProjectionMatrix(),
+                state.orbit.viewProjectionMatrix(),
                 matrices,
             );
         }
