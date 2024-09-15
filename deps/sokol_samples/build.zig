@@ -22,129 +22,14 @@ const emcc_extra_args = [_][]const u8{
     "-sUSE_OFFSET_CONVERTER=1",
 } ++ (if (builtin.mode == .Debug) debug_flags else release_flags);
 
-const BuildExampleOptions = struct {
-    utils: *std.Build.Module,
-    cuber: *std.Build.Module,
-    rowmath_mod: *std.Build.Module,
-    cimgui_dep: *std.Build.Dependency,
-    sokol_dep: *std.Build.Dependency,
-    ozz_dep: *std.Build.Dependency,
-    ozz_wf: *std.Build.Step.WriteFile,
-    cozz_lib: *std.Build.Step.Compile,
-
-    fn inject(self: @This(), compile: *std.Build.Step.Compile) void {
-        compile.root_module.addImport("sokol", self.sokol_dep.module("sokol"));
-        compile.root_module.addImport("rowmath", self.rowmath_mod);
-        compile.root_module.addImport("cimgui", self.cimgui_dep.module("cimgui"));
-        compile.root_module.addImport("utils", self.utils);
-        compile.root_module.addImport("cuber", self.cuber);
-        compile.root_module.addImport("cozz", &self.cozz_lib.root_module);
-    }
-
-    fn injectWasmSysRoot(
-        self: @This(),
-        emsdk: *std.Build.Dependency,
-        // compile: *std.Build.Step.Compile,
-    ) void {
-        // need to inject the Emscripten system header include path into
-        // the cimgui C library otherwise the C/C++ code won't find
-        // C stdlib headers
-        const emsdk_incl_path = emsdk.path("upstream/emscripten/cache/sysroot/include");
-        self.cimgui.artifact("cimgui_clib").addSystemIncludePath(emsdk_incl_path);
-
-        // all C libraries need to depend on the sokol library, when building for
-        // WASM this makes sure that the Emscripten SDK has been setup before
-        // C compilation is attempted (since the sokol C library depends on the
-        // Emscripten SDK setup step)
-        self.cimgui.artifact("cimgui_clib").step.dependOn(&self.dep_sokol.artifact("sokol_clib").step);
-    }
-};
-fn build_example(
-    b: *std.Build,
-    _emsdk: ?*std.Build.Dependency,
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
-    example: Example,
-    opts: BuildExampleOptions,
-    out_wf: *std.Build.Step.WriteFile,
-) *std.Build.Step.Compile {
-    if (_emsdk) |emsdk| {
-        const lib = b.addStaticLibrary(.{
-            .target = target,
-            .optimize = optimize,
-            .name = example.name,
-            .root_source_file = b.path(example.src),
-            .pic = true,
-        });
-        lib.addIncludePath(opts.ozz_dep.path(""));
-        example.injectShader(b, target, lib);
-        // inject dependency(must inject before emLinkStep)
-        opts.inject(lib);
-
-        // create a build step which invokes the Emscripten linker
-        const emcc = try emsdk_zig.emLinkCommand(b, emsdk, .{
-            .lib_main = lib,
-            .target = target,
-            .optimize = optimize,
-            .use_webgl2 = true,
-            .use_emmalloc = true,
-            .use_filesystem = true,
-            .shell_file_path = opts.sokol_dep.path("src/sokol/web/shell.html").getPath(b),
-            .release_use_closure = false,
-            .extra_before = &emcc_extra_args,
-        });
-
-        emcc.addArg("-o");
-        const out_file = emcc.addOutputFileArg(b.fmt("{s}.html", .{lib.name}));
-        if (example.use_ozz) {
-            emcc.addArg("-sMAIN_MODULE=1");
-            emcc.addFileArg(opts.ozz_wf.getDirectory().path(b, "web/cozz.wasm"));
-            emcc.addArg("-sERROR_ON_UNDEFINED_SYMBOLS=0");
-        }
-
-        _ = out_wf.addCopyDirectory(out_file.dirname(), "web", .{});
-
-        if (_emsdk) |emsdk_dep| {
-            const emsdk_incl_path = emsdk_dep.path(
-                "upstream/emscripten/cache/sysroot/include",
-            );
-            lib.addSystemIncludePath(emsdk_incl_path);
-        }
-
-        return lib;
-    } else {
-        const exe = b.addExecutable(.{
-            .target = target,
-            .optimize = optimize,
-            .name = example.name,
-            .root_source_file = b.path(example.src),
-        });
-        exe.addIncludePath(opts.ozz_dep.path(""));
-        b.installArtifact(exe);
-
-        example.injectShader(b, target, exe);
-
-        // inject dependency
-        opts.inject(exe);
-
-        if (example.use_ozz) {
-            const libdir = opts.ozz_wf.getDirectory().path(b, "lib");
-            exe.addLibraryPath(libdir);
-            exe.linkSystemLibrary("cozz");
-        }
-
-        return exe;
-    }
-}
-
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const rowmath_dep = b.dependency(
-        "rowmath",
-        .{},
-    );
+    const rowmath_dep = b.dependency("rowmath", .{
+        .target = target,
+        .optimize = optimize,
+    });
     const rowmath_mod = rowmath_dep.module("rowmath");
 
     const sokol_dep = b.dependency("sokol", .{
@@ -260,6 +145,121 @@ pub fn build(b: *std.Build) void {
             );
             compile.step.dependOn(&shader.step);
         }
+    }
+}
+
+const BuildExampleOptions = struct {
+    utils: *std.Build.Module,
+    cuber: *std.Build.Module,
+    rowmath_mod: *std.Build.Module,
+    cimgui_dep: *std.Build.Dependency,
+    sokol_dep: *std.Build.Dependency,
+    ozz_dep: *std.Build.Dependency,
+    ozz_wf: *std.Build.Step.WriteFile,
+    cozz_lib: *std.Build.Step.Compile,
+
+    fn inject(self: @This(), compile: *std.Build.Step.Compile) void {
+        compile.root_module.addImport("sokol", self.sokol_dep.module("sokol"));
+        compile.root_module.addImport("rowmath", self.rowmath_mod);
+        compile.root_module.addImport("cimgui", self.cimgui_dep.module("cimgui"));
+        compile.root_module.addImport("utils", self.utils);
+        compile.root_module.addImport("cuber", self.cuber);
+        compile.root_module.addImport("cozz", &self.cozz_lib.root_module);
+    }
+
+    fn injectWasmSysRoot(
+        self: @This(),
+        emsdk: *std.Build.Dependency,
+        // compile: *std.Build.Step.Compile,
+    ) void {
+        // need to inject the Emscripten system header include path into
+        // the cimgui C library otherwise the C/C++ code won't find
+        // C stdlib headers
+        const emsdk_incl_path = emsdk.path("upstream/emscripten/cache/sysroot/include");
+        self.cimgui.artifact("cimgui_clib").addSystemIncludePath(emsdk_incl_path);
+
+        // all C libraries need to depend on the sokol library, when building for
+        // WASM this makes sure that the Emscripten SDK has been setup before
+        // C compilation is attempted (since the sokol C library depends on the
+        // Emscripten SDK setup step)
+        self.cimgui.artifact("cimgui_clib").step.dependOn(&self.dep_sokol.artifact("sokol_clib").step);
+    }
+};
+fn build_example(
+    b: *std.Build,
+    _emsdk: ?*std.Build.Dependency,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    example: Example,
+    opts: BuildExampleOptions,
+    out_wf: *std.Build.Step.WriteFile,
+) *std.Build.Step.Compile {
+    if (_emsdk) |emsdk| {
+        const lib = b.addStaticLibrary(.{
+            .target = target,
+            .optimize = optimize,
+            .name = example.name,
+            .root_source_file = b.path(example.src),
+            .pic = true,
+        });
+        lib.addIncludePath(opts.ozz_dep.path(""));
+        example.injectShader(b, target, lib);
+        // inject dependency(must inject before emLinkStep)
+        opts.inject(lib);
+
+        // create a build step which invokes the Emscripten linker
+        const emcc = try emsdk_zig.emLinkCommand(b, emsdk, .{
+            .lib_main = lib,
+            .target = target,
+            .optimize = optimize,
+            .use_webgl2 = true,
+            .use_emmalloc = true,
+            .use_filesystem = true,
+            .shell_file_path = opts.sokol_dep.path("src/sokol/web/shell.html").getPath(b),
+            .release_use_closure = false,
+            .extra_before = &emcc_extra_args,
+        });
+
+        emcc.addArg("-o");
+        const out_file = emcc.addOutputFileArg(b.fmt("{s}.html", .{lib.name}));
+        if (example.use_ozz) {
+            emcc.addArg("-sMAIN_MODULE=1");
+            emcc.addFileArg(opts.ozz_wf.getDirectory().path(b, "web/cozz.wasm"));
+            emcc.addArg("-sERROR_ON_UNDEFINED_SYMBOLS=0");
+        }
+
+        _ = out_wf.addCopyDirectory(out_file.dirname(), "web", .{});
+
+        if (_emsdk) |emsdk_dep| {
+            const emsdk_incl_path = emsdk_dep.path(
+                "upstream/emscripten/cache/sysroot/include",
+            );
+            lib.addSystemIncludePath(emsdk_incl_path);
+        }
+
+        return lib;
+    } else {
+        const exe = b.addExecutable(.{
+            .target = target,
+            .optimize = optimize,
+            .name = example.name,
+            .root_source_file = b.path(example.src),
+        });
+        exe.addIncludePath(opts.ozz_dep.path(""));
+        b.installArtifact(exe);
+
+        example.injectShader(b, target, exe);
+
+        // inject dependency
+        opts.inject(exe);
+
+        if (example.use_ozz) {
+            const libdir = opts.ozz_wf.getDirectory().path(b, "lib");
+            exe.addLibraryPath(libdir);
+            exe.linkSystemLibrary("cozz");
+        }
+
+        return exe;
     }
 }
 
