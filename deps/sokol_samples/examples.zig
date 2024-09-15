@@ -48,8 +48,18 @@ pub const examples = [_]Example{
         .use_imgui = true,
     },
     .{
-        .name = "gizmo",
-        .src = "gizmo/main.zig",
+        .name = "gizmo_translation",
+        .src = "gizmo_translation/main.zig",
+        .use_imgui = true,
+    },
+    .{
+        .name = "gizmo_rotation",
+        .src = "gizmo_rotation/main.zig",
+        .use_imgui = true,
+    },
+    .{
+        .name = "gizmo_scaling",
+        .src = "gizmo_scaling/main.zig",
         .use_imgui = true,
     },
 };

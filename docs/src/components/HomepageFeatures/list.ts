@@ -16,11 +16,19 @@ export const list = [
     "base_name": "sokol_camera_rendertarget"
   },
   {
-    "name": "sokol gizmo",
-    "base_name": "gizmo"
-  },
-  {
     "name": "sokol instancing",
     "base_name": "sokol_instancing"
+  },
+  {
+    "name": "sokol gizmo translation",
+    "base_name": "gizmo_translation"
+  },
+  {
+    "name": "sokol gizmo rotation",
+    "base_name": "gizmo_rotation"
+  },
+  {
+    "name": "sokol gizmo scaling",
+    "base_name": "gizmo_scaling"
   },
 ];

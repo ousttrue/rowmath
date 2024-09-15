@@ -48,17 +48,13 @@ const state = struct {
         },
     };
     var gizmo_ctx: gizmo.Context = .{};
-    var gizmo_a: gizmo.TranslationContext = .{};
-    var gizmo_b: gizmo.RotationContext = .{};
-    var gizmo_c: gizmo.ScalingContext = .{};
+    var gizmo_s: gizmo.ScalingContext = .{};
     var gizmo_drawlist: std.ArrayList(gizmo.Renderable) = undefined;
 
     var hover = false;
     var display_cursor: Vec2 = .{ .x = 0, .y = 0 };
 
-    var xform_a = Transform{};
-    var xform_b = Transform{};
-    var xform_c = Transform{};
+    var transform = Transform{};
     var mesh = utils.mesh.Cube{};
 };
 
@@ -66,10 +62,6 @@ export fn init() void {
     // state.allocator = std.heap.page_allocator;
     // page_allocator crash wasm
     state.allocator = std.heap.c_allocator;
-
-    state.xform_a.rigid_transform.translation.x = -2;
-    state.xform_b.rigid_transform.translation.x = 2;
-    state.xform_c.rigid_transform.translation.z = -2;
 
     sg.setup(.{
         .environment = sokol.glue.environment(),
@@ -110,23 +102,11 @@ export fn frame() void {
         });
 
         state.gizmo_drawlist.clearRetainingCapacity();
-        state.gizmo_a.translation(
-            state.gizmo_ctx,
-            &state.gizmo_drawlist,
-            false,
-            &state.xform_a,
-        ) catch @panic("transform a");
-        state.gizmo_b.rotation(
-            state.gizmo_ctx,
-            &state.gizmo_drawlist,
-            true,
-            &state.xform_b,
-        ) catch @panic("transform b");
         const uniform = false;
-        state.gizmo_c.scale(
+        state.gizmo_s.scale(
             state.gizmo_ctx,
             &state.gizmo_drawlist,
-            &state.xform_c,
+            &state.transform,
             uniform,
         ) catch @panic("transform b");
     }
@@ -173,13 +153,18 @@ fn draw_gizmo(drawlist: []const gizmo.Renderable) void {
 }
 
 fn draw_scene(viewProj: Mat4, useRenderTarget: bool) void {
-    state.mesh.draw(state.xform_a, viewProj, .{ .useRenderTarget = useRenderTarget });
-    state.mesh.draw(state.xform_b, viewProj, .{ .useRenderTarget = useRenderTarget });
-    state.mesh.draw(state.xform_c, viewProj, .{ .useRenderTarget = useRenderTarget });
+    state.mesh.draw(state.transform, viewProj, .{ .useRenderTarget = useRenderTarget });
 }
 
 fn show_subview(name: []const u8) void {
     ig.igSetNextWindowSize(.{ .x = 256, .y = 256 }, ig.ImGuiCond_Once);
+    const io = ig.igGetIO();
+    const w = io.*.DisplaySize.x;
+    ig.igSetNextWindowPos(
+        .{ .x = w - 256 - 10, .y = 10 },
+        ig.ImGuiCond_Once,
+        .{ .x = 0, .y = 0 },
+    );
     ig.igPushStyleVar_Vec2(ig.ImGuiStyleVar_WindowPadding, .{ .x = 0, .y = 0 });
     defer ig.igPopStyleVar(1);
     if (ig.igBegin(
