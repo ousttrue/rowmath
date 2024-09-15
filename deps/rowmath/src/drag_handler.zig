@@ -8,7 +8,10 @@ pub const MouseButton = enum {
     middle,
 };
 
-pub fn DragHandle(comptime button: MouseButton, DragState: type) type {
+pub fn DragHandle(
+    comptime button: MouseButton,
+    DragState: type,
+) type {
     const Handler = fn (DragState, InputState, bool) DragState;
 
     return struct {
@@ -19,7 +22,6 @@ pub fn DragHandle(comptime button: MouseButton, DragState: type) type {
 
         state: DragState = undefined,
         handler: *const Handler = &nop,
-        // start: ?Vec2 = null,
 
         pub fn frame(self: *@This(), input: InputState) void {
             const button_down = switch (button) {
@@ -28,28 +30,6 @@ pub fn DragHandle(comptime button: MouseButton, DragState: type) type {
                 .middle => input.mouse_middle,
             };
             self.state = self.handler(self.state, input, button_down);
-            // if (self.start) |_| {
-            //     if (switch (button) {
-            //         .left => input.mouse_left,
-            //         .right => input.mouse_right,
-            //         .middle => input.mouse_middle,
-            //     }) {
-            //         // drag
-            //         self.state = self.handler(self.state, input);
-            //     } else {
-            //         // end
-            //         self.start = null;
-            //     }
-            // } else {
-            //     if (switch (button) {
-            //         .left => input.mouse_left,
-            //         .right => input.mouse_right,
-            //         .middle => input.mouse_middle,
-            //     }) {
-            //         // begin
-            //         self.start = input.cursor();
-            //     }
-            // }
         }
     };
 }

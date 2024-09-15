@@ -11,42 +11,90 @@ const Mat4 = rowmath.Mat4;
 const Vec2 = rowmath.Vec2;
 const InputState = rowmath.InputState;
 const RgbU8 = rowmath.RgbU8;
+const DragHandle = rowmath.DragHandle;
 const utils = @import("utils");
 const ig = @import("cimgui");
 
 const FONT_KC854 = 0;
 
-fn nopHandler(drag_state: ?Vec2, input: InputState, button: bool) ?Vec2 {
-    if (drag_state) |pos| {
-        if (button) {
-            return pos;
-        } else {
-            return null;
-        }
-    } else {
-        if (button) {
-            return input.cursor();
-        } else {
-            return null;
-        }
-    }
-}
+const DragOpts = struct {
+    name: []const u8,
+    color: RgbU8,
+};
 
-fn NopHandler(comptime button: rowmath.MouseButton) rowmath.DragHandle(button, ?Vec2) {
-    return rowmath.DragHandle(button, ?Vec2){
-        .state = null,
-        .handler = &nopHandler,
-    };
+fn drawDrag(drag_state: ?Vec2, input: InputState, opts: DragOpts) void {
+    const color = opts.color;
+    sokol.debugtext.color3b(color.r, color.g, color.b);
+    if (drag_state) |start| {
+        const delta = input.cursor().sub(start);
+        sokol.debugtext.print(
+            "{s} {d:0.0}, {d:0.0} => {d:0.0}, {d:0.0}:\n",
+            .{
+                opts.name,
+                start.x,
+                start.y,
+                delta.x,
+                delta.y,
+            },
+        );
+
+        const im_color = makeColor(color.r, color.g, color.b, 255);
+        const begin = ig.ImVec2{ .x = start.x, .y = start.y };
+        const end = ig.ImVec2{ .x = input.mouse_x, .y = input.mouse_y };
+
+        const drawlist = ig.igGetBackgroundDrawList_Nil();
+        ig.ImDrawList_AddLine(
+            drawlist,
+            begin,
+            end,
+            im_color,
+            1,
+        );
+        ig.ImDrawList_AddCircleFilled(drawlist, begin, 4, im_color, 14);
+        ig.ImDrawList_AddCircleFilled(drawlist, end, 4, im_color, 14);
+
+        var buf: [64]u8 = undefined;
+        _ = std.fmt.bufPrintZ(&buf, "{d}:{d}", .{ start.x, start.y }) catch
+            @panic("bufPrintZ");
+        ig.ImDrawList_AddText_Vec2(drawlist, begin, im_color, &buf[0], null);
+        _ = std.fmt.bufPrintZ(&buf, "{d}:{d}", .{ end.x, end.y }) catch
+            @panic("bufPrintZ");
+        ig.ImDrawList_AddText_Vec2(drawlist, end, im_color, &buf[0], null);
+    } else {
+        sokol.debugtext.print(
+            "{s} :\n",
+            .{opts.name},
+        );
+    }
 }
 
 const state = struct {
     var pass_action = sg.PassAction{};
     var input = InputState{};
-
-    var drag_left = NopHandler(.left);
-    var drag_right = NopHandler(.right);
-    var drag_middle = NopHandler(.middle);
+    var drag_left = DragHandle(.left, ?Vec2){ .handler = &dragVec2 };
+    var drag_right = DragHandle(.right, ?Vec2){ .handler = &dragVec2 };
+    var drag_middle = DragHandle(.middle, ?Vec2){ .handler = &dragVec2 };
 };
+
+fn dragVec2(drag_state: ?Vec2, input: InputState, button: bool) ?Vec2 {
+    if (drag_state) |pos| {
+        if (button) {
+            // keep
+            return pos;
+        } else {
+            // end
+            return null;
+        }
+    } else {
+        if (button) {
+            // start
+            return input.cursor();
+        } else {
+            // nop
+            return null;
+        }
+    }
+}
 
 export fn init() void {
     state.pass_action.colors[0] = .{
@@ -77,96 +125,23 @@ fn makeColor(r: u8, g: u8, b: u8, a: u8) u32 {
     return ig.igGetColorU32_Vec4(p.*);
 }
 
-fn draw_drawlist(drawlist: [*]ig.ImDrawList) void {
-    const red = makeColor(255, 0, 0, 200);
-
-    ig.ImDrawList_AddCircle(
-        drawlist,
-        .{ .x = 100, .y = 100 },
-        10.0,
-        red,
-        0,
-        10 + 4,
-    );
-    // ig.ImDrawList_AddText_Vec2(pos, col, b, e);
-}
-
-pub fn draw_button(
-    name: []const u8,
-    color: RgbU8,
-    _start: ?Vec2,
-    input: InputState,
-) void {
-    // draw_drawlist(drawlist);
-
-    sokol.debugtext.color3b(color.r, color.g, color.b);
-    if (_start) |start| {
-        const delta = input.cursor().sub(start);
-        sokol.debugtext.print(
-            "{s} {d:0.0}, {d:0.0} => {d:0.0}, {d:0.0}:\n",
-            .{
-                name,
-                start.x,
-                start.y,
-                delta.x,
-                delta.y,
-            },
-        );
-
-        // sokol.gl.c3b(color.r, color.g, color.b);
-        // sokol.gl.v3f(start.x, start.y, 0);
-        // sokol.gl.v3f(input.mouse_x, input.mouse_y, 0);
-
-        const drawlist = ig.igGetBackgroundDrawList_Nil();
-        const im_color = makeColor(color.r, color.g, color.b, 255);
-        const begin = ig.ImVec2{ .x = start.x, .y = start.y };
-        const end = ig.ImVec2{ .x = input.mouse_x, .y = input.mouse_y };
-        ig.ImDrawList_AddLine(
-            drawlist,
-            begin,
-            end,
-            im_color,
-            1,
-        );
-        ig.ImDrawList_AddCircleFilled(drawlist, begin, 4, im_color, 14);
-        ig.ImDrawList_AddCircleFilled(drawlist, end, 4, im_color, 14);
-
-        var buf: [64]u8 = undefined;
-        _ = std.fmt.bufPrintZ(&buf, "{d}:{d}", .{ start.x, start.y }) catch
-            @panic("bufPrintZ");
-        ig.ImDrawList_AddText_Vec2(drawlist, begin, im_color, &buf[0], null);
-        _ = std.fmt.bufPrintZ(&buf, "{d}:{d}", .{ end.x, end.y }) catch
-            @panic("bufPrintZ");
-        ig.ImDrawList_AddText_Vec2(drawlist, end, im_color, &buf[0], null);
-    } else {
-        sokol.debugtext.print(
-            "{s} :\n",
-            .{name},
-        );
-    }
-}
-
 fn draw_buttons() void {
     sokol.gl.beginLines();
     defer sokol.gl.end();
-    draw_button(
-        "Left",
-        RgbU8.red,
-        state.drag_left.state,
-        state.input,
-    );
-    draw_button(
-        "Right",
-        RgbU8.green,
-        state.drag_right.state,
-        state.input,
-    );
-    draw_button(
-        "Middle",
-        RgbU8.blue,
-        state.drag_middle.state,
-        state.input,
-    );
+
+    drawDrag(state.drag_left.state, state.input, .{
+        .name = "Left",
+        .color = RgbU8.red,
+    });
+    drawDrag(state.drag_right.state, state.input, .{
+        .name = "Right",
+        .color = RgbU8.green,
+    });
+    drawDrag(state.drag_middle.state, state.input, .{
+        .name = "Middle",
+        .color = RgbU8.blue,
+    });
+
     sokol.debugtext.draw();
 }
 
