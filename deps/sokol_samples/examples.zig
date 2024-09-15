@@ -47,4 +47,10 @@ pub const examples = [_]Example{
         .src = "instancing/main.zig",
         .use_imgui = true,
     },
+    .{
+        .name = "gizmo",
+        .src = "gizmo/main.zig",
+        .use_imgui = true,
+        .shader = "gizmo/cube.glsl",
+    },
 };

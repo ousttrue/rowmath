@@ -33,6 +33,7 @@ pub const lines = @import("lines/lines.zig");
 pub const Frustum = @import("Frustum.zig");
 
 pub const bvh = @import("bvh/bvh.zig");
+pub const gizmo = @import("gizmo/gizmo.zig");
 
 test {
     // const std = @import("std");

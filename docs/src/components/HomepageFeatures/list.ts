@@ -15,20 +15,12 @@ export const list = [
     "name": "sokol camera frustum",
     "base_name": "sokol_camera_rendertarget"
   },
-  // {
-  //   "name": "sokol imgui gizmo",
-  //   "base_name": "sokol_imgui_gizmo"
-  // },
+  {
+    "name": "sokol gizmo",
+    "base_name": "gizmo"
+  },
   {
     "name": "sokol instancing",
     "base_name": "sokol_instancing"
-  },
-  {
-    "name": "ozz animation",
-    "base_name": "ozz_anim"
-  },
-  {
-    "name": "ozz load bvh",
-    "base_name": "bvh_player"
   },
 ];
