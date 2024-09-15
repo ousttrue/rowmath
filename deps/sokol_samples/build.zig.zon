@@ -24,10 +24,6 @@
             .url = "git+https://github.com/floooh/sokol-tools-bin.git#8cc8c257380c9a5e230a84aeebf09cd500903fbc",
             .hash = "12200f5129c997728160ab584adcc939b9dbca6f802d7273f386dad777de85e80421",
         },
-        .@"ozz-animation" = .{
-            .url = "git+https://github.com/ousttrue/ozz-animation.git#a7493133216664a6178c7e5412d9429480088652",
-            .hash = "1220d12d7b0bb12494499aac9e212ffff58aebb5c5153f121fad05ec060fdfe88e62",
-        },
     },
     .paths = .{
         "build.zig",

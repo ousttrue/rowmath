@@ -6,7 +6,6 @@ pub const Example = struct {
     src: []const u8,
     shader: ?[]const u8 = null,
     use_imgui: bool = false,
-    use_ozz: bool = false,
 
     pub fn injectShader(
         self: @This(),
@@ -47,15 +46,5 @@ pub const examples = [_]Example{
         .name = "sokol_instancing",
         .src = "instancing/main.zig",
         .use_imgui = true,
-    },
-    .{
-        .name = "bvh_player",
-        .src = "bvh_player/main.zig",
-        .use_ozz = true,
-    },
-    .{
-        .name = "ozz_anim",
-        .src = "ozz_anim/main.zig",
-        .use_ozz = true,
     },
 };
