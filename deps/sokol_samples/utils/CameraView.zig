@@ -31,15 +31,6 @@ rendertarget: ?RenderTarget = null,
 
 pub fn init(self: *@This()) void {
     self.orbit.init();
-    // create a sokol-gl context compatible with the view1 render pass
-    // (specific color pixel format, no depth-stencil-surface, no MSAA)
-    self.sgl_ctx = sokol.gl.makeContext(.{
-        .max_vertices = 65535,
-        .max_commands = 65535,
-        .color_format = .RGBA8,
-        .depth_format = .DEPTH,
-        .sample_count = 1,
-    });
 }
 
 pub const RenderTargetImageButtonContext = struct {
@@ -48,6 +39,18 @@ pub const RenderTargetImageButtonContext = struct {
 };
 
 fn get_or_create(self: *@This(), width: i32, height: i32) RenderTarget {
+    if (self.rendertarget == null) {
+        // create a sokol-gl context compatible with the view1 render pass
+        // (specific color pixel format, no depth-stencil-surface, no MSAA)
+        self.sgl_ctx = sokol.gl.makeContext(.{
+            .max_vertices = 65535,
+            .max_commands = 65535,
+            .color_format = .RGBA8,
+            .depth_format = .DEPTH,
+            .sample_count = 1,
+        });
+    }
+
     if (self.rendertarget) |rendertarget| {
         if (rendertarget.width == width and rendertarget.height == height) {
             return rendertarget;
