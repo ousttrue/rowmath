@@ -1,13 +1,14 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const ig = @import("cimgui");
+
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const simgui = sokol.imgui;
-const scene = @import("cube_scene.zig");
+const ig = @import("cimgui");
+
 const utils = @import("utils");
 const CameraView = utils.CameraView;
-const linegeom = @import("linegeom.zig");
+
 const rowmath = @import("rowmath");
 const Vec3 = rowmath.Vec3;
 const Vec2 = rowmath.Vec2;
@@ -15,6 +16,7 @@ const Mat4 = rowmath.Mat4;
 const Camera = rowmath.Camera;
 const InputState = rowmath.InputState;
 const Frustum = rowmath.Frustum;
+const Transform = rowmath.Transform;
 const gizmo = rowmath.gizmo;
 
 const state = struct {
@@ -49,39 +51,41 @@ const state = struct {
     var gizmo_a: gizmo.TranslationContext = .{};
     var gizmo_b: gizmo.RotationContext = .{};
     var gizmo_c: gizmo.ScalingContext = .{};
-    var drawlist: std.ArrayList(gizmo.Renderable) = undefined;
+    var gizmo_drawlist: std.ArrayList(gizmo.Renderable) = undefined;
 
     var hover = false;
-    var offscreen_cursor: Vec2 = .{ .x = 0, .y = 0 };
     var display_cursor: Vec2 = .{ .x = 0, .y = 0 };
+
+    var xform_a = Transform{};
+    var xform_b = Transform{};
+    var xform_c = Transform{};
+    var mesh = utils.mesh.Cube{};
 };
 
 export fn init() void {
     // state.allocator = std.heap.page_allocator;
-    // wasm
+    // page_allocator crash wasm
     state.allocator = std.heap.c_allocator;
 
-    // initialize sokol-gfx
+    state.xform_a.rigid_transform.translation.x = -2;
+    state.xform_b.rigid_transform.translation.x = 2;
+    state.xform_c.rigid_transform.translation.z = -2;
+
     sg.setup(.{
         .environment = sokol.glue.environment(),
         .logger = .{ .func = sokol.log.func },
     });
-
-    // initialize sokol-imgui
+    sokol.gl.setup(.{
+        .logger = .{ .func = sokol.log.func },
+    });
     simgui.setup(.{
         .logger = .{ .func = sokol.log.func },
     });
 
-    sokol.gl.setup(.{
-        .logger = .{ .func = sokol.log.func },
-    });
-
-    scene.setup();
-
     state.offscreen.init();
     state.display.init();
-
-    state.drawlist = std.ArrayList(gizmo.Renderable).init(state.allocator);
+    state.mesh.init();
+    state.gizmo_drawlist = std.ArrayList(gizmo.Renderable).init(state.allocator);
 }
 
 export fn frame() void {
@@ -105,41 +109,41 @@ export fn frame() void {
             .cam_dir = state.display.orbit.camera.transform.rotation.dirZ().negate(),
         });
 
-        state.drawlist.clearRetainingCapacity();
+        state.gizmo_drawlist.clearRetainingCapacity();
         state.gizmo_a.translation(
             state.gizmo_ctx,
-            &state.drawlist,
+            &state.gizmo_drawlist,
             false,
-            &scene.state.xform_a,
+            &state.xform_a,
         ) catch @panic("transform a");
         state.gizmo_b.rotation(
             state.gizmo_ctx,
-            &state.drawlist,
+            &state.gizmo_drawlist,
             true,
-            &scene.state.xform_b,
+            &state.xform_b,
         ) catch @panic("transform b");
         const uniform = false;
         state.gizmo_c.scale(
             state.gizmo_ctx,
-            &state.drawlist,
-            &scene.state.xform_c,
+            &state.gizmo_drawlist,
+            &state.xform_c,
             uniform,
         ) catch @panic("transform b");
     }
 
-    //=== UI CODE STARTS HERE
-    show_subview("debug");
-    //=== UI CODE ENDS HERE
+    {
+        // imgui widgets
+        show_subview("debug");
+    }
 
     {
         // render background
         state.display.begin(null);
         defer state.display.end(null);
 
-        // grid
-        linegeom.grid();
-        scene.draw(.{ .camera = state.display.orbit });
-        draw_gizmo(state.drawlist.items);
+        utils.draw_lines(&rowmath.lines.Grid(5).lines);
+        draw_scene(state.display.orbit.viewProjectionMatrix(), false);
+        draw_gizmo(state.gizmo_drawlist.items);
     }
     sg.commit();
 }
@@ -168,6 +172,12 @@ fn draw_gizmo(drawlist: []const gizmo.Renderable) void {
     }
 }
 
+fn draw_scene(viewProj: Mat4, useRenderTarget: bool) void {
+    state.mesh.draw(state.xform_a, viewProj, .{ .useRenderTarget = useRenderTarget });
+    state.mesh.draw(state.xform_b, viewProj, .{ .useRenderTarget = useRenderTarget });
+    state.mesh.draw(state.xform_c, viewProj, .{ .useRenderTarget = useRenderTarget });
+}
+
 fn show_subview(name: []const u8) void {
     ig.igSetNextWindowSize(.{ .x = 256, .y = 256 }, ig.ImGuiCond_Once);
     ig.igPushStyleVar_Vec2(ig.ImGuiStyleVar_WindowPadding, .{ .x = 0, .y = 0 });
@@ -180,13 +190,8 @@ fn show_subview(name: []const u8) void {
         if (state.offscreen.beginImageButton()) |render_context| {
             defer state.offscreen.endImageButton();
             state.hover = render_context.hover;
-            state.offscreen_cursor = render_context.cursor;
 
-            scene.draw(.{
-                .camera = state.offscreen.orbit,
-                .useRenderTarget = true,
-            });
-
+            draw_scene(state.offscreen.orbit.camera.viewProjectionMatrix(), true);
             utils.draw_lines(&rowmath.lines.Grid(5).lines);
             utils.draw_camera_frustum(
                 state.display.orbit,
@@ -196,7 +201,7 @@ fn show_subview(name: []const u8) void {
                     state.display_cursor,
             );
 
-            draw_gizmo(state.drawlist.items);
+            draw_gizmo(state.gizmo_drawlist.items);
         }
     }
     ig.igEnd();

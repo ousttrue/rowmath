@@ -78,6 +78,11 @@ pub fn build(b: *std.Build) void {
     utils.addImport("rowmath", rowmath_mod);
     utils.addImport("sokol", sokol_dep.module("sokol"));
     utils.addImport("cimgui", cimgui_dep.module("cimgui"));
+    const cube_shader = sokol_tool.runShdcCommand(
+        b,
+        target,
+        b.path("utils/mesh/cube.glsl").getPath(b),
+    );
 
     var cuber = b.addModule("cuber", .{
         .root_source_file = b.path("cuber/cuber.zig"),
@@ -108,6 +113,7 @@ pub fn build(b: *std.Build) void {
         compile.linkLibCpp();
         compile.linkLibC();
 
+        compile.step.dependOn(&cube_shader.step);
         for (shaders) |glsl| {
             const shader = sokol_tool.runShdcCommand(
                 b,

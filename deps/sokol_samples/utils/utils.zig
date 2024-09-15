@@ -1,6 +1,7 @@
 pub usingnamespace @import("draw_util.zig");
 pub const RenderTarget = @import("RenderTarget.zig");
 pub const CameraView = @import("CameraView.zig");
+pub const mesh = @import("mesh/mesh.zig");
 
 const sokol = @import("sokol");
 const rowmath = @import("rowmath");

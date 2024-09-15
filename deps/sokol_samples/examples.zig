@@ -51,6 +51,5 @@ pub const examples = [_]Example{
         .name = "gizmo",
         .src = "gizmo/main.zig",
         .use_imgui = true,
-        .shader = "gizmo/cube.glsl",
     },
 };

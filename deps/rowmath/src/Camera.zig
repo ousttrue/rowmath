@@ -13,7 +13,7 @@ projection: Projection = .{},
 transform: RigidTransform = .{},
 
 pub fn viewProjectionMatrix(self: @This()) Mat4 {
-    return self.transform.worldToLocal().mul(self.projection_matrix);
+    return self.transform.worldToLocal().mul(self.projection.matrix);
 }
 
 pub fn getRay(self: @This(), mouse_cursor: Vec2) Ray {
