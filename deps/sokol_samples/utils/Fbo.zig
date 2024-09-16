@@ -1,7 +1,7 @@
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 
-pub const RenderTarget = @This();
+pub const Fbo = @This();
 
 width: i32,
 height: i32,

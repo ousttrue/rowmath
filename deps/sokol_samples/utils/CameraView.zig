@@ -6,7 +6,7 @@ const Vec2 = rowmath.Vec2;
 const OrbitCamera = rowmath.OrbitCamera;
 const InputState = rowmath.InputState;
 const ig = @import("cimgui");
-const RenderTarget = @import("RenderTarget.zig");
+const Fbo = @import("Fbo.zig");
 pub const RenderView = @This();
 
 extern fn Custom_ButtonBehaviorMiddleRight() void;
@@ -27,7 +27,7 @@ pass_action: sg.PassAction = .{
     },
 },
 sgl_ctx: sokol.gl.Context = .{},
-rendertarget: ?RenderTarget = null,
+rendertarget: ?Fbo = null,
 
 pub fn init(self: *@This()) void {
     self.orbit.init();
@@ -38,7 +38,7 @@ pub const RenderTargetImageButtonContext = struct {
     cursor: Vec2,
 };
 
-fn get_or_create(self: *@This(), width: i32, height: i32) RenderTarget {
+fn get_or_create(self: *@This(), width: i32, height: i32) Fbo {
     if (self.rendertarget == null) {
         // create a sokol-gl context compatible with the view1 render pass
         // (specific color pixel format, no depth-stencil-surface, no MSAA)
@@ -58,12 +58,12 @@ fn get_or_create(self: *@This(), width: i32, height: i32) RenderTarget {
         rendertarget.deinit();
     }
 
-    const rendertarget = RenderTarget.init(width, height);
+    const rendertarget = Fbo.init(width, height);
     self.rendertarget = rendertarget;
     return rendertarget;
 }
 
-pub fn begin(self: *@This(), _rendertarget: ?RenderTarget) void {
+pub fn begin(self: *@This(), _rendertarget: ?Fbo) void {
     if (_rendertarget) |rendertarget| {
         sg.beginPass(rendertarget.pass);
         sokol.gl.setContext(self.sgl_ctx);
@@ -82,7 +82,7 @@ pub fn begin(self: *@This(), _rendertarget: ?RenderTarget) void {
     sokol.gl.loadMatrix(&self.orbit.camera.transform.worldToLocal().m[0]);
 }
 
-pub fn end(self: *@This(), _rendertarget: ?RenderTarget) void {
+pub fn end(self: *@This(), _rendertarget: ?Fbo) void {
     if (_rendertarget) |_| {
         sokol.gl.contextDraw(self.sgl_ctx);
     } else {
