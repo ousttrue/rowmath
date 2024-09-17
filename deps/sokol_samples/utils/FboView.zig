@@ -7,13 +7,13 @@ const OrbitCamera = rowmath.OrbitCamera;
 const InputState = rowmath.InputState;
 const ig = @import("cimgui");
 const Fbo = @import("Fbo.zig");
-pub const RenderView = @This();
+pub const FboView = @This();
 
 extern fn Custom_ButtonBehaviorMiddleRight() void;
 
 orbit: OrbitCamera = .{},
+hover: bool = false,
 
-pip: sg.Pipeline = .{},
 pass_action: sg.PassAction = .{
     .colors = .{
         .{
@@ -31,6 +31,15 @@ rendertarget: ?Fbo = null,
 
 pub fn init(self: *@This()) void {
     self.orbit.init();
+    // create a sokol-gl context compatible with the view1 render pass
+    // (specific color pixel format, no depth-stencil-surface, no MSAA)
+    self.sgl_ctx = sokol.gl.makeContext(.{
+        .max_vertices = 65535,
+        .max_commands = 65535,
+        .color_format = .RGBA8,
+        .depth_format = .DEPTH,
+        .sample_count = 1,
+    });
 }
 
 pub const RenderTargetImageButtonContext = struct {
@@ -39,18 +48,6 @@ pub const RenderTargetImageButtonContext = struct {
 };
 
 fn get_or_create(self: *@This(), width: i32, height: i32) Fbo {
-    if (self.rendertarget == null) {
-        // create a sokol-gl context compatible with the view1 render pass
-        // (specific color pixel format, no depth-stencil-surface, no MSAA)
-        self.sgl_ctx = sokol.gl.makeContext(.{
-            .max_vertices = 65535,
-            .max_commands = 65535,
-            .color_format = .RGBA8,
-            .depth_format = .DEPTH,
-            .sample_count = 1,
-        });
-    }
-
     if (self.rendertarget) |rendertarget| {
         if (rendertarget.width == width and rendertarget.height == height) {
             return rendertarget;
@@ -63,18 +60,9 @@ fn get_or_create(self: *@This(), width: i32, height: i32) Fbo {
     return rendertarget;
 }
 
-pub fn begin(self: *@This(), _rendertarget: ?Fbo) void {
-    if (_rendertarget) |rendertarget| {
-        sg.beginPass(rendertarget.pass);
-        sokol.gl.setContext(self.sgl_ctx);
-    } else {
-        sg.beginPass(.{
-            .action = self.pass_action,
-            .swapchain = sokol.glue.swapchain(),
-        });
-        sokol.gl.setContext(sokol.gl.defaultContext());
-    }
-
+pub fn begin(self: *@This(), rendertarget: Fbo) void {
+    sokol.gl.setContext(self.sgl_ctx); // !
+    sg.beginPass(rendertarget.pass);
     sokol.gl.defaults();
     sokol.gl.matrixModeProjection();
     sokol.gl.loadMatrix(&self.orbit.camera.projection.matrix.m[0]);
@@ -82,13 +70,8 @@ pub fn begin(self: *@This(), _rendertarget: ?Fbo) void {
     sokol.gl.loadMatrix(&self.orbit.camera.transform.worldToLocal().m[0]);
 }
 
-pub fn end(self: *@This(), _rendertarget: ?Fbo) void {
-    if (_rendertarget) |_| {
-        sokol.gl.contextDraw(self.sgl_ctx);
-    } else {
-        sokol.gl.contextDraw(sokol.gl.defaultContext());
-        sokol.imgui.render();
-    }
+pub fn end(self: *@This()) void {
+    sokol.gl.contextDraw(self.sgl_ctx); // !
     sg.endPass();
 }
 
@@ -159,7 +142,26 @@ pub fn beginImageButton(self: *@This()) ?RenderTargetImageButtonContext {
 }
 
 pub fn endImageButton(self: *@This()) void {
-    if (self.rendertarget) |rendertarget| {
-        self.end(rendertarget);
+    self.end();
+}
+
+pub fn beginButton(self: *@This(), name: [:0]const u8) bool {
+    ig.igPushStyleVar_Vec2(ig.ImGuiStyleVar_WindowPadding, .{ .x = 0, .y = 0 });
+    defer ig.igPopStyleVar(1);
+    if (ig.igBegin(
+        &name[0],
+        null,
+        ig.ImGuiWindowFlags_NoScrollbar | ig.ImGuiWindowFlags_NoScrollWithMouse,
+    )) {
+        if (self.beginImageButton()) |render_context| {
+            self.hover = render_context.hover;
+            return true;
+        }
     }
+
+    return false;
+}
+
+pub fn endButton(self: *@This()) void {
+    self.endImageButton();
 }

@@ -1,8 +1,9 @@
 pub usingnamespace @import("draw_util.zig");
 pub const Fbo = @import("Fbo.zig");
-pub const CameraView = @import("CameraView.zig");
+pub const FboView = @import("FboView.zig");
 pub const SwapchainView = @import("SwapchainView.zig");
 pub const mesh = @import("mesh/mesh.zig");
+pub const Gizmo = @import("Gizmo.zig");
 
 const sokol = @import("sokol");
 const rowmath = @import("rowmath");

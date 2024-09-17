@@ -7,7 +7,7 @@ const simgui = sokol.imgui;
 const ig = @import("cimgui");
 
 const utils = @import("utils");
-const CameraView = utils.CameraView;
+const FboView = utils.FboView;
 const SwapchainView = utils.SwapchainView;
 
 const rowmath = @import("rowmath");
@@ -18,10 +18,9 @@ const Camera = rowmath.Camera;
 const InputState = rowmath.InputState;
 const Frustum = rowmath.Frustum;
 const Transform = rowmath.Transform;
-const gizmo = rowmath.gizmo;
 
 const state = struct {
-    var allocator: std.mem.Allocator = undefined;
+    // main camera
     var display = SwapchainView{
         .orbit = .{
             .camera = .{
@@ -39,7 +38,8 @@ const state = struct {
             },
         },
     };
-    var offscreen = CameraView{
+    // sub camera
+    var offscreen = FboView{
         .orbit = .{
             .camera = .{
                 .transform = .{
@@ -48,22 +48,14 @@ const state = struct {
             },
         },
     };
-    var gizmo_ctx: gizmo.Context = .{};
-    var gizmo_t: gizmo.TranslationContext = .{};
-    var gizmo_drawlist: std.ArrayList(gizmo.Renderable) = undefined;
-
-    var hover = false;
-    var display_cursor: Vec2 = .{ .x = 0, .y = 0 };
-
+    // gizmo
+    var gizmo = utils.Gizmo{};
+    // scene
     var transform = Transform{};
     var mesh = utils.mesh.Cube{};
 };
 
 export fn init() void {
-    // state.allocator = std.heap.page_allocator;
-    // page_allocator crash wasm
-    state.allocator = std.heap.c_allocator;
-
     sg.setup(.{
         .environment = sokol.glue.environment(),
         .logger = .{ .func = sokol.log.func },
@@ -78,7 +70,8 @@ export fn init() void {
     state.offscreen.init();
     state.display.init();
     state.mesh.init();
-    state.gizmo_drawlist = std.ArrayList(gizmo.Renderable).init(state.allocator);
+    // page_allocator crash wasm
+    state.gizmo.init(std.heap.c_allocator);
 }
 
 export fn frame() void {
@@ -90,20 +83,19 @@ export fn frame() void {
     });
     state.display.frame();
 
-    const io = ig.igGetIO().*;
-    if (!io.WantCaptureMouse) {
-        state.gizmo_ctx.update(.{
-            .viewport_size = .{ .x = io.DisplaySize.x, .y = io.DisplaySize.y },
-            .mouse_left = io.MouseDown[ig.ImGuiMouseButton_Left],
-            .ray = state.display.orbit.camera.getRay(state.display_cursor),
+    const io = ig.igGetIO();
+    if (!io.*.WantCaptureMouse) {
+        state.gizmo.ctx.update(.{
+            .viewport_size = .{ .x = io.*.DisplaySize.x, .y = io.*.DisplaySize.y },
+            .mouse_left = io.*.MouseDown[ig.ImGuiMouseButton_Left],
+            .ray = state.display.orbit.camera.getRay(state.display.cursor),
             .cam_yFov = state.display.orbit.camera.projection.fov_y_radians,
             .cam_dir = state.display.orbit.camera.transform.rotation.dirZ().negate(),
         });
-
-        state.gizmo_drawlist.clearRetainingCapacity();
-        state.gizmo_t.translation(
-            state.gizmo_ctx,
-            &state.gizmo_drawlist,
+        state.gizmo.drawlist.clearRetainingCapacity();
+        state.gizmo.t.translation(
+            state.gizmo.ctx,
+            &state.gizmo.drawlist,
             false,
             &state.transform,
         ) catch @panic("transform a");
@@ -111,7 +103,35 @@ export fn frame() void {
 
     {
         // imgui widgets
-        show_subview("debug");
+        ig.igSetNextWindowSize(.{ .x = 256, .y = 256 }, ig.ImGuiCond_Once);
+        const w = io.*.DisplaySize.x;
+        ig.igSetNextWindowPos(
+            .{ .x = w - 256 - 10, .y = 10 },
+            ig.ImGuiCond_Once,
+            .{ .x = 0, .y = 0 },
+        );
+        // show_subview("debug");
+        if (state.offscreen.beginButton("debug")) {
+            defer state.offscreen.endButton();
+
+            // draw_scene(state.offscreen.orbit.camera.viewProjectionMatrix(), true);
+            state.mesh.draw(
+                state.transform,
+                state.offscreen.orbit.camera.viewProjectionMatrix(),
+                .{ .useRenderTarget = true },
+            );
+            utils.draw_lines(&rowmath.lines.Grid(5).lines);
+            utils.draw_camera_frustum(
+                state.display.orbit,
+                if (state.offscreen.hover)
+                    null
+                else
+                    state.display.cursor,
+            );
+
+            state.gizmo.gl_draw();
+        }
+        ig.igEnd();
     }
 
     {
@@ -120,74 +140,14 @@ export fn frame() void {
         defer state.display.end();
 
         utils.draw_lines(&rowmath.lines.Grid(5).lines);
-        draw_scene(state.display.orbit.viewProjectionMatrix(), false);
-        draw_gizmo(state.gizmo_drawlist.items);
+        state.mesh.draw(
+            state.transform,
+            state.display.orbit.viewProjectionMatrix(),
+            .{ .useRenderTarget = false },
+        );
+        state.gizmo.gl_draw();
     }
     sg.commit();
-}
-
-fn draw_gizmo(drawlist: []const gizmo.Renderable) void {
-    for (drawlist) |m| {
-        sokol.gl.matrixModeModelview();
-        sokol.gl.pushMatrix();
-        defer sokol.gl.popMatrix();
-        sokol.gl.multMatrix(&m.matrix.m[0]);
-        sokol.gl.beginTriangles();
-        defer sokol.gl.end();
-        const color = m.color();
-        sokol.gl.c4f(
-            color.r,
-            color.g,
-            color.b,
-            color.a,
-        );
-        for (m.mesh.triangles) |triangle| {
-            for (triangle) |i| {
-                const p = m.mesh.vertices[i].position;
-                sokol.gl.v3f(p.x, p.y, p.z);
-            }
-        }
-    }
-}
-
-fn draw_scene(viewProj: Mat4, useRenderTarget: bool) void {
-    state.mesh.draw(state.transform, viewProj, .{ .useRenderTarget = useRenderTarget });
-}
-
-fn show_subview(name: []const u8) void {
-    ig.igSetNextWindowSize(.{ .x = 256, .y = 256 }, ig.ImGuiCond_Once);
-    const io = ig.igGetIO();
-    const w = io.*.DisplaySize.x;
-    ig.igSetNextWindowPos(
-        .{ .x = w - 256 - 10, .y = 10 },
-        ig.ImGuiCond_Once,
-        .{ .x = 0, .y = 0 },
-    );
-    ig.igPushStyleVar_Vec2(ig.ImGuiStyleVar_WindowPadding, .{ .x = 0, .y = 0 });
-    defer ig.igPopStyleVar(1);
-    if (ig.igBegin(
-        &name[0],
-        null,
-        ig.ImGuiWindowFlags_NoScrollbar | ig.ImGuiWindowFlags_NoScrollWithMouse,
-    )) {
-        if (state.offscreen.beginImageButton()) |render_context| {
-            defer state.offscreen.endImageButton();
-            state.hover = render_context.hover;
-
-            draw_scene(state.offscreen.orbit.camera.viewProjectionMatrix(), true);
-            utils.draw_lines(&rowmath.lines.Grid(5).lines);
-            utils.draw_camera_frustum(
-                state.display.orbit,
-                if (state.hover)
-                    null
-                else
-                    state.display_cursor,
-            );
-
-            draw_gizmo(state.gizmo_drawlist.items);
-        }
-    }
-    ig.igEnd();
 }
 
 export fn cleanup() void {
