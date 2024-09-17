@@ -33,3 +33,19 @@ pub fn DragHandle(
         }
     };
 }
+
+fn ReturnType(T: type) type {
+    const F = @typeInfo(T).Pointer.child;
+    return @typeInfo(F).Fn.return_type.?;
+}
+
+pub fn dragHandle(
+    comptime button: MouseButton,
+    handler: anytype,
+    init: anytype,
+) DragHandle(button, ReturnType(@TypeOf(handler))) {
+    return DragHandle(button, ReturnType(@TypeOf(handler))){
+        .handler = handler,
+        .state = init,
+    };
+}

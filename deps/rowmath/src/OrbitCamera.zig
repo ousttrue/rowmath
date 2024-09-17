@@ -5,7 +5,6 @@ const Mat4 = @import("Mat4.zig");
 const InputState = @import("InputState.zig");
 const Camera = @import("Camera.zig");
 const drag_handler = @import("drag_handler.zig");
-const DragHandle = drag_handler.DragHandle;
 pub const OrbitCamera = @This();
 
 pub const DragState = struct {
@@ -56,11 +55,12 @@ fn bindYawPitchHandler(
 pub fn makeYawPitchHandler(
     comptime button: drag_handler.MouseButton,
     orbit: *OrbitCamera,
-) DragHandle(button, DragState) {
-    return DragHandle(button, DragState){
-        .state = .{ .orbit = orbit },
-        .handler = &bindYawPitchHandler,
-    };
+) drag_handler.DragHandle(button, DragState) {
+    return drag_handler.dragHandle(
+        button,
+        &bindYawPitchHandler,
+        .{ .orbit = orbit },
+    );
 }
 
 fn bindScreenMoveHanler(
@@ -105,16 +105,17 @@ fn bindScreenMoveHanler(
 pub fn makeScreenMoveHandler(
     comptime button: drag_handler.MouseButton,
     orbit: *OrbitCamera,
-) DragHandle(button, DragState) {
-    return DragHandle(button, DragState){
-        .state = .{ .orbit = orbit },
-        .handler = &bindScreenMoveHanler,
-    };
+) drag_handler.DragHandle(button, DragState) {
+    return drag_handler.dragHandle(
+        button,
+        &bindScreenMoveHanler,
+        .{ .orbit = orbit },
+    );
 }
 
-pub const CameraLeftDragHandler = DragHandle(.left, DragState);
-pub const CameraRightDragHandler = DragHandle(.right, DragState);
-pub const CameraMiddleDragHandler = DragHandle(.middle, DragState);
+pub const CameraLeftDragHandler = drag_handler.DragHandle(.left, DragState);
+pub const CameraRightDragHandler = drag_handler.DragHandle(.right, DragState);
+pub const CameraMiddleDragHandler = drag_handler.DragHandle(.middle, DragState);
 camera: Camera = .{},
 
 // transform

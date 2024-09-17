@@ -11,7 +11,6 @@ const Mat4 = rowmath.Mat4;
 const Vec2 = rowmath.Vec2;
 const InputState = rowmath.InputState;
 const RgbU8 = rowmath.RgbU8;
-const DragHandle = rowmath.DragHandle;
 const utils = @import("utils");
 const ig = @import("cimgui");
 
@@ -71,9 +70,9 @@ fn drawDrag(drag_state: ?Vec2, input: InputState, opts: DragOpts) void {
 const state = struct {
     var pass_action = sg.PassAction{};
     var input = InputState{};
-    var drag_left = DragHandle(.left, ?Vec2){ .handler = &dragVec2 };
-    var drag_right = DragHandle(.right, ?Vec2){ .handler = &dragVec2 };
-    var drag_middle = DragHandle(.middle, ?Vec2){ .handler = &dragVec2 };
+    var drag_left = rowmath.dragHandle(.left, &dragVec2, null);
+    var drag_right = rowmath.dragHandle(.right, &dragVec2, null);
+    var drag_middle = rowmath.dragHandle(.middle, &dragVec2, null);
 };
 
 fn dragVec2(drag_state: ?Vec2, input: InputState, button: bool) ?Vec2 {
