@@ -7,7 +7,8 @@ const sokol_tool = @import("sokol_tool.zig");
 
 const debug_flags = [_][]const u8{
     "-sASSERTIONS",
-    "-g4",
+    // "-g4",
+    "-gsource-map",
 };
 
 const release_flags = [_][]const u8{};
