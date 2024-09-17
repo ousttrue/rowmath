@@ -4,6 +4,7 @@ pub const FboView = @import("FboView.zig");
 pub const SwapchainView = @import("SwapchainView.zig");
 pub const mesh = @import("mesh/mesh.zig");
 pub const Gizmo = @import("Gizmo.zig");
+const ig = @import("cimgui");
 
 const sokol = @import("sokol");
 const rowmath = @import("rowmath");
@@ -53,4 +54,10 @@ pub fn handle_camera_input(
         },
         else => {},
     }
+}
+
+pub fn imColor(r: u8, g: u8, b: u8, a: u8) u32 {
+    const color = ig.ImColor_ImColor_Int(r, g, b, a);
+    const p: *const ig.ImVec4 = @ptrCast(color);
+    return ig.igGetColorU32_Vec4(p.*);
 }

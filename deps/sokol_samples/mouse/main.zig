@@ -71,7 +71,7 @@ fn drawDrag(drag_state: ?Vec2, input: InputState, opts: DragOpts) void {
             },
         );
 
-        const im_color = makeColor(color.r, color.g, color.b, 255);
+        const im_color = utils.imColor(color.r, color.g, color.b, 255);
         const begin = ig.ImVec2{ .x = start.x, .y = start.y };
         const end = ig.ImVec2{ .x = input.mouse_x, .y = input.mouse_y };
 
@@ -122,12 +122,6 @@ export fn init() void {
     };
     sdtx_desc.fonts[0] = sokol.debugtext.fontKc854();
     sokol.debugtext.setup(sdtx_desc);
-}
-
-fn makeColor(r: u8, g: u8, b: u8, a: u8) u32 {
-    const color = ig.ImColor_ImColor_Int(r, g, b, a);
-    const p: *const ig.ImVec4 = @ptrCast(color);
-    return ig.igGetColorU32_Vec4(p.*);
 }
 
 fn draw_buttons() void {

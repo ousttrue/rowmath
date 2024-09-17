@@ -2,6 +2,7 @@ const Camera = @This();
 const std = @import("std");
 const Vec2 = @import("Vec2.zig");
 const Vec3 = @import("Vec3.zig");
+const Vec4 = @import("Vec4.zig");
 const Quat = @import("Quat.zig");
 const Mat4 = @import("Mat4.zig");
 const RigidTransform = @import("RigidTransform.zig");
@@ -31,6 +32,14 @@ pub fn getRayClip(self: @This(), ray: Ray) struct { f32, f32 } {
             return .{ self.projection.near_clip, self.projection.far_clip };
         },
     }
+}
+
+pub fn toScreen(self: @This(), world: Vec3) Vec2 {
+    const p = self.viewProjectionMatrix().transform(Vec4.fromVec3(world, 1));
+    return .{
+        .x = (p.x / p.w + 1.0) / 2.0 * self.projection.screen.x,
+        .y = (-p.y / p.w + 1.0) / 2.0 * self.projection.screen.y,
+    };
 }
 
 test "camera" {

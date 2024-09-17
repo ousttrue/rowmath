@@ -110,7 +110,8 @@ export fn frame() void {
             .{ .x = 0, .y = 0 },
         );
         // show_subview("debug");
-        if (state.offscreen.beginButton("debug")) {
+        var pos: ig.ImVec2 = undefined;
+        if (state.offscreen.beginButton("debug", &pos)) {
             defer state.offscreen.endButton();
 
             state.mesh.draw(
@@ -127,7 +128,16 @@ export fn frame() void {
                     state.display.cursor,
             );
 
-            draw_gizmo();
+            draw_gizmo_mesh(state.offscreen.orbit.camera);
+
+            if (state.gizmo.state.drag) |drag| {
+                draw_debug(
+                    state.offscreen.orbit.camera,
+                    drag,
+                    ig.igGetWindowDrawList(),
+                    pos,
+                );
+            }
         }
         ig.igEnd();
     }
@@ -144,21 +154,14 @@ export fn frame() void {
             .{ .useRenderTarget = false },
         );
 
-        draw_gizmo();
+        draw_gizmo_mesh(state.display.orbit.camera);
     }
     sg.commit();
 }
 
-fn draw_gizmo() void {
-    draw_gizmo_mesh(state.drawlist.items);
-
-    if (state.gizmo.state.drag) |drag| {
-        draw_ray(drag);
-    }
-}
-
-fn draw_gizmo_mesh(drawlist: []const rowmath.gizmo.Renderable) void {
-    for (drawlist) |m| {
+fn draw_gizmo_mesh(camera: Camera) void {
+    _ = camera;
+    for (state.drawlist.items) |m| {
         sokol.gl.matrixModeModelview();
         sokol.gl.pushMatrix();
         defer sokol.gl.popMatrix();
@@ -181,16 +184,78 @@ fn draw_gizmo_mesh(drawlist: []const rowmath.gizmo.Renderable) void {
     }
 }
 
-fn draw_ray(drag: rowmath.gizmo.DragState) void {
+fn draw_debug(
+    camera: Camera,
+    drag: rowmath.gizmo.DragState,
+    drawlist: *ig.ImDrawList,
+    pos: ig.ImVec2,
+) void {
     sokol.gl.beginLines();
     defer sokol.gl.end();
 
-    // X axis (green).
     sokol.gl.c3f(0, 0xff, 0xff);
     const o = drag.ray.origin;
     sokol.gl.v3f(o.x, o.y, o.z);
     const p = drag.ray.point(drag.hit);
     sokol.gl.v3f(p.x, p.y, p.z);
+
+    switch (drag.mode) {
+        .Translate_x => {
+            var buf: [64]u8 = undefined;
+
+            const im_color = utils.imColor(0, 255, 255, 255);
+            {
+                const begin = camera.toScreen(drag.start.rigid_transform.translation);
+                // y = a * x + d
+                ig.ImDrawList_AddCircleFilled(
+                    drawlist,
+                    .{ .x = pos.x + begin.x, .y = pos.y + begin.y },
+                    4,
+                    im_color,
+                    14,
+                );
+                // ig.ImDrawList_AddCircleFilled(drawlist, end, 4, im_color, 14);
+                _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ begin.x, begin.y }) catch
+                    @panic("bufPrintZ");
+
+                ig.ImDrawList_AddText_Vec2(
+                    drawlist,
+                    .{ .x = pos.x + begin.x, .y = pos.y + begin.y },
+                    im_color,
+                    &buf[0],
+                    null,
+                );
+            }
+            {
+                const end = camera.toScreen(drag.ray.point(drag.hit));
+                // y = a * x + d
+                ig.ImDrawList_AddCircleFilled(
+                    drawlist,
+                    .{ .x = pos.x + end.x, .y = pos.y + end.y },
+                    4,
+                    im_color,
+                    14,
+                );
+                // ig.ImDrawList_AddCircleFilled(drawlist, end, 4, im_color, 14);
+                _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ end.x, end.y }) catch
+                    @panic("bufPrintZ");
+
+                ig.ImDrawList_AddText_Vec2(
+                    drawlist,
+                    .{ .x = pos.x + end.x, .y = pos.y + end.y },
+                    im_color,
+                    &buf[0],
+                    null,
+                );
+            }
+        },
+        .Translate_y => {},
+        .Translate_z => {},
+        .Translate_yz => {},
+        .Translate_zx => {},
+        .Translate_xy => {},
+        .Translate_xyz => {},
+    }
 }
 
 export fn cleanup() void {

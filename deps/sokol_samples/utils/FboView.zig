@@ -145,14 +145,22 @@ pub fn endImageButton(self: *@This()) void {
     self.end();
 }
 
-pub fn beginButton(self: *@This(), name: [:0]const u8) bool {
+pub fn beginButton(self: *@This(), name: [:0]const u8, pos: *ig.ImVec2) bool {
     ig.igPushStyleVar_Vec2(ig.ImGuiStyleVar_WindowPadding, .{ .x = 0, .y = 0 });
+
     defer ig.igPopStyleVar(1);
     if (ig.igBegin(
         &name[0],
         null,
         ig.ImGuiWindowFlags_NoScrollbar | ig.ImGuiWindowFlags_NoScrollWithMouse,
     )) {
+        // var winpos: ig.ImVec2=undefined;
+        // ig.igGetWindowPos(&winpos);
+        // var curpos: ig.ImVec2=undefined;
+        ig.igGetCursorScreenPos(pos);
+        // pos.x = winpos.x ;//+ curpos.x;
+        // pos.y = winpos.y ;//+ curpos.y;
+
         if (self.beginImageButton()) |render_context| {
             self.hover = render_context.hover;
             return true;

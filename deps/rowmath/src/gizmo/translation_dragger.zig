@@ -12,6 +12,7 @@ pub const DragState = struct {
     ray: Ray,
     hit: f32,
     mode: translation.InteractionMode,
+    start: Transform,
 };
 
 pub const GizmoState = struct {
@@ -85,6 +86,7 @@ pub fn translationDragHandler(
                         .ray = ray,
                         .hit = hit,
                         .mode = mode,
+                        .start = drag_input.transform,
                     },
                 };
             } else {
@@ -108,6 +110,7 @@ pub fn translationDragHandler(
                     .ray = ray,
                     .hit = hit,
                     .mode = mode,
+                    .start = drag_input.transform,
                 },
             };
         } else {
