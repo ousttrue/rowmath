@@ -20,6 +20,30 @@ const Frustum = rowmath.Frustum;
 const Transform = rowmath.Transform;
 const Ray = rowmath.Ray;
 
+const Plane = struct {
+    normal: Vec3,
+    d: f32,
+
+    fn fromNormalAndPoint(
+        normal: Vec3,
+        point: Vec3,
+    ) @This() {
+        return .{
+            .normal = normal,
+            .d = -normal.dot(point),
+        };
+    }
+
+    fn intersect(self: @This(), ray: Ray) ?f32 {
+        if (self.normal.dot(ray.direction) == 0) {
+            return null;
+        }
+        const nv = self.normal.dot(ray.direction);
+        const nq_d = self.normal.dot(ray.origin) + self.d;
+        return -nq_d / nv;
+    }
+};
+
 const state = struct {
     // main camera
     var display = SwapchainView{
@@ -89,12 +113,12 @@ export fn frame() void {
         .delta_time = sokol.app.frameDuration(),
         .dpi_scale = sokol.app.dpiScale(),
     });
-    const input = state.display.frame();
+    state.display.frame();
 
     const io = ig.igGetIO();
     if (!io.*.WantCaptureMouse) {
         state.gizmo.frame(.{
-            .input = input,
+            .input = state.display.orbit.input,
             .transform = state.transform,
             .drawlist = &state.drawlist,
         });
@@ -110,8 +134,8 @@ export fn frame() void {
             .{ .x = 0, .y = 0 },
         );
         // show_subview("debug");
-        var pos: ig.ImVec2 = undefined;
-        if (state.offscreen.beginButton("debug", &pos)) {
+        var screen_pos: ig.ImVec2 = undefined;
+        if (state.offscreen.beginButton("debug", &screen_pos)) {
             defer state.offscreen.endButton();
 
             state.mesh.draw(
@@ -125,7 +149,7 @@ export fn frame() void {
                 if (state.offscreen.hover)
                     null
                 else
-                    state.display.cursor,
+                    state.display.orbit.input.cursorScreenPosition(),
             );
 
             draw_gizmo_mesh(state.offscreen.orbit.camera);
@@ -135,7 +159,10 @@ export fn frame() void {
                     state.offscreen.orbit.camera,
                     drag,
                     ig.igGetWindowDrawList(),
-                    pos,
+                    screen_pos,
+                    state.display.orbit.camera.getRay(
+                        state.display.orbit.input.cursorScreenPosition(),
+                    ),
                 );
             }
         }
@@ -155,6 +182,18 @@ export fn frame() void {
         );
 
         draw_gizmo_mesh(state.display.orbit.camera);
+
+        if (state.gizmo.state.drag) |drag| {
+            draw_debug(
+                state.display.orbit.camera,
+                drag,
+                ig.igGetBackgroundDrawList_Nil(),
+                .{ .x = 0, .y = 0 },
+                state.display.orbit.camera.getRay(
+                    state.display.orbit.input.cursorScreenPosition(),
+                ),
+            );
+        }
     }
     sg.commit();
 }
@@ -188,65 +227,93 @@ fn draw_debug(
     camera: Camera,
     drag: rowmath.gizmo.DragState,
     drawlist: *ig.ImDrawList,
-    pos: ig.ImVec2,
+    o: ig.ImVec2,
+    ray: Ray,
 ) void {
     sokol.gl.beginLines();
     defer sokol.gl.end();
 
-    sokol.gl.c3f(0, 0xff, 0xff);
-    const o = drag.ray.origin;
-    sokol.gl.v3f(o.x, o.y, o.z);
-    const p = drag.ray.point(drag.hit);
-    sokol.gl.v3f(p.x, p.y, p.z);
+    {
+        sokol.gl.c3f(0, 0xff, 0xff);
+        const origin = drag.ray.origin;
+        sokol.gl.v3f(origin.x, origin.y, origin.z);
+        const point = drag.ray.point(drag.hit);
+        sokol.gl.v3f(point.x, point.y, point.z);
+    }
 
     switch (drag.mode) {
         .Translate_x => {
             var buf: [64]u8 = undefined;
 
-            const im_color = utils.imColor(0, 255, 255, 255);
             {
-                const begin = camera.toScreen(drag.start.rigid_transform.translation);
-                // y = a * x + d
+                const im_color = utils.imColor(0, 255, 255, 255);
+                const pos = camera.toScreen(drag.start.rigid_transform.translation);
                 ig.ImDrawList_AddCircleFilled(
                     drawlist,
-                    .{ .x = pos.x + begin.x, .y = pos.y + begin.y },
+                    .{ .x = o.x + pos.x, .y = o.y + pos.y },
                     4,
                     im_color,
                     14,
                 );
-                // ig.ImDrawList_AddCircleFilled(drawlist, end, 4, im_color, 14);
-                _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ begin.x, begin.y }) catch
+                _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ pos.x, pos.y }) catch
                     @panic("bufPrintZ");
-
                 ig.ImDrawList_AddText_Vec2(
                     drawlist,
-                    .{ .x = pos.x + begin.x, .y = pos.y + begin.y },
+                    .{ .x = o.x + pos.x, .y = o.y + pos.y },
                     im_color,
                     &buf[0],
                     null,
                 );
             }
+
             {
-                const end = camera.toScreen(drag.ray.point(drag.hit));
-                // y = a * x + d
+                const im_color = utils.imColor(0, 255, 255, 255);
+                const pos = camera.toScreen(drag.ray.point(drag.hit));
                 ig.ImDrawList_AddCircleFilled(
                     drawlist,
-                    .{ .x = pos.x + end.x, .y = pos.y + end.y },
+                    .{ .x = o.x + pos.x, .y = o.y + pos.y },
                     4,
                     im_color,
                     14,
                 );
-                // ig.ImDrawList_AddCircleFilled(drawlist, end, 4, im_color, 14);
-                _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ end.x, end.y }) catch
+                _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ pos.x, pos.y }) catch
                     @panic("bufPrintZ");
-
                 ig.ImDrawList_AddText_Vec2(
                     drawlist,
-                    .{ .x = pos.x + end.x, .y = pos.y + end.y },
+                    .{ .x = o.x + pos.x, .y = o.y + pos.y },
                     im_color,
                     &buf[0],
                     null,
                 );
+            }
+
+            {
+                const im_color = utils.imColor(255, 0, 0, 255);
+                // drag plane & current ray intersection
+                const plane = Plane.fromNormalAndPoint(
+                    drag.ray.direction,
+                    drag.ray.point(drag.hit),
+                );
+                if (plane.intersect(ray)) |hit| {
+                    const world = ray.point(hit);
+                    const pos = camera.toScreen(world);
+                    ig.ImDrawList_AddCircleFilled(
+                        drawlist,
+                        .{ .x = o.x + pos.x, .y = o.y + pos.y },
+                        4,
+                        im_color,
+                        14,
+                    );
+                    _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ pos.x, pos.y }) catch
+                        @panic("bufPrintZ");
+                    ig.ImDrawList_AddText_Vec2(
+                        drawlist,
+                        .{ .x = o.x + pos.x, .y = o.y + pos.y },
+                        im_color,
+                        &buf[0],
+                        null,
+                    );
+                }
             }
         },
         .Translate_y => {},

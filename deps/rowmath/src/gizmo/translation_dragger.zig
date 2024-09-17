@@ -80,6 +80,7 @@ pub fn translationDragHandler(
                 local_ray,
             );
             if (_mode) |mode| {
+                // begin drag
                 break :block .{
                     .camera = drag_state.camera,
                     .drag = DragState{
@@ -104,6 +105,7 @@ pub fn translationDragHandler(
             local_ray,
         );
         if (_mode) |mode| {
+            // hover
             break :block .{
                 .camera = drag_state.camera,
                 .drag = DragState{

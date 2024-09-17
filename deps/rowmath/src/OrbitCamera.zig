@@ -116,6 +116,7 @@ pub fn makeScreenMoveHandler(
 pub const CameraRightDragHandler = drag_handler.DragHandle(.right, &bindYawPitchHandler);
 pub const CameraMiddleDragHandler = drag_handler.DragHandle(.middle, &bindScreenMoveHanler);
 camera: Camera = .{},
+input: InputState = .{},
 
 // transform
 pitch: f32 = 0,
@@ -126,9 +127,9 @@ shift: Vec3 = .{ .x = 0, .y = 0, .z = 10 },
 drag_right: CameraRightDragHandler = .{},
 drag_middle: CameraMiddleDragHandler = .{},
 
-pub fn init(state: *@This()) void {
-    state.drag_right = makeYawPitchHandler(.right, state);
-    state.drag_middle = makeScreenMoveHandler(.middle, state);
+pub fn init(self: *@This()) void {
+    self.drag_right = makeYawPitchHandler(.right, self);
+    self.drag_middle = makeScreenMoveHandler(.middle, self);
 }
 
 pub fn projectionMatrix(self: @This()) Mat4 {
@@ -143,18 +144,19 @@ pub fn viewProjectionMatrix(self: @This()) Mat4 {
     return self.viewMatrix().mul(self.projectionMatrix());
 }
 
-pub fn frame(state: *@This(), input: InputState) void {
+pub fn frame(self: *@This(), input: InputState) void {
     // update projection
-    state.camera.projection.resize(input.screen_size());
+    self.camera.projection.resize(input.screen_size());
+    self.input = input;
 
     // update transform
-    state.drag_right.frame(.{ .input = input });
-    state.drag_middle.frame(.{ .input = input });
+    self.drag_right.frame(.{ .input = input });
+    self.drag_middle.frame(.{ .input = input });
 
     // consumed. input.mouse_wheel must be clear
-    state.dolly(input.mouse_wheel);
+    self.dolly(input.mouse_wheel);
 
-    state.updateTransform();
+    self.updateTransform();
 }
 
 pub fn dolly(self: *@This(), d: f32) void {

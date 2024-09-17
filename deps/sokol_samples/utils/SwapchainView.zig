@@ -8,7 +8,6 @@ const ig = @import("cimgui");
 pub const SwapchainView = @This();
 
 orbit: OrbitCamera = .{},
-cursor: Vec2 = undefined,
 
 pip: sg.Pipeline = .{},
 pass_action: sg.PassAction = .{},
@@ -38,11 +37,9 @@ pub fn inputFromScreen() InputState {
     return input;
 }
 
-pub fn frame(self: *@This()) InputState {
-    const input = inputFromScreen();
-    self.orbit.frame(input);
-    self.cursor = input.cursorScreenPosition();
-    return input;
+pub fn frame(self: *@This()) void {
+    self.orbit.input = inputFromScreen();
+    self.orbit.frame(self.orbit.input);
 }
 
 pub fn begin(self: *@This()) void {
