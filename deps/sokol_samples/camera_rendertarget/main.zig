@@ -3,7 +3,8 @@ const sokol = @import("sokol");
 const sg = sokol.gfx;
 const ig = @import("cimgui");
 const utils = @import("utils");
-const CameraView = utils.CameraView;
+const SwapchainView = utils.SwapchainView;
+const FboView = utils.FboView;
 const rowmath = @import("rowmath");
 const Vec2 = rowmath.Vec2;
 const Vec3 = rowmath.Vec3;
@@ -12,7 +13,7 @@ const Camera = rowmath.Camera;
 const state = struct {
     var allocator: std.mem.Allocator = undefined;
     // background. without render target
-    var screen = CameraView{
+    var screen = SwapchainView{
         .orbit = .{
             .camera = .{
                 .projection = .{
@@ -31,7 +32,7 @@ const state = struct {
     };
     var view1_cursor: Vec2 = .{ .x = 0, .y = 0 };
 
-    var subview = CameraView{
+    var subview = FboView{
         .orbit = .{
             .camera = .{
                 .transform = .{
@@ -76,9 +77,7 @@ export fn frame() void {
         .delta_time = sokol.app.frameDuration(),
         .dpi_scale = sokol.app.dpiScale(),
     });
-
-    const input = CameraView.inputFromScreen();
-    state.screen.orbit.frame(input);
+    const input = state.screen.frame();
 
     //=== UI CODE STARTS HERE
     {
@@ -184,8 +183,8 @@ export fn frame() void {
 
     {
         // call sokol.imgui.render() inside a sokol-gfx pass
-        state.screen.begin(null);
-        defer state.screen.end(null);
+        state.screen.begin();
+        defer state.screen.end();
 
         utils.draw_lines(&rowmath.lines.Grid(5).lines);
     }

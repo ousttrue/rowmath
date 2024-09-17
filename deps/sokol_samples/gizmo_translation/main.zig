@@ -81,7 +81,7 @@ export fn frame() void {
         .delta_time = sokol.app.frameDuration(),
         .dpi_scale = sokol.app.dpiScale(),
     });
-    state.display.frame();
+    _ = state.display.frame();
 
     const io = ig.igGetIO();
     if (!io.*.WantCaptureMouse) {
