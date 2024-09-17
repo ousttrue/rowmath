@@ -57,40 +57,100 @@ const state = struct {
 };
 
 const DragState = struct {
+    ray: Ray,
+    hit: f32,
+
+    fn draw(self: @This()) void {
+        sokol.gl.beginLines();
+        defer sokol.gl.end();
+
+        // X axis (green).
+        sokol.gl.c3f(0, 0xff, 0xff);
+        const o = self.ray.origin;
+        sokol.gl.v3f(o.x, o.y, o.z);
+        const p = self.ray.point(self.hit);
+        sokol.gl.v3f(p.x, p.y, p.z);
+    }
+};
+
+const GizmoState = struct {
     camera: *Camera,
-    ray: ?Ray = null,
+    drag: ?DragState = null,
 };
 
 const DragInput = struct {
     input: InputState,
+    transform: Transform,
 };
 
-fn dragHandler(drag_state: DragState, drag_input: DragInput, button: bool) DragState {
+// state.gizmo.ctx.update(.{
+//     .viewport_size = .{ .x = io.*.DisplaySize.x, .y = io.*.DisplaySize.y },
+//     .mouse_left = io.*.MouseDown[ig.ImGuiMouseButton_Left],
+//     .ray = state.display.orbit.camera.getRay(state.display.cursor),
+//     .cam_yFov = state.display.orbit.camera.projection.fov_y_radians,
+//     .cam_dir = state.display.orbit.camera.transform.rotation.dirZ().negate(),
+// });
+// state.gizmo.drawlist.clearRetainingCapacity();
+// state.gizmo.t.translation(
+//     state.gizmo.ctx,
+//     &state.gizmo.drawlist,
+//     false,
+//     &state.transform,
+// ) catch @panic("transform a");
+fn dragHandler(drag_state: GizmoState, drag_input: DragInput, button: bool) GizmoState {
     if (button) {
-        if (drag_state.ray) |ray| {
+        if (drag_state.drag) |drag| {
             // keep
             return .{
                 .camera = drag_state.camera,
-                .ray = ray,
+                .drag = drag,
             };
         } else {
             // new ray
             const cursor = drag_input.input.cursorScreenPosition();
             const ray = drag_state.camera.getRay(cursor);
-            return .{
-                .camera = drag_state.camera,
-                .ray = ray,
-            };
+            const local_ray = detransform(drag_input.transform, ray);
+            const _mode, const hit = rowmath.gizmo.translation_intersect(
+                local_ray,
+            );
+            if (_mode) |_| {
+                return .{
+                    .camera = drag_state.camera,
+                    .drag = DragState{
+                        .ray = ray,
+                        .hit = hit,
+                    },
+                };
+            }
         }
     } else {
-        if (drag_state.ray) |_| {
-            // end
-        } else {}
-        return .{
-            .camera = drag_state.camera,
-            .ray = null,
-        };
+        const cursor = drag_input.input.cursorScreenPosition();
+        const ray = drag_state.camera.getRay(cursor);
+        const local_ray = detransform(drag_input.transform, ray);
+        const _mode, const hit = rowmath.gizmo.translation_intersect(
+            local_ray,
+        );
+        if (_mode) |_| {
+            return .{
+                .camera = drag_state.camera,
+                .drag = DragState{
+                    .ray = ray,
+                    .hit = hit,
+                },
+            };
+        }
     }
+    return .{
+        .camera = drag_state.camera,
+        .drag = null,
+    };
+}
+
+fn detransform(p: Transform, r: Ray) Ray {
+    return .{
+        .origin = p.detransformPoint(r.origin),
+        .direction = p.detransformVector(r.direction),
+    };
 }
 
 export fn init() void {
@@ -128,22 +188,9 @@ export fn frame() void {
 
     const io = ig.igGetIO();
     if (!io.*.WantCaptureMouse) {
-        // state.gizmo.ctx.update(.{
-        //     .viewport_size = .{ .x = io.*.DisplaySize.x, .y = io.*.DisplaySize.y },
-        //     .mouse_left = io.*.MouseDown[ig.ImGuiMouseButton_Left],
-        //     .ray = state.display.orbit.camera.getRay(state.display.cursor),
-        //     .cam_yFov = state.display.orbit.camera.projection.fov_y_radians,
-        //     .cam_dir = state.display.orbit.camera.transform.rotation.dirZ().negate(),
-        // });
-        // state.gizmo.drawlist.clearRetainingCapacity();
-        // state.gizmo.t.translation(
-        //     state.gizmo.ctx,
-        //     &state.gizmo.drawlist,
-        //     false,
-        //     &state.transform,
-        // ) catch @panic("transform a");
         state.gizmo.frame(.{
             .input = input,
+            .transform = state.transform,
         });
     }
 
@@ -160,6 +207,10 @@ export fn frame() void {
         if (state.offscreen.beginButton("debug")) {
             defer state.offscreen.endButton();
 
+            if (state.gizmo.state.drag) |drag| {
+                drag.draw();
+            }
+
             // draw_scene(state.offscreen.orbit.camera.viewProjectionMatrix(), true);
             state.mesh.draw(
                 state.transform,
@@ -174,6 +225,11 @@ export fn frame() void {
                 else
                     state.display.cursor,
             );
+
+            // drawDrag(state.drag_left.state, state.input, .{
+            //     .name = "Left",
+            //     .color = RgbU8.red,
+            // });
 
             // state.gizmo.gl_draw();
         }

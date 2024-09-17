@@ -87,7 +87,11 @@ export fn frame() void {
         defer ig.igEnd();
 
         // bg
-        _ = ig.igColorEdit3("Background", &state.screen.pass_action.colors[0].clear_value.r, ig.ImGuiColorEditFlags_None);
+        _ = ig.igColorEdit3(
+            "Background",
+            &state.screen.pass_action.colors[0].clear_value.r,
+            ig.ImGuiColorEditFlags_None,
+        );
 
         var updated = false;
 

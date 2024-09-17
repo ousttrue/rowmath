@@ -71,7 +71,7 @@ const translate_xyz = geometry.MeshComponent.init(
     ),
     Rgba.gray,
 );
-fn translation_intersect(local_ray: Ray) struct { ?InteractionMode, f32 } {
+pub fn translation_intersect(local_ray: Ray) struct { ?InteractionMode, f32 } {
     var component: ?InteractionMode = null;
     var best_t = std.math.inf(f32);
 
