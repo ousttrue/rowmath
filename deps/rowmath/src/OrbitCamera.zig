@@ -55,7 +55,7 @@ fn bindYawPitchHandler(
 pub fn makeYawPitchHandler(
     comptime button: drag_handler.MouseButton,
     orbit: *OrbitCamera,
-) drag_handler.DragHandle(button, DragState) {
+) drag_handler.DragHandle(button, &bindYawPitchHandler) {
     return drag_handler.dragHandle(
         button,
         &bindYawPitchHandler,
@@ -105,7 +105,7 @@ fn bindScreenMoveHanler(
 pub fn makeScreenMoveHandler(
     comptime button: drag_handler.MouseButton,
     orbit: *OrbitCamera,
-) drag_handler.DragHandle(button, DragState) {
+) drag_handler.DragHandle(button, &bindScreenMoveHanler) {
     return drag_handler.dragHandle(
         button,
         &bindScreenMoveHanler,
@@ -113,9 +113,8 @@ pub fn makeScreenMoveHandler(
     );
 }
 
-pub const CameraLeftDragHandler = drag_handler.DragHandle(.left, DragState);
-pub const CameraRightDragHandler = drag_handler.DragHandle(.right, DragState);
-pub const CameraMiddleDragHandler = drag_handler.DragHandle(.middle, DragState);
+pub const CameraRightDragHandler = drag_handler.DragHandle(.right, &bindYawPitchHandler);
+pub const CameraMiddleDragHandler = drag_handler.DragHandle(.middle, &bindScreenMoveHanler);
 camera: Camera = .{},
 
 // transform

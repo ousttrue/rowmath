@@ -1,6 +1,5 @@
 const std = @import("std");
 const Vec2 = @import("Vec2.zig");
-const InputState = @import("InputState.zig");
 
 pub const MouseButton = enum {
     left,
@@ -8,14 +7,28 @@ pub const MouseButton = enum {
     middle,
 };
 
+fn StateType(Handler: type) type {
+    return @typeInfo(Handler).Fn.return_type.?;
+}
+
+fn InputType(Handler: type) type {
+    return @typeInfo(Handler).Fn.params[1].type.?;
+}
+
+// handler required:
+//
+// (StateType, InputType, is_pressed:bool) => StateType;
+
 pub fn DragHandle(
     comptime button: MouseButton,
-    DragState: type,
+    handler: anytype,
 ) type {
-    const Handler = fn (DragState, InputState, bool) DragState;
+    const Handler = @typeInfo(@TypeOf(handler)).Pointer.child;
+    const DragInput = InputType(Handler);
+    const DragState = StateType(Handler);
 
     return struct {
-        fn nop(_: DragState, _: InputState, _: bool) DragState {
+        fn nop(_: DragState, _: DragInput, _: bool) DragState {
             const v: DragState = undefined;
             return v;
         }
@@ -23,7 +36,7 @@ pub fn DragHandle(
         state: DragState = undefined,
         handler: *const Handler = &nop,
 
-        pub fn frame(self: *@This(), input: InputState) void {
+        pub fn frame(self: *@This(), input: DragInput) void {
             const button_down = switch (button) {
                 .left => input.mouse_left,
                 .right => input.mouse_right,
@@ -34,17 +47,12 @@ pub fn DragHandle(
     };
 }
 
-fn ReturnType(T: type) type {
-    const F = @typeInfo(T).Pointer.child;
-    return @typeInfo(F).Fn.return_type.?;
-}
-
 pub fn dragHandle(
     comptime button: MouseButton,
-    handler: anytype,
+    comptime handler: anytype,
     init: anytype,
-) DragHandle(button, ReturnType(@TypeOf(handler))) {
-    return DragHandle(button, ReturnType(@TypeOf(handler))){
+) DragHandle(button, handler) {
+    return DragHandle(button, handler){
         .handler = handler,
         .state = init,
     };
