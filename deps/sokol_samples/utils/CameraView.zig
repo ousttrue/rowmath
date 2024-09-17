@@ -96,23 +96,6 @@ fn is_contain(pos: ig.ImVec2, size: ig.ImVec2, p: ig.ImVec2) bool {
     return (p.x >= pos.x and p.x <= (pos.x + size.x)) and (p.y >= pos.y and p.y <= (pos.y + size.y));
 }
 
-pub fn inputFromScreen() InputState {
-    const io = ig.igGetIO().*;
-    var input = InputState{
-        .screen_width = io.DisplaySize.x,
-        .screen_height = io.DisplaySize.y,
-        .mouse_x = io.MousePos.x,
-        .mouse_y = io.MousePos.y,
-    };
-    if (!io.WantCaptureMouse) {
-        input.mouse_left = io.MouseDown[ig.ImGuiMouseButton_Left];
-        input.mouse_right = io.MouseDown[ig.ImGuiMouseButton_Right];
-        input.mouse_middle = io.MouseDown[ig.ImGuiMouseButton_Middle];
-        input.mouse_wheel = io.MouseWheel;
-    }
-    return input;
-}
-
 pub fn inputFromRendertarget(pos: ig.ImVec2, size: ig.ImVec2) InputState {
     const io = ig.igGetIO().*;
     var input = InputState{

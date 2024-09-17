@@ -8,6 +8,7 @@ const ig = @import("cimgui");
 
 const utils = @import("utils");
 const CameraView = utils.CameraView;
+const SwapchainView = utils.SwapchainView;
 
 const rowmath = @import("rowmath");
 const Vec3 = rowmath.Vec3;
@@ -21,7 +22,7 @@ const gizmo = rowmath.gizmo;
 
 const state = struct {
     var allocator: std.mem.Allocator = undefined;
-    var display = CameraView{
+    var display = SwapchainView{
         .orbit = .{
             .camera = .{
                 .projection = .{
@@ -87,9 +88,7 @@ export fn frame() void {
         .delta_time = sokol.app.frameDuration(),
         .dpi_scale = sokol.app.dpiScale(),
     });
-    const input = CameraView.inputFromScreen();
-    state.display.orbit.frame(input);
-    state.display_cursor = input.cursorScreenPosition();
+    state.display.frame();
 
     const io = ig.igGetIO().*;
     if (!io.WantCaptureMouse) {
@@ -117,8 +116,8 @@ export fn frame() void {
 
     {
         // render background
-        state.display.begin(null);
-        defer state.display.end(null);
+        state.display.begin();
+        defer state.display.end();
 
         utils.draw_lines(&rowmath.lines.Grid(5).lines);
         draw_scene(state.display.orbit.viewProjectionMatrix(), false);
