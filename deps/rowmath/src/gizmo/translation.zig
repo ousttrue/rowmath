@@ -10,7 +10,7 @@ const Transform = @import("../Transform.zig");
 const geometry = @import("geometry.zig");
 const context = @import("context.zig");
 
-const translate_x = geometry.MeshComponent.init(
+pub const translate_x = geometry.MeshComponent.init(
     geometry.make_lathed_geometry(
         Vec3.right,
         Vec3.up,
@@ -21,7 +21,7 @@ const translate_x = geometry.MeshComponent.init(
     ),
     Rgba.red,
 );
-const translate_y = geometry.MeshComponent.init(
+pub const translate_y = geometry.MeshComponent.init(
     geometry.make_lathed_geometry(
         Vec3.up,
         Vec3.forward,
@@ -32,7 +32,7 @@ const translate_y = geometry.MeshComponent.init(
     ),
     Rgba.green,
 );
-const translate_z = geometry.MeshComponent.init(
+pub const translate_z = geometry.MeshComponent.init(
     geometry.make_lathed_geometry(
         Vec3.forward,
         Vec3.right,
@@ -43,28 +43,28 @@ const translate_z = geometry.MeshComponent.init(
     ),
     Rgba.blue,
 );
-const translate_yz = geometry.MeshComponent.init(
+pub const translate_yz = geometry.MeshComponent.init(
     geometry.make_box_geometry(
         .{ .x = -0.01, .y = 0.25, .z = 0.25 },
         .{ .x = 0.01, .y = 0.75, .z = 0.75 },
     ),
     Rgba.cyan,
 );
-const translate_zx = geometry.MeshComponent.init(
+pub const translate_zx = geometry.MeshComponent.init(
     geometry.make_box_geometry(
         .{ .x = 0.25, .y = -0.01, .z = 0.25 },
         .{ .x = 0.75, .y = 0.01, .z = 0.75 },
     ),
     Rgba.magenta,
 );
-const translate_xy = geometry.MeshComponent.init(
+pub const translate_xy = geometry.MeshComponent.init(
     geometry.make_box_geometry(
         .{ .x = 0.25, .y = 0.25, .z = -0.01 },
         .{ .x = 0.75, .y = 0.75, .z = 0.01 },
     ),
     Rgba.yellow,
 );
-const translate_xyz = geometry.MeshComponent.init(
+pub const translate_xyz = geometry.MeshComponent.init(
     geometry.make_box_geometry(
         .{ .x = -0.05, .y = -0.05, .z = -0.05 },
         .{ .x = 0.05, .y = 0.05, .z = 0.05 },
@@ -121,7 +121,7 @@ pub fn translation_intersect(local_ray: Ray) struct { ?InteractionMode, f32 } {
     return .{ component, best_t };
 }
 
-fn get(i: InteractionMode) ?geometry.MeshComponent {
+pub fn get(i: InteractionMode) ?geometry.MeshComponent {
     return switch (i) {
         .Translate_x => translate_x,
         .Translate_y => translate_y,
@@ -144,7 +144,7 @@ fn snap(value: Vec3, f: f32) ?Vec3 {
     return null;
 }
 
-const InteractionMode = enum {
+pub const InteractionMode = enum {
     Translate_x,
     Translate_y,
     Translate_z,
@@ -229,6 +229,16 @@ fn axis_translation_dragger(
     return active.original_position.add(axis.scale(delta.dot(axis)));
 }
 
+pub const draw_interactions = [_]InteractionMode{
+    .Translate_x,
+    .Translate_y,
+    .Translate_z,
+    .Translate_yz,
+    .Translate_zx,
+    .Translate_xy,
+    .Translate_xyz,
+};
+
 pub const TranslationContext = struct {
     // Flag to indicate if the gizmo is being hovered
     hover: ?InteractionMode = null,
@@ -300,16 +310,6 @@ pub const TranslationContext = struct {
         if (ctx.has_released) {
             self.active = null;
         }
-
-        const draw_interactions = [_]InteractionMode{
-            .Translate_x,
-            .Translate_y,
-            .Translate_z,
-            .Translate_yz,
-            .Translate_zx,
-            .Translate_xy,
-            .Translate_xyz,
-        };
 
         const scaleMatrix = Mat4.scale(.{
             .x = draw_scale,

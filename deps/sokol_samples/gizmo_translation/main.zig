@@ -50,108 +50,12 @@ const state = struct {
         },
     };
     // gizmo
-    var gizmo: rowmath.DragHandle(.left, &dragHandler) = undefined;
+    var gizmo: rowmath.DragHandle(.left, &rowmath.gizmo.translationDragHandler) = undefined;
+    var drawlist: std.ArrayList(rowmath.gizmo.Renderable) = undefined;
     // scene
     var transform = Transform{};
     var mesh = utils.mesh.Cube{};
 };
-
-const DragState = struct {
-    ray: Ray,
-    hit: f32,
-
-    fn draw(self: @This()) void {
-        sokol.gl.beginLines();
-        defer sokol.gl.end();
-
-        // X axis (green).
-        sokol.gl.c3f(0, 0xff, 0xff);
-        const o = self.ray.origin;
-        sokol.gl.v3f(o.x, o.y, o.z);
-        const p = self.ray.point(self.hit);
-        sokol.gl.v3f(p.x, p.y, p.z);
-    }
-};
-
-const GizmoState = struct {
-    camera: *Camera,
-    drag: ?DragState = null,
-};
-
-const DragInput = struct {
-    input: InputState,
-    transform: Transform,
-};
-
-// state.gizmo.ctx.update(.{
-//     .viewport_size = .{ .x = io.*.DisplaySize.x, .y = io.*.DisplaySize.y },
-//     .mouse_left = io.*.MouseDown[ig.ImGuiMouseButton_Left],
-//     .ray = state.display.orbit.camera.getRay(state.display.cursor),
-//     .cam_yFov = state.display.orbit.camera.projection.fov_y_radians,
-//     .cam_dir = state.display.orbit.camera.transform.rotation.dirZ().negate(),
-// });
-// state.gizmo.drawlist.clearRetainingCapacity();
-// state.gizmo.t.translation(
-//     state.gizmo.ctx,
-//     &state.gizmo.drawlist,
-//     false,
-//     &state.transform,
-// ) catch @panic("transform a");
-fn dragHandler(drag_state: GizmoState, drag_input: DragInput, button: bool) GizmoState {
-    if (button) {
-        if (drag_state.drag) |drag| {
-            // keep
-            return .{
-                .camera = drag_state.camera,
-                .drag = drag,
-            };
-        } else {
-            // new ray
-            const cursor = drag_input.input.cursorScreenPosition();
-            const ray = drag_state.camera.getRay(cursor);
-            const local_ray = detransform(drag_input.transform, ray);
-            const _mode, const hit = rowmath.gizmo.translation_intersect(
-                local_ray,
-            );
-            if (_mode) |_| {
-                return .{
-                    .camera = drag_state.camera,
-                    .drag = DragState{
-                        .ray = ray,
-                        .hit = hit,
-                    },
-                };
-            }
-        }
-    } else {
-        const cursor = drag_input.input.cursorScreenPosition();
-        const ray = drag_state.camera.getRay(cursor);
-        const local_ray = detransform(drag_input.transform, ray);
-        const _mode, const hit = rowmath.gizmo.translation_intersect(
-            local_ray,
-        );
-        if (_mode) |_| {
-            return .{
-                .camera = drag_state.camera,
-                .drag = DragState{
-                    .ray = ray,
-                    .hit = hit,
-                },
-            };
-        }
-    }
-    return .{
-        .camera = drag_state.camera,
-        .drag = null,
-    };
-}
-
-fn detransform(p: Transform, r: Ray) Ray {
-    return .{
-        .origin = p.detransformPoint(r.origin),
-        .direction = p.detransformVector(r.direction),
-    };
-}
 
 export fn init() void {
     sg.setup(.{
@@ -170,11 +74,12 @@ export fn init() void {
     state.mesh.init();
     // page_allocator crash wasm
     state.gizmo = .{
-        .handler = &dragHandler,
+        .handler = &rowmath.gizmo.translationDragHandler,
         .state = .{
             .camera = &state.display.orbit.camera,
         },
     };
+    state.drawlist = std.ArrayList(rowmath.gizmo.Renderable).init(std.heap.c_allocator);
 }
 
 export fn frame() void {
@@ -191,6 +96,7 @@ export fn frame() void {
         state.gizmo.frame(.{
             .input = input,
             .transform = state.transform,
+            .drawlist = &state.drawlist,
         });
     }
 
@@ -207,11 +113,6 @@ export fn frame() void {
         if (state.offscreen.beginButton("debug")) {
             defer state.offscreen.endButton();
 
-            if (state.gizmo.state.drag) |drag| {
-                drag.draw();
-            }
-
-            // draw_scene(state.offscreen.orbit.camera.viewProjectionMatrix(), true);
             state.mesh.draw(
                 state.transform,
                 state.offscreen.orbit.camera.viewProjectionMatrix(),
@@ -226,12 +127,7 @@ export fn frame() void {
                     state.display.cursor,
             );
 
-            // drawDrag(state.drag_left.state, state.input, .{
-            //     .name = "Left",
-            //     .color = RgbU8.red,
-            // });
-
-            // state.gizmo.gl_draw();
+            draw_gizmo();
         }
         ig.igEnd();
     }
@@ -247,9 +143,54 @@ export fn frame() void {
             state.display.orbit.viewProjectionMatrix(),
             .{ .useRenderTarget = false },
         );
-        // state.gizmo.gl_draw();
+
+        draw_gizmo();
     }
     sg.commit();
+}
+
+fn draw_gizmo() void {
+    draw_gizmo_mesh(state.drawlist.items);
+
+    if (state.gizmo.state.drag) |drag| {
+        draw_ray(drag);
+    }
+}
+
+fn draw_gizmo_mesh(drawlist: []const rowmath.gizmo.Renderable) void {
+    for (drawlist) |m| {
+        sokol.gl.matrixModeModelview();
+        sokol.gl.pushMatrix();
+        defer sokol.gl.popMatrix();
+        sokol.gl.multMatrix(&m.matrix.m[0]);
+        sokol.gl.beginTriangles();
+        defer sokol.gl.end();
+        const color = m.color();
+        sokol.gl.c4f(
+            color.r,
+            color.g,
+            color.b,
+            color.a,
+        );
+        for (m.mesh.triangles) |triangle| {
+            for (triangle) |i| {
+                const p = m.mesh.vertices[i].position;
+                sokol.gl.v3f(p.x, p.y, p.z);
+            }
+        }
+    }
+}
+
+fn draw_ray(drag: rowmath.gizmo.DragState) void {
+    sokol.gl.beginLines();
+    defer sokol.gl.end();
+
+    // X axis (green).
+    sokol.gl.c3f(0, 0xff, 0xff);
+    const o = drag.ray.origin;
+    sokol.gl.v3f(o.x, o.y, o.z);
+    const p = drag.ray.point(drag.hit);
+    sokol.gl.v3f(p.x, p.y, p.z);
 }
 
 export fn cleanup() void {
