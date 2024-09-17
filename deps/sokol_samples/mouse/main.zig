@@ -16,6 +16,40 @@ const ig = @import("cimgui");
 
 const FONT_KC854 = 0;
 
+fn dragVec2(
+    drag_state: ?Vec2,
+    frame_input: struct {
+        input: InputState,
+    },
+    button: bool,
+) ?Vec2 {
+    if (drag_state) |pos| {
+        if (button) {
+            // keep
+            return pos;
+        } else {
+            // end
+            return null;
+        }
+    } else {
+        if (button) {
+            // start
+            return frame_input.input.cursor();
+        } else {
+            // nop
+            return null;
+        }
+    }
+}
+
+const state = struct {
+    var pass_action = sg.PassAction{};
+    var input = InputState{};
+    var drag_left = rowmath.dragHandle(.left, &dragVec2, null);
+    var drag_right = rowmath.dragHandle(.right, &dragVec2, null);
+    var drag_middle = rowmath.dragHandle(.middle, &dragVec2, null);
+};
+
 const DragOpts = struct {
     name: []const u8,
     color: RgbU8,
@@ -64,34 +98,6 @@ fn drawDrag(drag_state: ?Vec2, input: InputState, opts: DragOpts) void {
             "{s} :\n",
             .{opts.name},
         );
-    }
-}
-
-const state = struct {
-    var pass_action = sg.PassAction{};
-    var input = InputState{};
-    var drag_left = rowmath.dragHandle(.left, &dragVec2, null);
-    var drag_right = rowmath.dragHandle(.right, &dragVec2, null);
-    var drag_middle = rowmath.dragHandle(.middle, &dragVec2, null);
-};
-
-fn dragVec2(drag_state: ?Vec2, input: InputState, button: bool) ?Vec2 {
-    if (drag_state) |pos| {
-        if (button) {
-            // keep
-            return pos;
-        } else {
-            // end
-            return null;
-        }
-    } else {
-        if (button) {
-            // start
-            return input.cursor();
-        } else {
-            // nop
-            return null;
-        }
     }
 }
 
@@ -153,9 +159,9 @@ export fn frame() void {
         .dpi_scale = sokol.app.dpiScale(),
     });
 
-    state.drag_left.frame(state.input);
-    state.drag_right.frame(state.input);
-    state.drag_middle.frame(state.input);
+    state.drag_left.frame(.{ .input = state.input });
+    state.drag_right.frame(.{ .input = state.input });
+    state.drag_middle.frame(.{ .input = state.input });
 
     // imgui
     ig.igShowDemoWindow(null);

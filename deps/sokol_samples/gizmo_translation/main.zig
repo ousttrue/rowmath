@@ -18,6 +18,7 @@ const Camera = rowmath.Camera;
 const InputState = rowmath.InputState;
 const Frustum = rowmath.Frustum;
 const Transform = rowmath.Transform;
+const Ray = rowmath.Ray;
 
 const state = struct {
     // main camera
@@ -49,11 +50,48 @@ const state = struct {
         },
     };
     // gizmo
-    var gizmo = utils.Gizmo{};
+    var gizmo: rowmath.DragHandle(.left, &dragHandler) = undefined;
     // scene
     var transform = Transform{};
     var mesh = utils.mesh.Cube{};
 };
+
+const DragState = struct {
+    camera: *Camera,
+    ray: ?Ray = null,
+};
+
+const DragInput = struct {
+    input: InputState,
+};
+
+fn dragHandler(drag_state: DragState, drag_input: DragInput, button: bool) DragState {
+    if (button) {
+        if (drag_state.ray) |ray| {
+            // keep
+            return .{
+                .camera = drag_state.camera,
+                .ray = ray,
+            };
+        } else {
+            // new ray
+            const cursor = drag_input.input.cursorScreenPosition();
+            const ray = drag_state.camera.getRay(cursor);
+            return .{
+                .camera = drag_state.camera,
+                .ray = ray,
+            };
+        }
+    } else {
+        if (drag_state.ray) |_| {
+            // end
+        } else {}
+        return .{
+            .camera = drag_state.camera,
+            .ray = null,
+        };
+    }
+}
 
 export fn init() void {
     sg.setup(.{
@@ -71,7 +109,12 @@ export fn init() void {
     state.display.init();
     state.mesh.init();
     // page_allocator crash wasm
-    state.gizmo.init(std.heap.c_allocator);
+    state.gizmo = .{
+        .handler = &dragHandler,
+        .state = .{
+            .camera = &state.display.orbit.camera,
+        },
+    };
 }
 
 export fn frame() void {
@@ -81,24 +124,27 @@ export fn frame() void {
         .delta_time = sokol.app.frameDuration(),
         .dpi_scale = sokol.app.dpiScale(),
     });
-    _ = state.display.frame();
+    const input = state.display.frame();
 
     const io = ig.igGetIO();
     if (!io.*.WantCaptureMouse) {
-        state.gizmo.ctx.update(.{
-            .viewport_size = .{ .x = io.*.DisplaySize.x, .y = io.*.DisplaySize.y },
-            .mouse_left = io.*.MouseDown[ig.ImGuiMouseButton_Left],
-            .ray = state.display.orbit.camera.getRay(state.display.cursor),
-            .cam_yFov = state.display.orbit.camera.projection.fov_y_radians,
-            .cam_dir = state.display.orbit.camera.transform.rotation.dirZ().negate(),
+        // state.gizmo.ctx.update(.{
+        //     .viewport_size = .{ .x = io.*.DisplaySize.x, .y = io.*.DisplaySize.y },
+        //     .mouse_left = io.*.MouseDown[ig.ImGuiMouseButton_Left],
+        //     .ray = state.display.orbit.camera.getRay(state.display.cursor),
+        //     .cam_yFov = state.display.orbit.camera.projection.fov_y_radians,
+        //     .cam_dir = state.display.orbit.camera.transform.rotation.dirZ().negate(),
+        // });
+        // state.gizmo.drawlist.clearRetainingCapacity();
+        // state.gizmo.t.translation(
+        //     state.gizmo.ctx,
+        //     &state.gizmo.drawlist,
+        //     false,
+        //     &state.transform,
+        // ) catch @panic("transform a");
+        state.gizmo.frame(.{
+            .input = input,
         });
-        state.gizmo.drawlist.clearRetainingCapacity();
-        state.gizmo.t.translation(
-            state.gizmo.ctx,
-            &state.gizmo.drawlist,
-            false,
-            &state.transform,
-        ) catch @panic("transform a");
     }
 
     {
@@ -129,7 +175,7 @@ export fn frame() void {
                     state.display.cursor,
             );
 
-            state.gizmo.gl_draw();
+            // state.gizmo.gl_draw();
         }
         ig.igEnd();
     }
@@ -145,7 +191,7 @@ export fn frame() void {
             state.display.orbit.viewProjectionMatrix(),
             .{ .useRenderTarget = false },
         );
-        state.gizmo.gl_draw();
+        // state.gizmo.gl_draw();
     }
     sg.commit();
 }

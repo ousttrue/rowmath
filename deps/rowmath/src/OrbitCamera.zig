@@ -9,29 +9,29 @@ pub const OrbitCamera = @This();
 
 pub const DragState = struct {
     orbit: *OrbitCamera = undefined,
-    input: InputState = .{},
+    prev_input: InputState = .{},
     start: ?Vec2 = null,
 };
 
 fn bindYawPitchHandler(
     state: DragState,
-    input: InputState,
+    frame_input: struct { input: InputState },
     button: bool,
 ) DragState {
     if (state.start) |start| {
         if (button) {
             // drag
-            state.orbit.yawPitch(input, state.input);
+            state.orbit.yawPitch(frame_input.input, state.prev_input);
             return DragState{
                 .orbit = state.orbit,
-                .input = input,
+                .prev_input = frame_input.input,
                 .start = start,
             };
         } else {
             // end
             return DragState{
                 .orbit = state.orbit,
-                .input = input,
+                .prev_input = frame_input.input,
             };
         }
     } else {
@@ -39,14 +39,14 @@ fn bindYawPitchHandler(
             // begin
             return DragState{
                 .orbit = state.orbit,
-                .input = input,
-                .start = input.cursor(),
+                .prev_input = frame_input.input,
+                .start = frame_input.input.cursor(),
             };
         } else {
             // not drag
             return DragState{
                 .orbit = state.orbit,
-                .input = input,
+                .prev_input = frame_input.input,
             };
         }
     }
@@ -65,23 +65,23 @@ pub fn makeYawPitchHandler(
 
 fn bindScreenMoveHanler(
     state: DragState,
-    input: InputState,
+    frame_input: struct { input: InputState },
     button: bool,
 ) DragState {
     if (state.start) |start| {
         if (button) {
             // drag
-            state.orbit.screenMove(input, state.input);
+            state.orbit.screenMove(frame_input.input, state.prev_input);
             return DragState{
                 .orbit = state.orbit,
-                .input = input,
+                .prev_input = frame_input.input,
                 .start = start,
             };
         } else {
             // end
             return DragState{
                 .orbit = state.orbit,
-                .input = input,
+                .prev_input = frame_input.input,
             };
         }
     } else {
@@ -89,14 +89,14 @@ fn bindScreenMoveHanler(
             // begin
             return DragState{
                 .orbit = state.orbit,
-                .input = input,
-                .start = input.cursor(),
+                .prev_input = frame_input.input,
+                .start = frame_input.input.cursor(),
             };
         } else {
             // not drag
             return DragState{
                 .orbit = state.orbit,
-                .input = input,
+                .prev_input = frame_input.input,
             };
         }
     }
@@ -148,8 +148,8 @@ pub fn frame(state: *@This(), input: InputState) void {
     state.camera.projection.resize(input.screen_size());
 
     // update transform
-    state.drag_right.frame(input);
-    state.drag_middle.frame(input);
+    state.drag_right.frame(.{ .input = input });
+    state.drag_middle.frame(.{ .input = input });
 
     // consumed. input.mouse_wheel must be clear
     state.dolly(input.mouse_wheel);
