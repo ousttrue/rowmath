@@ -4,6 +4,7 @@ const Quat = @import("Quat.zig");
 const Mat4 = @import("Mat4.zig");
 const InputState = @import("InputState.zig");
 const Camera = @import("Camera.zig");
+const Ray = @import("Ray.zig");
 const drag_handler = @import("drag_handler.zig");
 pub const OrbitCamera = @This();
 
@@ -184,5 +185,11 @@ pub fn updateTransform(self: *@This()) void {
 pub fn target(self: @This()) Vec3 {
     return self.camera.transform.translation.add(
         self.camera.transform.rotation.dirZ().scale(-@abs(self.shift.z)),
+    );
+}
+
+pub fn getRay(self: @This()) Ray {
+    return self.camera.getRay(
+        self.input.cursorScreenPosition(),
     );
 }

@@ -128,7 +128,6 @@ export fn frame() void {
             ig.ImGuiCond_Once,
             .{ .x = 0, .y = 0 },
         );
-        // show_subview("debug");
         var screen_pos: ig.ImVec2 = undefined;
         if (state.offscreen.beginButton("debug", &screen_pos)) {
             defer state.offscreen.endButton();
@@ -140,18 +139,14 @@ export fn frame() void {
             );
             utils.draw_lines(&rowmath.lines.Grid(5).lines);
             utils.draw_camera_frustum(state.display.orbit);
-
             draw_gizmo_mesh(state.offscreen.orbit.camera);
-
             if (state.gizmo.state.drag) |drag| {
                 draw_debug(
                     state.offscreen.orbit.camera,
                     drag,
                     ig.igGetWindowDrawList(),
                     screen_pos,
-                    state.display.orbit.camera.getRay(
-                        state.display.orbit.input.cursorScreenPosition(),
-                    ),
+                    state.display.orbit.getRay(),
                 );
             }
         }
@@ -178,9 +173,7 @@ export fn frame() void {
                 drag,
                 ig.igGetBackgroundDrawList_Nil(),
                 .{ .x = 0, .y = 0 },
-                state.display.orbit.camera.getRay(
-                    state.display.orbit.input.cursorScreenPosition(),
-                ),
+                state.display.orbit.getRay(),
             );
         }
     }
