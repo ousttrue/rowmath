@@ -30,7 +30,6 @@ sgl_ctx: sokol.gl.Context = .{},
 rendertarget: ?Fbo = null,
 
 pub fn init(self: *@This()) void {
-    self.orbit.init();
     // create a sokol-gl context compatible with the view1 render pass
     // (specific color pixel format, no depth-stencil-surface, no MSAA)
     self.sgl_ctx = sokol.gl.makeContext(.{

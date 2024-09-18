@@ -39,7 +39,6 @@ pub fn main() void {
     // Define the camera to look into our 3d world
     var camera = c.Camera{};
     var orbit = rowmath.OrbitCamera{};
-    orbit.init();
 
     c.SetTargetFPS(60); // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

@@ -17,7 +17,6 @@ pub fn init(self: *@This()) void {
         .load_action = .CLEAR,
         .clear_value = .{ .r = 0.0, .g = 0.5, .b = 1.0, .a = 1.0 },
     };
-    self.orbit.init();
 }
 
 pub fn inputFromScreen() InputState {

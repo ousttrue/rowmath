@@ -98,13 +98,14 @@ yaw: f32 = 0,
 pivot: Vec3 = .{ .x = 0, .y = 2, .z = 0 },
 shift: Vec3 = .{ .x = 0, .y = 0, .z = 10 },
 
-drag_right: CameraRightDragHandler = .{},
-drag_middle: CameraMiddleDragHandler = .{},
-
-pub fn init(self: *@This()) void {
-    self.drag_right = drag_handler.dragHandle(.right, &bindYawPitchHandler, .{});
-    self.drag_middle = drag_handler.dragHandle(.middle, &bindScreenMoveHanler, .{});
-}
+drag_right: drag_handler.DragHandle(
+    .right,
+    &bindYawPitchHandler,
+) = drag_handler.dragHandle(.right, &bindYawPitchHandler, .{}),
+drag_middle: drag_handler.DragHandle(
+    .middle,
+    &bindScreenMoveHanler,
+) = drag_handler.dragHandle(.middle, &bindScreenMoveHanler, .{}),
 
 pub fn projectionMatrix(self: @This()) Mat4 {
     return self.camera.projection.matrix;

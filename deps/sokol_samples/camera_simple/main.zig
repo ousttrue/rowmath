@@ -28,8 +28,6 @@ export fn init() void {
     };
     debugtext_desc.fonts[0] = sokol.debugtext.fontOric();
     sokol.debugtext.setup(debugtext_desc);
-
-    state.orbit.init();
 }
 
 export fn frame() void {
