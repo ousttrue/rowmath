@@ -22,6 +22,32 @@ const emcc_extra_args = [_][]const u8{
     "-sUSE_OFFSET_CONVERTER=1",
 } ++ (if (builtin.mode == .Debug) debug_flags else release_flags);
 
+const shaders = [_][]const u8{
+    "utils/mesh/cube.glsl",
+    "utils/mesh/bone.glsl",
+    "utils/mesh/joint.glsl",
+};
+// // glsl to glsl.zig
+// const shaders: []const []const u8 = &.{
+//     "cuber/shader.glsl",
+// };
+
+fn shdc(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    comptime src: []const []const u8,
+) [src.len]*std.Build.Step.Run {
+    var dst: [src.len]*std.Build.Step.Run = undefined;
+    for (src, 0..) |s, i| {
+        dst[i] = sokol_tool.runShdcCommand(
+            b,
+            target,
+            b.path(s).getPath(b),
+        );
+    }
+    return dst;
+}
+
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -79,11 +105,8 @@ pub fn build(b: *std.Build) void {
     utils.addImport("rowmath", rowmath_mod);
     utils.addImport("sokol", sokol_dep.module("sokol"));
     utils.addImport("cimgui", cimgui_dep.module("cimgui"));
-    const cube_shader = sokol_tool.runShdcCommand(
-        b,
-        target,
-        b.path("utils/mesh/cube.glsl").getPath(b),
-    );
+
+    const shader_steps = shdc(b, target, &shaders);
 
     var cuber = b.addModule("cuber", .{
         .root_source_file = b.path("cuber/cuber.zig"),
@@ -114,7 +137,9 @@ pub fn build(b: *std.Build) void {
         compile.linkLibCpp();
         compile.linkLibC();
 
-        compile.step.dependOn(&cube_shader.step);
+        for (shader_steps) |shader_step| {
+            compile.step.dependOn(&shader_step.step);
+        }
         for (shaders) |glsl| {
             const shader = sokol_tool.runShdcCommand(
                 b,
@@ -223,11 +248,6 @@ fn build_example(
         return exe;
     }
 }
-
-// glsl to glsl.zig
-const shaders: []const []const u8 = &.{
-    "cuber/shader.glsl",
-};
 
 pub fn emrun(b: *std.Build, dep: *std.Build.Dependency) *std.Build.Step.Run {
     const emsdk_zig_dep = dep.builder.dependency("emsdk-zig", .{});

@@ -175,10 +175,7 @@ export fn frame() void {
                 // grid
                 utils.draw_lines(&rowmath.lines.Grid(5).lines);
                 // frustum
-                utils.draw_camera_frustum(
-                    state.screen.orbit,
-                    .none,
-                );
+                utils.draw_camera_frustum(state.screen.orbit);
             }
         }
         ig.igEnd();

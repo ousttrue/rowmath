@@ -49,7 +49,6 @@ pub fn draw_line(v0: Vec3, v1: Vec3) void {
 
 pub fn draw_camera_frustum(
     orbit: OrbitCamera,
-    translation_state: rowmath.gizmo.TranslateionState,
 ) void {
     {
         sokol.gl.pushMatrix();
@@ -58,27 +57,6 @@ pub fn draw_camera_frustum(
         const frustum = orbit.camera.projection.getFrustum();
         const frustum_lines = frustum.toLines();
         draw_lines(&frustum_lines);
-
-        switch (translation_state) {
-            .none => {},
-            .hover, .drag => |drag_state| {
-                // drag plane
-                {
-                    const hit = drag_state.ray.point(drag_state.hit);
-                    const v = hit.sub(orbit.camera.transform.translation);
-                    const drag_clip = v.dot(orbit.camera.transform.rotation.dirZ());
-                    const quad = Frustum.getPyramidBase(
-                        orbit.camera.projection.fov_y_radians,
-                        orbit.camera.projection.getAspectRatio(),
-                        drag_clip,
-                    );
-                    const quad_lines = quad.toLines();
-                    draw_lines(&quad_lines);
-                    const cross_lines = quad.crossLines(drag_state.cursor);
-                    draw_lines(&cross_lines);
-                }
-            },
-        }
     }
 
     // cursor
@@ -93,6 +71,32 @@ pub fn draw_camera_frustum(
         defer sokol.gl.end();
         sokol.gl.c3f(1, 1, 0);
         draw_line(orbit.camera.transform.translation, orbit.pivot);
+    }
+}
+
+pub fn draw_camera_frustum_gizmo(
+    orbit: OrbitCamera,
+    translation_state: rowmath.gizmo.TranslateionState,
+) void {
+    switch (translation_state) {
+        .none => {},
+        .hover, .drag => |drag_state| {
+            // drag plane
+            {
+                const hit = drag_state.ray.point(drag_state.hit);
+                const v = hit.sub(orbit.camera.transform.translation);
+                const drag_clip = v.dot(orbit.camera.transform.rotation.dirZ());
+                const quad = Frustum.getPyramidBase(
+                    orbit.camera.projection.fov_y_radians,
+                    orbit.camera.projection.getAspectRatio(),
+                    drag_clip,
+                );
+                const quad_lines = quad.toLines();
+                draw_lines(&quad_lines);
+                const cross_lines = quad.crossLines(drag_state.cursor);
+                draw_lines(&cross_lines);
+            }
+        },
     }
 }
 

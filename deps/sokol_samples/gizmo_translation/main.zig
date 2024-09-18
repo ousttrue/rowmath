@@ -155,6 +155,9 @@ fn draw_debug(
     if (draw_frustum) {
         utils.draw_camera_frustum(
             state.display.orbit,
+        );
+        utils.draw_camera_frustum_gizmo(
+            state.display.orbit,
             state.gizmo.translation.state,
         );
     }
