@@ -62,4 +62,9 @@ pub const examples = [_]Example{
         .src = "gizmo_scaling/main.zig",
         .use_imgui = true,
     },
+    .{
+        .name = "springbone",
+        .src = "springbone/main.zig",
+        .use_imgui = true,
+    },
 };
