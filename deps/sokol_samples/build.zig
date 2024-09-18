@@ -26,11 +26,8 @@ const shaders = [_][]const u8{
     "utils/mesh/cube.glsl",
     "utils/mesh/bone.glsl",
     "utils/mesh/joint.glsl",
+    "cuber/shader.glsl",
 };
-// // glsl to glsl.zig
-// const shaders: []const []const u8 = &.{
-//     "cuber/shader.glsl",
-// };
 
 fn shdc(
     b: *std.Build,
