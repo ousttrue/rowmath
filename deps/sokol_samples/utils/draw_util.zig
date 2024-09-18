@@ -3,12 +3,14 @@ const sokol = @import("sokol");
 const rowmath = @import("rowmath");
 const Vec2 = rowmath.Vec2;
 const Vec3 = rowmath.Vec3;
+const Quat = rowmath.Quat;
 const Mat4 = rowmath.Mat4;
 const RgbU8 = rowmath.RgbU8;
 const RgbF32 = rowmath.RgbF32;
 const OrbitCamera = rowmath.OrbitCamera;
 const InputState = rowmath.InputState;
 const DragHandle = rowmath.DragHandle;
+const Frustum = rowmath.Frustum;
 const Ray = rowmath.Ray;
 
 pub fn gl_begin(opts: struct { projection: Mat4, view: Mat4 }) void {
@@ -45,16 +47,38 @@ pub fn draw_line(v0: Vec3, v1: Vec3) void {
     sokol.gl.v3f(v1.x, v1.y, v1.z);
 }
 
-pub fn draw_camera_frustum(orbit: OrbitCamera) void {
+pub fn draw_camera_frustum(
+    orbit: OrbitCamera,
+    translation_state: rowmath.gizmo.TranslateionState,
+) void {
     {
         sokol.gl.pushMatrix();
         defer sokol.gl.popMatrix();
         sokol.gl.multMatrix(&orbit.camera.transform.localToWorld().m[0]);
-        const frustum_lines = switch (orbit.camera.projection.projection_type) {
-            .perspective => orbit.camera.projection.perspectiveFrustum().toLines(),
-            .orthographic => orbit.camera.projection.orthographicFrustum().toLines(),
-        };
+        const frustum = orbit.camera.projection.getFrustum();
+        const frustum_lines = frustum.toLines();
         draw_lines(&frustum_lines);
+
+        switch (translation_state) {
+            .none => {},
+            .hover, .drag => |drag_state| {
+                // drag plane
+                {
+                    const hit = drag_state.ray.point(drag_state.hit);
+                    const v = hit.sub(orbit.camera.transform.translation);
+                    const drag_clip = v.dot(orbit.camera.transform.rotation.dirZ());
+                    const quad = Frustum.getPyramidBase(
+                        orbit.camera.projection.fov_y_radians,
+                        orbit.camera.projection.getAspectRatio(),
+                        drag_clip,
+                    );
+                    const quad_lines = quad.toLines();
+                    draw_lines(&quad_lines);
+                    const cross_lines = quad.crossLines(drag_state.cursor);
+                    draw_lines(&cross_lines);
+                }
+            },
+        }
     }
 
     // cursor

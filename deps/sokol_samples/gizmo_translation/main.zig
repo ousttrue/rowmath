@@ -153,7 +153,10 @@ fn draw_debug(
     draw_frustum: bool,
 ) void {
     if (draw_frustum) {
-        utils.draw_camera_frustum(state.display.orbit);
+        utils.draw_camera_frustum(
+            state.display.orbit,
+            state.gizmo.translation.state,
+        );
     }
 
     const drag = switch (state.gizmo.translation.state) {
@@ -173,30 +176,39 @@ fn draw_debug(
         sokol.gl.v3f(point.x, point.y, point.z);
     }
 
+    // drag plane & current ray intersection
+    const drag_plane = drag.getPlane();
+    if (drag_plane.intersect(ray)) |hit| {
+        const start = drag.ray.point(drag.hit);
+        sokol.gl.v3f(start.x, start.y, start.z);
+        const current = ray.point(hit);
+        sokol.gl.v3f(current.x, current.y, current.z);
+    }
+
     switch (drag.mode) {
         .Translate_x => {
             var buf: [64]u8 = undefined;
 
-            {
-                const im_color = utils.imColor(0, 255, 255, 255);
-                const pos = camera.toScreen(drag.start.rigid_transform.translation);
-                ig.ImDrawList_AddCircleFilled(
-                    drawlist,
-                    .{ .x = o.x + pos.x, .y = o.y + pos.y },
-                    4,
-                    im_color,
-                    14,
-                );
-                _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ pos.x, pos.y }) catch
-                    @panic("bufPrintZ");
-                ig.ImDrawList_AddText_Vec2(
-                    drawlist,
-                    .{ .x = o.x + pos.x, .y = o.y + pos.y },
-                    im_color,
-                    &buf[0],
-                    null,
-                );
-            }
+            // {
+            //     const im_color = utils.imColor(0, 255, 255, 255);
+            //     const pos = camera.toScreen(drag.start.rigid_transform.translation);
+            //     ig.ImDrawList_AddCircleFilled(
+            //         drawlist,
+            //         .{ .x = o.x + pos.x, .y = o.y + pos.y },
+            //         4,
+            //         im_color,
+            //         14,
+            //     );
+            //     _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ pos.x, pos.y }) catch
+            //         @panic("bufPrintZ");
+            //     ig.ImDrawList_AddText_Vec2(
+            //         drawlist,
+            //         .{ .x = o.x + pos.x, .y = o.y + pos.y },
+            //         im_color,
+            //         &buf[0],
+            //         null,
+            //     );
+            // }
 
             {
                 const im_color = utils.imColor(0, 255, 255, 255);
@@ -221,12 +233,7 @@ fn draw_debug(
 
             {
                 const im_color = utils.imColor(255, 0, 0, 255);
-                // drag plane & current ray intersection
-                const plane = Plane.fromNormalAndPoint(
-                    drag.ray.direction,
-                    drag.ray.point(drag.hit),
-                );
-                if (plane.intersect(ray)) |hit| {
+                if (drag_plane.intersect(ray)) |hit| {
                     const world = ray.point(hit);
                     const pos = camera.toScreen(world);
                     ig.ImDrawList_AddCircleFilled(

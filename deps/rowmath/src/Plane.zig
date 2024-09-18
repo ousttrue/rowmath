@@ -20,6 +20,6 @@ pub fn intersect(self: @This(), ray: Ray) ?f32 {
         return null;
     }
     const nv = self.normal.dot(ray.direction);
-    const nq_d = self.normal.dot(ray.origin) + self.d;
-    return -nq_d / nv;
+    const nq = self.normal.dot(ray.origin) + self.d;
+    return -nq / nv;
 }

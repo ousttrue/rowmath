@@ -215,3 +215,10 @@ pub fn orthographicFrustum(self: @This()) Frustum {
         },
     };
 }
+
+pub fn getFrustum(self: @This()) Frustum {
+    return switch (self.projection_type) {
+        .perspective => self.perspectiveFrustum(),
+        .orthographic => self.orthographicFrustum(),
+    };
+}

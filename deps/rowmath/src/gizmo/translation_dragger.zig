@@ -2,17 +2,29 @@ const std = @import("std");
 const Camera = @import("../Camera.zig");
 const InputState = @import("../InputState.zig");
 const Transform = @import("../Transform.zig");
+const RigidTransform = @import("../RigidTransform.zig");
+const Vec2 = @import("../Vec2.zig");
 const Ray = @import("../Ray.zig");
 const Mat4 = @import("../Mat4.zig");
+const Plane = @import("../Plane.zig");
 const geometry = @import("geometry.zig");
 const translation = @import("translation.zig");
 const Renderable = @import("context.zig").Renderable;
 
 pub const DragState = struct {
+    camera_transform: RigidTransform,
     start: Transform,
     mode: translation.InteractionMode,
+    cursor: Vec2,
     ray: Ray,
     hit: f32,
+
+    pub fn getPlane(self: @This()) Plane {
+        return Plane.fromNormalAndPoint(
+            self.camera_transform.rotation.dirZ(),
+            self.ray.point(self.hit),
+        );
+    }
 };
 
 pub const TranslateionState = union(enum) {
@@ -81,8 +93,10 @@ pub fn translationDragHandler(
                 // new hover
                 next_state = .{
                     .hover = .{
+                        .camera_transform = drag_input.camera.transform,
                         .start = drag_input.transform,
                         .mode = mode,
+                        .cursor = drag_input.input.cursorScreenPosition(),
                         .ray = ray,
                         .hit = hit,
                     },
@@ -106,8 +120,10 @@ pub fn translationDragHandler(
                     // new hover
                     next_state = .{
                         .hover = .{
+                            .camera_transform = drag_input.camera.transform,
                             .start = drag_input.transform,
                             .mode = mode,
+                            .cursor = drag_input.input.cursorScreenPosition(),
                             .ray = ray,
                             .hit = hit,
                         },

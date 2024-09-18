@@ -27,6 +27,10 @@ pub const right: Vec3 = .{ .x = 1, .y = 0, .z = 0 };
 pub const up: Vec3 = .{ .x = 0, .y = 1, .z = 0 };
 pub const forward: Vec3 = .{ .x = 0, .y = 0, .z = 1 };
 
+pub const left: Vec3 = .{ .x = -1, .y = 0, .z = 0 };
+pub const down: Vec3 = .{ .x = 0, .y = -1, .z = 0 };
+pub const backward: Vec3 = .{ .x = 0, .y = 0, .z = -1 };
+
 pub fn scalar(f: f32) Vec3 {
     return .{
         .x = f,
