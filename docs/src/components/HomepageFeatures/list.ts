@@ -31,4 +31,8 @@ export const list = [
     "name": "sokol gizmo scaling",
     "base_name": "gizmo_scaling"
   },
+  {
+    "name": "springbone",
+    "base_name": "springbone"
+  },
 ];
