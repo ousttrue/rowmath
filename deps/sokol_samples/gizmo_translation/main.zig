@@ -99,9 +99,6 @@ export fn init() void {
     // page_allocator crash wasm
     state.gizmo = .{
         .handler = &rowmath.gizmo.translationDragHandler,
-        .state = .{
-            .camera = &state.display.orbit.camera,
-        },
     };
     state.drawlist = std.ArrayList(rowmath.gizmo.Renderable).init(std.heap.c_allocator);
 }
@@ -118,6 +115,7 @@ export fn frame() void {
     const io = ig.igGetIO();
     if (!io.*.WantCaptureMouse) {
         state.gizmo.frame(.{
+            .camera = state.display.orbit.camera,
             .input = state.display.orbit.input,
             .transform = state.transform,
             .drawlist = &state.drawlist,
@@ -144,13 +142,7 @@ export fn frame() void {
                 .{ .useRenderTarget = true },
             );
             utils.draw_lines(&rowmath.lines.Grid(5).lines);
-            utils.draw_camera_frustum(
-                state.display.orbit,
-                if (state.offscreen.hover)
-                    null
-                else
-                    state.display.orbit.input.cursorScreenPosition(),
-            );
+            utils.draw_camera_frustum(state.display.orbit);
 
             draw_gizmo_mesh(state.offscreen.orbit.camera);
 

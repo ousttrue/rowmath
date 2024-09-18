@@ -174,14 +174,7 @@ fn show_subview(name: []const u8) void {
 
             draw_scene(state.offscreen.orbit.camera.viewProjectionMatrix(), true);
             utils.draw_lines(&rowmath.lines.Grid(5).lines);
-            utils.draw_camera_frustum(
-                state.display.orbit,
-                if (state.hover)
-                    null
-                else
-                    state.display_cursor,
-            );
-
+            utils.draw_camera_frustum(state.display.orbit);
             draw_gizmo(state.gizmo_drawlist.items);
         }
     }

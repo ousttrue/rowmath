@@ -16,11 +16,11 @@ pub const DragState = struct {
 };
 
 pub const GizmoState = struct {
-    camera: *Camera,
     drag: ?DragState = null,
 };
 
 const DragInput = struct {
+    camera: Camera,
     input: InputState,
     transform: Transform,
     drawlist: *std.ArrayList(Renderable),
@@ -68,13 +68,12 @@ pub fn translationDragHandler(
         if (drag_state.drag) |drag| block: {
             // keep
             break :block .{
-                .camera = drag_state.camera,
                 .drag = drag,
             };
         } else block: {
             // new ray
             const cursor = drag_input.input.cursorScreenPosition();
-            const ray = drag_state.camera.getRay(cursor);
+            const ray = drag_input.camera.getRay(cursor);
             const local_ray = detransform(drag_input.transform, ray);
             const _mode, const hit = translation.translation_intersect(
                 local_ray,
@@ -82,7 +81,6 @@ pub fn translationDragHandler(
             if (_mode) |mode| {
                 // begin drag
                 break :block .{
-                    .camera = drag_state.camera,
                     .drag = DragState{
                         .ray = ray,
                         .hit = hit,
@@ -92,14 +90,13 @@ pub fn translationDragHandler(
                 };
             } else {
                 break :block .{
-                    .camera = drag_state.camera,
                     .drag = null,
                 };
             }
         }
     else block: {
         const cursor = drag_input.input.cursorScreenPosition();
-        const ray = drag_state.camera.getRay(cursor);
+        const ray = drag_input.camera.getRay(cursor);
         const local_ray = detransform(drag_input.transform, ray);
         const _mode, const hit = translation.translation_intersect(
             local_ray,
@@ -107,7 +104,6 @@ pub fn translationDragHandler(
         if (_mode) |mode| {
             // hover
             break :block .{
-                .camera = drag_state.camera,
                 .drag = DragState{
                     .ray = ray,
                     .hit = hit,
@@ -117,7 +113,6 @@ pub fn translationDragHandler(
             };
         } else {
             break :block .{
-                .camera = drag_state.camera,
                 .drag = null,
             };
         }

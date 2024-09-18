@@ -7,110 +7,84 @@ const Camera = @import("Camera.zig");
 const drag_handler = @import("drag_handler.zig");
 pub const OrbitCamera = @This();
 
-pub const DragState = struct {
-    orbit: *OrbitCamera = undefined,
+pub const OrbitState = struct {
     prev_input: InputState = .{},
     start: ?Vec2 = null,
 };
 
+pub const OrbitInput = struct {
+    orbit: *OrbitCamera,
+    input: InputState,
+};
+
 fn bindYawPitchHandler(
-    state: DragState,
-    frame_input: struct { input: InputState },
+    state: OrbitState,
+    frame_input: OrbitInput,
     button: bool,
-) DragState {
+) OrbitState {
     if (state.start) |start| {
         if (button) {
             // drag
-            state.orbit.yawPitch(frame_input.input, state.prev_input);
-            return DragState{
-                .orbit = state.orbit,
+            frame_input.orbit.yawPitch(frame_input.input, state.prev_input);
+            return .{
                 .prev_input = frame_input.input,
                 .start = start,
             };
         } else {
             // end
-            return DragState{
-                .orbit = state.orbit,
+            return .{
                 .prev_input = frame_input.input,
             };
         }
     } else {
         if (button) {
             // begin
-            return DragState{
-                .orbit = state.orbit,
+            return .{
                 .prev_input = frame_input.input,
                 .start = frame_input.input.cursor(),
             };
         } else {
             // not drag
-            return DragState{
-                .orbit = state.orbit,
+            return .{
                 .prev_input = frame_input.input,
             };
         }
     }
-}
-
-pub fn makeYawPitchHandler(
-    comptime button: drag_handler.MouseButton,
-    orbit: *OrbitCamera,
-) drag_handler.DragHandle(button, &bindYawPitchHandler) {
-    return drag_handler.dragHandle(
-        button,
-        &bindYawPitchHandler,
-        .{ .orbit = orbit },
-    );
 }
 
 fn bindScreenMoveHanler(
-    state: DragState,
-    frame_input: struct { input: InputState },
+    state: OrbitState,
+    frame_input: OrbitInput,
     button: bool,
-) DragState {
+) OrbitState {
     if (state.start) |start| {
         if (button) {
             // drag
-            state.orbit.screenMove(frame_input.input, state.prev_input);
-            return DragState{
-                .orbit = state.orbit,
+            frame_input.orbit.screenMove(frame_input.input, state.prev_input);
+            return .{
                 .prev_input = frame_input.input,
                 .start = start,
             };
         } else {
             // end
-            return DragState{
-                .orbit = state.orbit,
+            return .{
                 .prev_input = frame_input.input,
             };
         }
     } else {
         if (button) {
             // begin
-            return DragState{
-                .orbit = state.orbit,
+            return .{
                 .prev_input = frame_input.input,
                 .start = frame_input.input.cursor(),
             };
         } else {
             // not drag
-            return DragState{
-                .orbit = state.orbit,
+            return .{
                 .prev_input = frame_input.input,
             };
         }
     }
-}
-
-pub fn makeScreenMoveHandler(
-    comptime button: drag_handler.MouseButton,
-    orbit: *OrbitCamera,
-) drag_handler.DragHandle(button, &bindScreenMoveHanler) {
-    return drag_handler.dragHandle(
-        button,
-        &bindScreenMoveHanler,
-        .{ .orbit = orbit },
-    );
 }
 
 pub const CameraRightDragHandler = drag_handler.DragHandle(.right, &bindYawPitchHandler);
@@ -128,8 +102,8 @@ drag_right: CameraRightDragHandler = .{},
 drag_middle: CameraMiddleDragHandler = .{},
 
 pub fn init(self: *@This()) void {
-    self.drag_right = makeYawPitchHandler(.right, self);
-    self.drag_middle = makeScreenMoveHandler(.middle, self);
+    self.drag_right = drag_handler.dragHandle(.right, &bindYawPitchHandler, .{});
+    self.drag_middle = drag_handler.dragHandle(.middle, &bindScreenMoveHanler, .{});
 }
 
 pub fn projectionMatrix(self: @This()) Mat4 {
@@ -150,8 +124,8 @@ pub fn frame(self: *@This(), input: InputState) void {
     self.input = input;
 
     // update transform
-    self.drag_right.frame(.{ .input = input });
-    self.drag_middle.frame(.{ .input = input });
+    self.drag_right.frame(.{ .orbit = self, .input = input });
+    self.drag_middle.frame(.{ .orbit = self, .input = input });
 
     // consumed. input.mouse_wheel must be clear
     self.dolly(input.mouse_wheel);

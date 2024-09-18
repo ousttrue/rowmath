@@ -77,7 +77,7 @@ export fn frame() void {
         .delta_time = sokol.app.frameDuration(),
         .dpi_scale = sokol.app.dpiScale(),
     });
-    const input = state.screen.frame();
+    state.screen.frame();
 
     //=== UI CODE STARTS HERE
     {
@@ -177,7 +177,6 @@ export fn frame() void {
                 // frustum
                 utils.draw_camera_frustum(
                     state.screen.orbit,
-                    input.cursorScreenPosition(),
                 );
             }
         }

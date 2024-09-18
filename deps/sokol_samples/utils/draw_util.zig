@@ -45,7 +45,7 @@ pub fn draw_line(v0: Vec3, v1: Vec3) void {
     sokol.gl.v3f(v1.x, v1.y, v1.z);
 }
 
-pub fn draw_camera_frustum(orbit: OrbitCamera, _cursor: ?Vec2) void {
+pub fn draw_camera_frustum(orbit: OrbitCamera) void {
     {
         sokol.gl.pushMatrix();
         defer sokol.gl.popMatrix();
@@ -58,11 +58,10 @@ pub fn draw_camera_frustum(orbit: OrbitCamera, _cursor: ?Vec2) void {
     }
 
     // cursor
-    if (_cursor) |cursor| {
-        const ray = orbit.camera.getRay(cursor);
-        const min, const max = orbit.camera.getRayClip(ray);
-        draw_ray(ray, min, max);
-    }
+    const cursor = orbit.input.cursorScreenPosition();
+    const ray = orbit.camera.getRay(cursor);
+    const min, const max = orbit.camera.getRayClip(ray);
+    draw_ray(ray, min, max);
 
     // pivot
     {
