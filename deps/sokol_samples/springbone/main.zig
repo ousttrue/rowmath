@@ -24,14 +24,26 @@ const RigidTransform = rowmath.RigidTransform;
 
 const Joint = struct {
     name: [:0]const u8,
-    transform: RigidTransform = .{},
+    transform: Transform = .{},
 };
 
-const JOINTS = [_]Joint{
-    .{ .name = "joint0", .transform = .{ .translation = .{ .x = 0, .y = 3, .z = 0 } } },
-    .{ .name = "joint1", .transform = .{ .translation = .{ .x = 0, .y = 2, .z = 0 } } },
-    .{ .name = "joint2", .transform = .{ .translation = .{ .x = 0, .y = 1, .z = 0 } } },
-    .{ .name = "end", .transform = .{ .translation = .{ .x = 0, .y = 0, .z = 0 } } },
+var JOINTS = [_]Joint{
+    .{
+        .name = "joint0",
+        .transform = .{ .rigid_transform = .{ .translation = .{ .x = 0, .y = 3, .z = 0 } } },
+    },
+    .{
+        .name = "joint1",
+        .transform = .{ .rigid_transform = .{ .translation = .{ .x = 0, .y = 2, .z = 0 } } },
+    },
+    .{
+        .name = "joint2",
+        .transform = .{ .rigid_transform = .{ .translation = .{ .x = 0, .y = 1, .z = 0 } } },
+    },
+    .{
+        .name = "end",
+        .transform = .{ .rigid_transform = .{ .translation = .{ .x = 0, .y = 0, .z = 0 } } },
+    },
 };
 
 const Bone = struct {
@@ -59,7 +71,7 @@ pub fn SpringBone(comptime n: usize) type {
             self.bones = bones;
 
             for (joints, 0..) |joint, i| {
-                self.matrices[i] = Mat4.translate(joint.transform.translation);
+                self.matrices[i] = joint.transform.matrix();
             }
         }
 
@@ -79,6 +91,12 @@ pub fn SpringBone(comptime n: usize) type {
                 }
             }
             return true;
+        }
+
+        pub fn update(self: *@This()) void {
+            for (self.joints, 0..) |joint, i| {
+                self.matrices[i] = joint.transform.matrix();
+            }
         }
     };
 }
@@ -105,6 +123,7 @@ const state = struct {
 
     var springbone: SpringBone(JOINTS.len) = undefined;
     var skeleton: utils.mesh.Skeleton = undefined;
+    var gizmo = utils.Gizmo{};
 };
 
 export fn init() void {
@@ -134,6 +153,7 @@ export fn init() void {
             .is_leaf = state.springbone.isLeaf(@intCast(i)),
         };
     }
+    state.gizmo.init(std.heap.c_allocator);
 }
 
 export fn frame() void {
@@ -145,11 +165,23 @@ export fn frame() void {
     });
     state.display.frame();
 
+    const io = ig.igGetIO();
+    if (!io.*.WantCaptureMouse) {
+        state.gizmo.translation.frame(.{
+            .camera = state.display.orbit.camera,
+            .input = state.display.orbit.input,
+            .transform = &JOINTS[0].transform,
+            .drawlist = &state.gizmo.drawlist,
+        });
+        state.springbone.update();
+    }
+
     {
         state.display.begin();
         defer state.display.end();
         // render background
         utils.draw_lines(&rowmath.lines.Grid(5).lines);
+        state.gizmo.gl_draw();
 
         // const matrices: [*]const Mat4 = @ptrCast(cozz.OZZ_model_matrices(state.ozz));
         state.skeleton.draw(

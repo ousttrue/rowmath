@@ -50,9 +50,8 @@ const state = struct {
             },
         },
     };
-    // gizmo
+
     var gizmo = utils.Gizmo{};
-    // scene
     var transform = Transform{};
     var mesh = utils.mesh.Cube{};
 };

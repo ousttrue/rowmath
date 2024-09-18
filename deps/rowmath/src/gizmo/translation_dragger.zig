@@ -12,7 +12,7 @@ const geometry = @import("geometry.zig");
 const translation = @import("translation.zig");
 const Renderable = @import("context.zig").Renderable;
 
-const DragInput = struct {
+const TranslationInput = struct {
     camera: Camera,
     input: InputState,
     transform: *Transform,
@@ -62,7 +62,7 @@ pub const DragState = struct {
     //
     // pos = start + dir * t;
     //
-    pub fn drag(self: @This(), input: DragInput) void {
+    pub fn drag(self: @This(), input: TranslationInput) void {
         const drag_plane = self.getPlane();
         const ray = input.getRay();
         if (drag_plane.intersect(ray)) |hit| {
@@ -117,23 +117,9 @@ pub fn make_drawlist(
     }
 }
 
-// state.gizmo.ctx.update(.{
-//     .viewport_size = .{ .x = io.*.DisplaySize.x, .y = io.*.DisplaySize.y },
-//     .mouse_left = io.*.MouseDown[ig.ImGuiMouseButton_Left],
-//     .ray = state.display.orbit.camera.getRay(state.display.cursor),
-//     .cam_yFov = state.display.orbit.camera.projection.fov_y_radians,
-//     .cam_dir = state.display.orbit.camera.transform.rotation.dirZ().negate(),
-// });
-// state.gizmo.drawlist.clearRetainingCapacity();
-// state.gizmo.t.translation(
-//     state.gizmo.ctx,
-//     &state.gizmo.drawlist,
-//     false,
-//     &state.transform,
-// ) catch @panic("transform a");
 pub fn translationDragHandler(
     drag_state: TranslateionState,
-    drag_input: DragInput,
+    drag_input: TranslationInput,
     button: bool,
 ) TranslateionState {
     var next_state = TranslateionState{ .none = void{} };
