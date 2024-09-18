@@ -177,6 +177,7 @@ export fn frame() void {
                 // frustum
                 utils.draw_camera_frustum(
                     state.screen.orbit,
+                    .none,
                 );
             }
         }
