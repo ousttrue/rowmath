@@ -20,6 +20,68 @@ const Frustum = rowmath.Frustum;
 const Transform = rowmath.Transform;
 const Ray = rowmath.Ray;
 const Plane = rowmath.Plane;
+const RigidTransform = rowmath.RigidTransform;
+
+const Joint = struct {
+    name: [:0]const u8,
+    transform: RigidTransform = .{},
+};
+
+const JOINTS = [_]Joint{
+    .{ .name = "joint0", .transform = .{ .translation = .{ .x = 0, .y = 3, .z = 0 } } },
+    .{ .name = "joint1", .transform = .{ .translation = .{ .x = 0, .y = 2, .z = 0 } } },
+    .{ .name = "joint2", .transform = .{ .translation = .{ .x = 0, .y = 1, .z = 0 } } },
+    .{ .name = "end", .transform = .{ .translation = .{ .x = 0, .y = 0, .z = 0 } } },
+};
+
+const Bone = struct {
+    head: u16,
+    tail: u16,
+};
+
+const BONES = [_]Bone{
+    .{ .head = 0, .tail = 1 },
+    .{ .head = 1, .tail = 2 },
+    .{ .head = 2, .tail = 3 },
+};
+
+pub fn SpringBone(comptime n: usize) type {
+    return struct {
+        // prev: [n]Vec3,
+        // current: [n]Vec3,
+        matrices: [n]Mat4,
+
+        joints: []const Joint,
+        bones: []const Bone,
+
+        pub fn init(self: *@This(), joints: []const Joint, bones: []const Bone) void {
+            self.joints = joints;
+            self.bones = bones;
+
+            for (joints, 0..) |joint, i| {
+                self.matrices[i] = Mat4.translate(joint.transform.translation);
+            }
+        }
+
+        pub fn getParent(self: @This(), i: u16) ?u16 {
+            for (self.bones) |bone| {
+                if (bone.tail == i) {
+                    return bone.head;
+                }
+            }
+            return null;
+        }
+
+        pub fn isLeaf(self: @This(), i: u16) bool {
+            for (self.bones) |bone| {
+                if (bone.head == i) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    };
+}
 
 const state = struct {
     // main camera
@@ -40,16 +102,9 @@ const state = struct {
             },
         },
     };
-    // sub camera
-    var offscreen = FboView{
-        .orbit = .{
-            .camera = .{
-                .transform = .{
-                    .translation = .{ .x = 0, .y = 1, .z = 15 },
-                },
-            },
-        },
-    };
+
+    var springbone: SpringBone(JOINTS.len) = undefined;
+    var skeleton: utils.mesh.Skeleton = undefined;
 };
 
 export fn init() void {
@@ -64,8 +119,21 @@ export fn init() void {
         .logger = .{ .func = sokol.log.func },
     });
 
-    state.offscreen.init();
     state.display.init();
+    state.springbone.init(&JOINTS, &BONES);
+
+    state.skeleton = utils.mesh.Skeleton.init(
+        std.heap.c_allocator,
+        JOINTS.len,
+    ) catch unreachable;
+    for (JOINTS, 0..) |joint, i| {
+        // const parent: u16 = parents[i];
+        state.skeleton.joints[i] = .{
+            .name = joint.name,
+            .parent = state.springbone.getParent(@intCast(i)),
+            .is_leaf = state.springbone.isLeaf(@intCast(i)),
+        };
+    }
 }
 
 export fn frame() void {
@@ -82,6 +150,12 @@ export fn frame() void {
         defer state.display.end();
         // render background
         utils.draw_lines(&rowmath.lines.Grid(5).lines);
+
+        // const matrices: [*]const Mat4 = @ptrCast(cozz.OZZ_model_matrices(state.ozz));
+        state.skeleton.draw(
+            state.display.orbit.viewProjectionMatrix(),
+            &state.springbone.matrices,
+        );
     }
     sg.commit();
 }
