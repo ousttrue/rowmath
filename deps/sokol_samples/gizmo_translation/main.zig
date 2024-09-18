@@ -185,82 +185,72 @@ fn draw_debug(
         sokol.gl.v3f(current.x, current.y, current.z);
     }
 
-    switch (drag.mode) {
-        .Translate_x => {
-            var buf: [64]u8 = undefined;
+    var buf: [64]u8 = undefined;
 
-            // {
-            //     const im_color = utils.imColor(0, 255, 255, 255);
-            //     const pos = camera.toScreen(drag.start.rigid_transform.translation);
-            //     ig.ImDrawList_AddCircleFilled(
-            //         drawlist,
-            //         .{ .x = o.x + pos.x, .y = o.y + pos.y },
-            //         4,
-            //         im_color,
-            //         14,
-            //     );
-            //     _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ pos.x, pos.y }) catch
-            //         @panic("bufPrintZ");
-            //     ig.ImDrawList_AddText_Vec2(
-            //         drawlist,
-            //         .{ .x = o.x + pos.x, .y = o.y + pos.y },
-            //         im_color,
-            //         &buf[0],
-            //         null,
-            //     );
-            // }
+    // {
+    //     const im_color = utils.imColor(0, 255, 255, 255);
+    //     const pos = camera.toScreen(drag.start.rigid_transform.translation);
+    //     ig.ImDrawList_AddCircleFilled(
+    //         drawlist,
+    //         .{ .x = o.x + pos.x, .y = o.y + pos.y },
+    //         4,
+    //         im_color,
+    //         14,
+    //     );
+    //     _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ pos.x, pos.y }) catch
+    //         @panic("bufPrintZ");
+    //     ig.ImDrawList_AddText_Vec2(
+    //         drawlist,
+    //         .{ .x = o.x + pos.x, .y = o.y + pos.y },
+    //         im_color,
+    //         &buf[0],
+    //         null,
+    //     );
+    // }
 
-            {
-                const im_color = utils.imColor(0, 255, 255, 255);
-                const pos = camera.toScreen(drag.ray.point(drag.hit));
-                ig.ImDrawList_AddCircleFilled(
-                    drawlist,
-                    .{ .x = o.x + pos.x, .y = o.y + pos.y },
-                    4,
-                    im_color,
-                    14,
-                );
-                _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ pos.x, pos.y }) catch
-                    @panic("bufPrintZ");
-                ig.ImDrawList_AddText_Vec2(
-                    drawlist,
-                    .{ .x = o.x + pos.x, .y = o.y + pos.y },
-                    im_color,
-                    &buf[0],
-                    null,
-                );
-            }
+    {
+        const im_color = utils.imColor(0, 255, 255, 255);
+        const pos = camera.toScreen(drag.ray.point(drag.hit));
+        ig.ImDrawList_AddCircleFilled(
+            drawlist,
+            .{ .x = o.x + pos.x, .y = o.y + pos.y },
+            4,
+            im_color,
+            14,
+        );
+        _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ pos.x, pos.y }) catch
+            @panic("bufPrintZ");
+        ig.ImDrawList_AddText_Vec2(
+            drawlist,
+            .{ .x = o.x + pos.x, .y = o.y + pos.y },
+            im_color,
+            &buf[0],
+            null,
+        );
+    }
 
-            {
-                const im_color = utils.imColor(255, 0, 0, 255);
-                if (drag_plane.intersect(ray)) |hit| {
-                    const world = ray.point(hit);
-                    const pos = camera.toScreen(world);
-                    ig.ImDrawList_AddCircleFilled(
-                        drawlist,
-                        .{ .x = o.x + pos.x, .y = o.y + pos.y },
-                        4,
-                        im_color,
-                        14,
-                    );
-                    _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ pos.x, pos.y }) catch
-                        @panic("bufPrintZ");
-                    ig.ImDrawList_AddText_Vec2(
-                        drawlist,
-                        .{ .x = o.x + pos.x, .y = o.y + pos.y },
-                        im_color,
-                        &buf[0],
-                        null,
-                    );
-                }
-            }
-        },
-        .Translate_y => {},
-        .Translate_z => {},
-        .Translate_yz => {},
-        .Translate_zx => {},
-        .Translate_xy => {},
-        .Translate_xyz => {},
+    {
+        const im_color = utils.imColor(255, 0, 0, 255);
+        if (drag_plane.intersect(ray)) |hit| {
+            const world = ray.point(hit);
+            const pos = camera.toScreen(world);
+            ig.ImDrawList_AddCircleFilled(
+                drawlist,
+                .{ .x = o.x + pos.x, .y = o.y + pos.y },
+                4,
+                im_color,
+                14,
+            );
+            _ = std.fmt.bufPrintZ(&buf, "{d:.0}:{d:.0}", .{ pos.x, pos.y }) catch
+                @panic("bufPrintZ");
+            ig.ImDrawList_AddText_Vec2(
+                drawlist,
+                .{ .x = o.x + pos.x, .y = o.y + pos.y },
+                im_color,
+                &buf[0],
+                null,
+            );
+        }
     }
 }
 

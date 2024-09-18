@@ -23,10 +23,25 @@ const DragInput = struct {
     }
 };
 
-pub fn getDir(t: Transform, mode: translation.InteractionMode) Vec3 {
+const DragAxis = union(enum) {
+    mono: Vec3,
+    di: struct { Vec3, Vec3 },
+};
+
+pub fn getDir(t: Transform, mode: translation.InteractionMode, camera: Camera) DragAxis {
     _ = t;
-    _ = mode;
-    return Vec3.right;
+    return switch (mode) {
+        .Translate_x => DragAxis{ .mono = Vec3.right },
+        .Translate_y => DragAxis{ .mono = Vec3.up },
+        .Translate_z => DragAxis{ .mono = Vec3.forward },
+        .Translate_yz => DragAxis{ .di = .{ Vec3.up, Vec3.forward } },
+        .Translate_zx => DragAxis{ .di = .{ Vec3.forward, Vec3.right } },
+        .Translate_xy => DragAxis{ .di = .{ Vec3.right, Vec3.up } },
+        .Translate_xyz => DragAxis{ .di = .{
+            camera.transform.rotation.dirX(),
+            camera.transform.rotation.dirY(),
+        } },
+    };
 }
 
 pub const DragState = struct {
@@ -53,12 +68,26 @@ pub const DragState = struct {
         if (drag_plane.intersect(ray)) |hit| {
             const current = ray.point(hit);
             const start = self.ray.point(self.hit);
-            const dir = getDir(self.start_transform, self.mode);
-            const d = dir.dot(current.sub(start));
+            switch (getDir(self.start_transform, self.mode, input.camera)) {
+                .mono => |dir| {
+                    const d = dir.dot(current.sub(start));
 
-            input.transform.rigid_transform.translation = self.start_transform.rigid_transform.translation.add(
-                dir.scale(d),
-            );
+                    input.transform.rigid_transform.translation = self.start_transform.rigid_transform.translation.add(
+                        dir.scale(d),
+                    );
+                },
+                .di => |x_y| {
+                    const dir_x, const dir_y = x_y;
+                    const v = current.sub(start);
+                    const d_x = dir_x.dot(v);
+                    const d_y = dir_y.dot(v);
+                    input.transform.rigid_transform.translation = self.start_transform.rigid_transform.translation.add(
+                        dir_x.scale(d_x),
+                    ).add(
+                        dir_y.scale(d_y),
+                    );
+                },
+            }
         }
     }
 };
