@@ -90,7 +90,7 @@ export fn frame() void {
         state.gizmo.translation.frame(.{
             .camera = state.display.orbit.camera,
             .input = state.display.orbit.input,
-            .transform = state.transform,
+            .transform = &state.transform,
             .drawlist = &state.gizmo.drawlist,
         });
     }
