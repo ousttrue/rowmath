@@ -131,51 +131,41 @@ export fn frame() void {
         var screen_pos: ig.ImVec2 = undefined;
         if (state.offscreen.beginButton("debug", &screen_pos)) {
             defer state.offscreen.endButton();
-
+            // render subview
             state.mesh.draw(
                 state.transform,
                 state.offscreen.orbit.camera.viewProjectionMatrix(),
                 .{ .useRenderTarget = true },
             );
             utils.draw_lines(&rowmath.lines.Grid(5).lines);
-            utils.draw_camera_frustum(state.display.orbit);
             draw_gizmo_mesh(state.offscreen.orbit.camera);
-            if (state.gizmo.state.drag) |drag| {
-                draw_debug(
-                    state.offscreen.orbit.camera,
-                    drag,
-                    ig.igGetWindowDrawList(),
-                    screen_pos,
-                    state.display.orbit.getRay(),
-                );
-            }
+            draw_debug(
+                state.offscreen.orbit.camera,
+                screen_pos,
+                ig.igGetWindowDrawList(),
+                true,
+            );
         }
         ig.igEnd();
     }
 
     {
-        // render background
         state.display.begin();
         defer state.display.end();
-
-        utils.draw_lines(&rowmath.lines.Grid(5).lines);
+        // render background
         state.mesh.draw(
             state.transform,
             state.display.orbit.viewProjectionMatrix(),
             .{ .useRenderTarget = false },
         );
-
+        utils.draw_lines(&rowmath.lines.Grid(5).lines);
         draw_gizmo_mesh(state.display.orbit.camera);
-
-        if (state.gizmo.state.drag) |drag| {
-            draw_debug(
-                state.display.orbit.camera,
-                drag,
-                ig.igGetBackgroundDrawList_Nil(),
-                .{ .x = 0, .y = 0 },
-                state.display.orbit.getRay(),
-            );
-        }
+        draw_debug(
+            state.display.orbit.camera,
+            .{ .x = 0, .y = 0 },
+            ig.igGetBackgroundDrawList_Nil(),
+            false,
+        );
     }
     sg.commit();
 }
@@ -207,11 +197,18 @@ fn draw_gizmo_mesh(camera: Camera) void {
 
 fn draw_debug(
     camera: Camera,
-    drag: rowmath.gizmo.DragState,
-    drawlist: *ig.ImDrawList,
     o: ig.ImVec2,
-    ray: Ray,
+    drawlist: *ig.ImDrawList,
+    draw_frustum: bool,
 ) void {
+    if (draw_frustum) {
+        utils.draw_camera_frustum(state.display.orbit);
+    }
+
+    const drag = state.gizmo.state.drag orelse {
+        return;
+    };
+    const ray = state.display.orbit.getRay();
     sokol.gl.beginLines();
     defer sokol.gl.end();
 
