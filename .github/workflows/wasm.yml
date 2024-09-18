@@ -37,10 +37,10 @@ jobs:
           sudo apt install meson ninja-build
           zig build --summary all -Dtarget=wasm32-emscripten -Doptimize=ReleaseSmall -Dsokol
           zig build --summary all -Dtarget=wasm32-emscripten -Doptimize=ReleaseSmall -Draylib
-          zig build docs
+          # zig build docs
           find zig-out
           cp -rp zig-out/web docs/static/wasm
-          cp -rp zig-out/docs docs/static/api
+          # cp -rp zig-out/docs docs/static/api
       # docusaurus
       - uses: actions/setup-node@v3
         with:
