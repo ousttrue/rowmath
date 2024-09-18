@@ -51,8 +51,7 @@ const state = struct {
         },
     };
     // gizmo
-    var gizmo = rowmath.DragHandle(.left, rowmath.gizmo.translationDragHandler){ .state = .{} };
-    var drawlist: std.ArrayList(rowmath.gizmo.Renderable) = undefined;
+    var gizmo = utils.Gizmo{};
     // scene
     var transform = Transform{};
     var mesh = utils.mesh.Cube{};
@@ -74,7 +73,7 @@ export fn init() void {
     state.display.init();
     state.mesh.init();
     // page_allocator crash wasm
-    state.drawlist = std.ArrayList(rowmath.gizmo.Renderable).init(std.heap.c_allocator);
+    state.gizmo.init(std.heap.c_allocator);
 }
 
 export fn frame() void {
@@ -88,11 +87,11 @@ export fn frame() void {
 
     const io = ig.igGetIO();
     if (!io.*.WantCaptureMouse) {
-        state.gizmo.frame(.{
+        state.gizmo.translation.frame(.{
             .camera = state.display.orbit.camera,
             .input = state.display.orbit.input,
             .transform = state.transform,
-            .drawlist = &state.drawlist,
+            .drawlist = &state.gizmo.drawlist,
         });
     }
 
@@ -115,7 +114,7 @@ export fn frame() void {
                 .{ .useRenderTarget = true },
             );
             utils.draw_lines(&rowmath.lines.Grid(5).lines);
-            utils.Gizmo.draw_gizmo_mesh(state.drawlist.items);
+            state.gizmo.gl_draw();
             draw_debug(
                 state.offscreen.orbit.camera,
                 screen_pos,
@@ -136,7 +135,7 @@ export fn frame() void {
             .{ .useRenderTarget = false },
         );
         utils.draw_lines(&rowmath.lines.Grid(5).lines);
-        utils.Gizmo.draw_gizmo_mesh(state.drawlist.items);
+        state.gizmo.gl_draw();
         draw_debug(
             state.display.orbit.camera,
             .{ .x = 0, .y = 0 },
@@ -157,7 +156,7 @@ fn draw_debug(
         utils.draw_camera_frustum(state.display.orbit);
     }
 
-    const drag = state.gizmo.state.drag orelse {
+    const drag = state.gizmo.translation.state.drag orelse {
         return;
     };
     const ray = state.display.orbit.getRay();
