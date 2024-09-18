@@ -25,6 +25,7 @@ pub const Transform = @import("Transform.zig");
 
 pub const InputState = @import("InputState.zig");
 pub const Ray = @import("Ray.zig");
+pub const Plane = @import("Plane.zig");
 pub const Camera = @import("Camera.zig");
 pub const OrbitCamera = @import("OrbitCamera.zig");
 pub usingnamespace @import("drag_handler.zig");

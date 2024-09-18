@@ -19,30 +19,7 @@ const InputState = rowmath.InputState;
 const Frustum = rowmath.Frustum;
 const Transform = rowmath.Transform;
 const Ray = rowmath.Ray;
-
-const Plane = struct {
-    normal: Vec3,
-    d: f32,
-
-    fn fromNormalAndPoint(
-        normal: Vec3,
-        point: Vec3,
-    ) @This() {
-        return .{
-            .normal = normal,
-            .d = -normal.dot(point),
-        };
-    }
-
-    fn intersect(self: @This(), ray: Ray) ?f32 {
-        if (self.normal.dot(ray.direction) == 0) {
-            return null;
-        }
-        const nv = self.normal.dot(ray.direction);
-        const nq_d = self.normal.dot(ray.origin) + self.d;
-        return -nq_d / nv;
-    }
-};
+const Plane = rowmath.Plane;
 
 const state = struct {
     // main camera
@@ -138,7 +115,7 @@ export fn frame() void {
                 .{ .useRenderTarget = true },
             );
             utils.draw_lines(&rowmath.lines.Grid(5).lines);
-            draw_gizmo_mesh(state.offscreen.orbit.camera);
+            utils.Gizmo.draw_gizmo_mesh(state.drawlist.items);
             draw_debug(
                 state.offscreen.orbit.camera,
                 screen_pos,
@@ -159,7 +136,7 @@ export fn frame() void {
             .{ .useRenderTarget = false },
         );
         utils.draw_lines(&rowmath.lines.Grid(5).lines);
-        draw_gizmo_mesh(state.display.orbit.camera);
+        utils.Gizmo.draw_gizmo_mesh(state.drawlist.items);
         draw_debug(
             state.display.orbit.camera,
             .{ .x = 0, .y = 0 },
@@ -168,31 +145,6 @@ export fn frame() void {
         );
     }
     sg.commit();
-}
-
-fn draw_gizmo_mesh(camera: Camera) void {
-    _ = camera;
-    for (state.drawlist.items) |m| {
-        sokol.gl.matrixModeModelview();
-        sokol.gl.pushMatrix();
-        defer sokol.gl.popMatrix();
-        sokol.gl.multMatrix(&m.matrix.m[0]);
-        sokol.gl.beginTriangles();
-        defer sokol.gl.end();
-        const color = m.color();
-        sokol.gl.c4f(
-            color.r,
-            color.g,
-            color.b,
-            color.a,
-        );
-        for (m.mesh.triangles) |triangle| {
-            for (triangle) |i| {
-                const p = m.mesh.vertices[i].position;
-                sokol.gl.v3f(p.x, p.y, p.z);
-            }
-        }
-    }
 }
 
 fn draw_debug(
