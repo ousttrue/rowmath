@@ -87,8 +87,6 @@ fn bindScreenMoveHanler(
     }
 }
 
-pub const CameraRightDragHandler = drag_handler.DragHandle(.right, &bindYawPitchHandler);
-pub const CameraMiddleDragHandler = drag_handler.DragHandle(.middle, &bindScreenMoveHanler);
 camera: Camera = .{},
 input: InputState = .{},
 
@@ -100,12 +98,12 @@ shift: Vec3 = .{ .x = 0, .y = 0, .z = 10 },
 
 drag_right: drag_handler.DragHandle(
     .right,
-    &bindYawPitchHandler,
-) = drag_handler.dragHandle(.right, &bindYawPitchHandler, .{}),
+    bindYawPitchHandler,
+) = .{ .state = .{} },
 drag_middle: drag_handler.DragHandle(
     .middle,
-    &bindScreenMoveHanler,
-) = drag_handler.dragHandle(.middle, &bindScreenMoveHanler, .{}),
+    bindScreenMoveHanler,
+) = .{ .state = .{} },
 
 pub fn projectionMatrix(self: @This()) Mat4 {
     return self.camera.projection.matrix;

@@ -74,7 +74,7 @@ const state = struct {
         },
     };
     // gizmo
-    var gizmo: rowmath.DragHandle(.left, &rowmath.gizmo.translationDragHandler) = undefined;
+    var gizmo = rowmath.DragHandle(.left, rowmath.gizmo.translationDragHandler){ .state = .{} };
     var drawlist: std.ArrayList(rowmath.gizmo.Renderable) = undefined;
     // scene
     var transform = Transform{};
@@ -97,9 +97,6 @@ export fn init() void {
     state.display.init();
     state.mesh.init();
     // page_allocator crash wasm
-    state.gizmo = .{
-        .handler = &rowmath.gizmo.translationDragHandler,
-    };
     state.drawlist = std.ArrayList(rowmath.gizmo.Renderable).init(std.heap.c_allocator);
 }
 

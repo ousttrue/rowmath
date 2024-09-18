@@ -45,9 +45,9 @@ fn dragVec2(
 const state = struct {
     var pass_action = sg.PassAction{};
     var input = InputState{};
-    var drag_left = rowmath.dragHandle(.left, &dragVec2, null);
-    var drag_right = rowmath.dragHandle(.right, &dragVec2, null);
-    var drag_middle = rowmath.dragHandle(.middle, &dragVec2, null);
+    var drag_left = rowmath.DragHandle(.left, dragVec2){ .state = null };
+    var drag_right = rowmath.DragHandle(.right, dragVec2){ .state = null };
+    var drag_middle = rowmath.DragHandle(.middle, dragVec2){ .state = null };
 };
 
 const DragOpts = struct {
