@@ -13,7 +13,7 @@ const Renderable = @import("context.zig").Renderable;
 
 pub const DragState = struct {
     camera_transform: RigidTransform,
-    start: Transform,
+    start_transform: Transform,
     mode: translation.InteractionMode,
     cursor: Vec2,
     ray: Ray,
@@ -94,7 +94,7 @@ pub fn translationDragHandler(
                 next_state = .{
                     .hover = .{
                         .camera_transform = drag_input.camera.transform,
-                        .start = drag_input.transform,
+                        .start_transform = drag_input.transform,
                         .mode = mode,
                         .cursor = drag_input.input.cursorScreenPosition(),
                         .ray = ray,
@@ -121,7 +121,7 @@ pub fn translationDragHandler(
                     next_state = .{
                         .hover = .{
                             .camera_transform = drag_input.camera.transform,
-                            .start = drag_input.transform,
+                            .start_transform = drag_input.transform,
                             .mode = mode,
                             .cursor = drag_input.input.cursorScreenPosition(),
                             .ray = ray,
