@@ -22,26 +22,37 @@ const Ray = rowmath.Ray;
 const Plane = rowmath.Plane;
 const RigidTransform = rowmath.RigidTransform;
 
+const MoveType = enum {
+    kinematic,
+    particle,
+};
+
 const Joint = struct {
     name: [:0]const u8,
+    type: MoveType,
     transform: Transform = .{},
+    drag_force: f32 = 0.5,
 };
 
 var JOINTS = [_]Joint{
     .{
         .name = "joint0",
+        .type = .kinematic,
         .transform = .{ .rigid_transform = .{ .translation = .{ .x = 0, .y = 3, .z = 0 } } },
     },
     .{
         .name = "joint1",
+        .type = .particle,
         .transform = .{ .rigid_transform = .{ .translation = .{ .x = 0, .y = 2, .z = 0 } } },
     },
     .{
         .name = "joint2",
+        .type = .particle,
         .transform = .{ .rigid_transform = .{ .translation = .{ .x = 0, .y = 1, .z = 0 } } },
     },
     .{
         .name = "end",
+        .type = .particle,
         .transform = .{ .rigid_transform = .{ .translation = .{ .x = 0, .y = 0, .z = 0 } } },
     },
 };
@@ -57,49 +68,118 @@ const BONES = [_]Bone{
     .{ .head = 2, .tail = 3 },
 };
 
-pub fn SpringBone(comptime n: usize) type {
+const Node = struct {
+    joint_index: u16,
+    children: std.ArrayList(u16),
+    parent_index: ?u16 = null,
+    pub fn init(
+        allocator: std.mem.Allocator,
+        joint_index: u16,
+    ) !@This() {
+        return Node{
+            .joint_index = joint_index,
+            .children = std.ArrayList(u16).init(allocator),
+        };
+    }
+    pub fn deinit(self: *@This(), allocator: std.mem.Allocator) void {
+        self.children.deinit();
+        allocator.free(self);
+    }
+    pub fn addChild(self: *@This(), child: *@This()) !void {
+        try self.children.append(child.joint_index);
+        std.debug.assert(child.parent_index == null);
+        child.parent_index = self.joint_index;
+    }
+};
+
+pub fn ParticleSimulation(comptime n: usize) type {
     return struct {
-        // prev: [n]Vec3,
-        // current: [n]Vec3,
-        matrices: [n]Mat4,
+        buffer: [3][n]Vec3 = undefined,
+        phase: usize = 0,
+        matrices: [n]Mat4 = undefined,
 
-        joints: []const Joint,
-        bones: []const Bone,
+        pub fn prev(self: *const @This()) []const Vec3 {
+            return &self.buffer[@mod(self.phase, 3)];
+        }
+        pub fn current(self: *const @This()) []const Vec3 {
+            return &self.buffer[@mod(self.phase + 1, 3)];
+        }
+        pub fn next(self: *@This()) []Vec3 {
+            return &self.buffer[@mod(self.phase + 2, 3)];
+        }
 
-        pub fn init(self: *@This(), joints: []const Joint, bones: []const Bone) void {
-            self.joints = joints;
-            self.bones = bones;
-
-            for (joints, 0..) |joint, i| {
-                self.matrices[i] = joint.transform.matrix();
+        pub fn init(self: *@This(), joints: []const Joint) void {
+            for (joints, &self.buffer[0], &self.buffer[1], &self.buffer[2]) |joint, *b0, *b1, *b2| {
+                b0.* = joint.transform.rigid_transform.translation;
+                b1.* = joint.transform.rigid_transform.translation;
+                b2.* = joint.transform.rigid_transform.translation;
             }
         }
 
-        pub fn getParent(self: @This(), i: u16) ?u16 {
-            for (self.bones) |bone| {
-                if (bone.tail == i) {
-                    return bone.head;
-                }
+        pub fn currentToMatrixFlip(self: *@This()) void {
+            for (&self.matrices, self.current()) |*m, *b| {
+                m.* = Mat4.translate(b.*);
             }
-            return null;
-        }
-
-        pub fn isLeaf(self: @This(), i: u16) bool {
-            for (self.bones) |bone| {
-                if (bone.head == i) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        pub fn update(self: *@This()) void {
-            for (self.joints, 0..) |joint, i| {
-                self.matrices[i] = joint.transform.matrix();
-            }
+            self.phase += 1;
         }
     };
 }
+const SIMULATION = ParticleSimulation(JOINTS.len);
+
+pub const SpringBone = struct {
+    nodes: std.ArrayList(Node),
+
+    pub fn init(
+        self: *@This(),
+        allocator: std.mem.Allocator,
+        joints: []const Joint,
+        bones: []const Bone,
+    ) !void {
+        self.nodes = std.ArrayList(Node).init(allocator);
+        // make nodes
+        for (0..joints.len) |i| {
+            try self.nodes.append(try Node.init(allocator, @intCast(i)));
+        }
+        // build hierarchy.
+        // bones[0] must root
+        for (bones) |bone| {
+            try self.nodes.items[bone.head].addChild(&self.nodes.items[bone.tail]);
+        }
+    }
+
+    pub fn update(
+        self: *@This(),
+        joints: []const Joint,
+        simuation: *SIMULATION,
+    ) void {
+        // verlet
+        for (joints, simuation.current(), simuation.prev(), simuation.next()) |joint, current, prev, *next| {
+            next.* = switch (joint.type) {
+                .kinematic => block: {
+                    break :block joint.transform.rigid_transform.translation;
+                },
+                .particle => block: {
+                    const position = current.add(current.sub(prev).scale(1.0 - joint.drag_force))
+                    // + parentRotation * LocalRotation * BoneAxis * settings.StiffnessForce * deltaTime * scalingFactor // 親の回転による子ボーンの移動目標
+                    //// 外力による移動量
+                    // + settings.GravityDir * (settings.GravityPower * deltaTime) * scalingFactor;
+                    ;
+                    break :block position;
+                },
+            };
+        }
+
+        // constraint
+        self.constraintRecursive(0);
+    }
+
+    pub fn constraintRecursive(self: @This(), i: usize) void {
+        const node = self.nodes.items[i];
+        for (node.children.items) |child| {
+            self.constraintRecursive(child);
+        }
+    }
+};
 
 const state = struct {
     // main camera
@@ -121,9 +201,11 @@ const state = struct {
         },
     };
 
-    var springbone: SpringBone(JOINTS.len) = undefined;
+    var springbone: SpringBone = undefined;
     var skeleton: utils.mesh.Skeleton = undefined;
     var gizmo = utils.Gizmo{};
+
+    var simulation = ParticleSimulation(JOINTS.len){};
 };
 
 export fn init() void {
@@ -139,20 +221,24 @@ export fn init() void {
     });
 
     state.display.init();
-    state.springbone.init(&JOINTS, &BONES);
+    state.springbone.init(
+        std.heap.c_allocator,
+        &JOINTS,
+        &BONES,
+    ) catch @panic("SpringBone.init");
 
     state.skeleton = utils.mesh.Skeleton.init(
         std.heap.c_allocator,
         JOINTS.len,
     ) catch unreachable;
     for (JOINTS, 0..) |joint, i| {
-        // const parent: u16 = parents[i];
         state.skeleton.joints[i] = .{
             .name = joint.name,
-            .parent = state.springbone.getParent(@intCast(i)),
-            .is_leaf = state.springbone.isLeaf(@intCast(i)),
+            .parent = state.springbone.nodes.items[i].parent_index,
+            .is_leaf = state.springbone.nodes.items[i].children.items.len == 0,
         };
     }
+    state.simulation.init(&JOINTS);
     state.gizmo.init(std.heap.c_allocator);
 }
 
@@ -173,7 +259,8 @@ export fn frame() void {
             .transform = &JOINTS[0].transform,
             .drawlist = &state.gizmo.drawlist,
         });
-        state.springbone.update();
+        state.springbone.update(&JOINTS, &state.simulation);
+        state.simulation.currentToMatrixFlip();
     }
 
     {
@@ -186,7 +273,7 @@ export fn frame() void {
         // const matrices: [*]const Mat4 = @ptrCast(cozz.OZZ_model_matrices(state.ozz));
         state.skeleton.draw(
             state.display.orbit.viewProjectionMatrix(),
-            &state.springbone.matrices,
+            &state.simulation.matrices,
         );
     }
     sg.commit();
