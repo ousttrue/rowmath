@@ -156,8 +156,10 @@ fn draw_debug(
         utils.draw_camera_frustum(state.display.orbit);
     }
 
-    const drag = state.gizmo.translation.state.drag orelse {
-        return;
+    const drag = switch (state.gizmo.translation.state) {
+        .none => return,
+        .hover => |hover| hover,
+        .drag => |drag| drag,
     };
     const ray = state.display.orbit.getRay();
     sokol.gl.beginLines();

@@ -9,14 +9,16 @@ const translation = @import("translation.zig");
 const Renderable = @import("context.zig").Renderable;
 
 pub const DragState = struct {
+    start: Transform,
+    mode: translation.InteractionMode,
     ray: Ray,
     hit: f32,
-    mode: translation.InteractionMode,
-    start: Transform,
 };
 
-pub const GizmoState = struct {
-    drag: ?DragState = null,
+pub const TranslateionState = union(enum) {
+    none: void,
+    hover: DragState,
+    drag: DragState,
 };
 
 const DragInput = struct {
@@ -60,18 +62,15 @@ pub fn make_drawlist(
 //     &state.transform,
 // ) catch @panic("transform a");
 pub fn translationDragHandler(
-    drag_state: GizmoState,
+    drag_state: TranslateionState,
     drag_input: DragInput,
     button: bool,
-) GizmoState {
-    const next_state: GizmoState = if (button)
-        if (drag_state.drag) |drag| block: {
-            // keep
-            break :block .{
-                .drag = drag,
-            };
-        } else block: {
-            // new ray
+) TranslateionState {
+    var next_state = TranslateionState{ .none = void{} };
+
+    switch (drag_state) {
+        .none => {
+            // new hover
             const cursor = drag_input.input.cursorScreenPosition();
             const ray = drag_input.camera.getRay(cursor);
             const local_ray = detransform(drag_input.transform, ray);
@@ -79,50 +78,58 @@ pub fn translationDragHandler(
                 local_ray,
             );
             if (_mode) |mode| {
-                // begin drag
-                break :block .{
-                    .drag = DragState{
+                // new hover
+                next_state = .{
+                    .hover = .{
+                        .start = drag_input.transform,
+                        .mode = mode,
                         .ray = ray,
                         .hit = hit,
-                        .mode = mode,
-                        .start = drag_input.transform,
                     },
                 };
-            } else {
-                break :block .{
-                    .drag = null,
-                };
             }
-        }
-    else block: {
-        const cursor = drag_input.input.cursorScreenPosition();
-        const ray = drag_input.camera.getRay(cursor);
-        const local_ray = detransform(drag_input.transform, ray);
-        const _mode, const hit = translation.translation_intersect(
-            local_ray,
-        );
-        if (_mode) |mode| {
-            // hover
-            break :block .{
-                .drag = DragState{
-                    .ray = ray,
-                    .hit = hit,
-                    .mode = mode,
-                    .start = drag_input.transform,
-                },
-            };
-        } else {
-            break :block .{
-                .drag = null,
-            };
-        }
-    };
+        },
+        .hover => |hover| {
+            if (button) {
+                // begin drag
+                next_state = .{
+                    .drag = hover,
+                };
+            } else {
+                const cursor = drag_input.input.cursorScreenPosition();
+                const ray = drag_input.camera.getRay(cursor);
+                const local_ray = detransform(drag_input.transform, ray);
+                const _mode, const hit = translation.translation_intersect(
+                    local_ray,
+                );
+                if (_mode) |mode| {
+                    // new hover
+                    next_state = .{
+                        .hover = .{
+                            .start = drag_input.transform,
+                            .mode = mode,
+                            .ray = ray,
+                            .hit = hit,
+                        },
+                    };
+                }
+            }
+        },
+        .drag => |drag| {
+            if (button) {
+                // continue drag
+                next_state = .{ .drag = drag };
+            } else {
+                // end drag
+            }
+        },
+    }
 
-    make_drawlist(
-        drag_input.drawlist,
-        drag_input.transform.matrix(),
-        if (drag_state.drag) |d| d.mode else null,
-    );
+    make_drawlist(drag_input.drawlist, drag_input.transform.matrix(), switch (drag_state) {
+        .none => null,
+        .hover => |hover| hover.mode,
+        .drag => |drag| drag.mode,
+    });
 
     return next_state;
 }

@@ -11,7 +11,9 @@ ctx: gizmo.Context = .{},
 drawlist: std.ArrayList(gizmo.Renderable) = undefined,
 t: rowmath.gizmo.TranslationContext = .{},
 
-translation: rowmath.DragHandle(.left, rowmath.gizmo.translationDragHandler) = .{ .state = .{} },
+translation: rowmath.DragHandle(.left, rowmath.gizmo.translationDragHandler) = .{
+    .state = .{ .none = void{} },
+},
 
 pub fn init(self: *@This(), allocator: std.mem.Allocator) void {
     self.drawlist = std.ArrayList(gizmo.Renderable).init(allocator);
