@@ -28,22 +28,6 @@ const DragAxis = union(enum) {
     di: struct { Vec3, Vec3 },
 };
 
-pub fn getDir(t: Transform, mode: translation.InteractionMode, camera: Camera) DragAxis {
-    _ = t;
-    return switch (mode) {
-        .Translate_x => DragAxis{ .mono = Vec3.right },
-        .Translate_y => DragAxis{ .mono = Vec3.up },
-        .Translate_z => DragAxis{ .mono = Vec3.forward },
-        .Translate_yz => DragAxis{ .di = .{ Vec3.up, Vec3.forward } },
-        .Translate_zx => DragAxis{ .di = .{ Vec3.forward, Vec3.right } },
-        .Translate_xy => DragAxis{ .di = .{ Vec3.right, Vec3.up } },
-        .Translate_xyz => DragAxis{ .di = .{
-            camera.transform.rotation.dirX(),
-            camera.transform.rotation.dirY(),
-        } },
-    };
-}
-
 pub const DragState = struct {
     camera_transform: RigidTransform,
     start_transform: Transform,
@@ -52,42 +36,158 @@ pub const DragState = struct {
     ray: Ray,
     hit: f32,
 
-    pub fn getPlane(self: @This()) Plane {
+    pub fn getRayHitPlane(self: @This()) Plane {
         return Plane.fromNormalAndPoint(
             self.camera_transform.rotation.dirZ(),
             self.ray.point(self.hit),
         );
     }
 
+    fn dragAxis(
+        input_transform: *Transform,
+        start: Vec3,
+        v: Vec3,
+        dir_x: Vec3,
+        _dir_y: ?Vec3,
+    ) void {
+        const d_x = v.dot(dir_x);
+        if (_dir_y) |dir_y| {
+            const d_y = v.dot(dir_y);
+            input_transform.rigid_transform.translation = start.add(
+                dir_x.scale(d_x),
+            ).add(
+                dir_y.scale(d_y),
+            );
+        } else {
+            input_transform.rigid_transform.translation = start.add(
+                dir_x.scale(d_x),
+            );
+        }
+    }
+
     //
     // pos = start + dir * t;
     //
     pub fn drag(self: @This(), input: TranslationInput) void {
-        const drag_plane = self.getPlane();
+        const start = self.ray.point(self.hit);
         const ray = input.getRay();
-        if (drag_plane.intersect(ray)) |hit| {
-            const current = ray.point(hit);
-            const start = self.ray.point(self.hit);
-            switch (getDir(self.start_transform, self.mode, input.camera)) {
-                .mono => |dir| {
-                    const d = dir.dot(current.sub(start));
-
-                    input.transform.rigid_transform.translation = self.start_transform.rigid_transform.translation.add(
-                        dir.scale(d),
-                    );
-                },
-                .di => |x_y| {
-                    const dir_x, const dir_y = x_y;
+        switch (self.mode) {
+            .Translate_x => {
+                const drag_plane = Plane.fromNormalAndPoint(
+                    self.start_transform.rigid_transform.rotation.dirZ(),
+                    self.ray.point(self.hit),
+                );
+                if (drag_plane.intersect(ray)) |hit| {
+                    const current = ray.point(hit);
                     const v = current.sub(start);
-                    const d_x = dir_x.dot(v);
-                    const d_y = dir_y.dot(v);
-                    input.transform.rigid_transform.translation = self.start_transform.rigid_transform.translation.add(
-                        dir_x.scale(d_x),
-                    ).add(
-                        dir_y.scale(d_y),
+                    dragAxis(
+                        input.transform,
+                        self.start_transform.rigid_transform.translation,
+                        v,
+                        Vec3.right,
+                        null,
                     );
-                },
-            }
+                }
+            },
+            .Translate_y => {
+                const drag_plane = Plane.fromNormalAndPoint(
+                    self.start_transform.rigid_transform.rotation.dirX(),
+                    self.ray.point(self.hit),
+                );
+                if (drag_plane.intersect(ray)) |hit| {
+                    const current = ray.point(hit);
+                    const v = current.sub(start);
+                    dragAxis(
+                        input.transform,
+                        self.start_transform.rigid_transform.translation,
+                        v,
+                        Vec3.up,
+                        null,
+                    );
+                }
+            },
+            .Translate_z => {
+                const drag_plane = Plane.fromNormalAndPoint(
+                    self.start_transform.rigid_transform.rotation.dirY(),
+                    self.ray.point(self.hit),
+                );
+                if (drag_plane.intersect(ray)) |hit| {
+                    const current = ray.point(hit);
+                    const v = current.sub(start);
+                    dragAxis(
+                        input.transform,
+                        self.start_transform.rigid_transform.translation,
+                        v,
+                        Vec3.forward,
+                        null,
+                    );
+                }
+            },
+            .Translate_xy => {
+                const drag_plane = Plane.fromNormalAndPoint(
+                    self.start_transform.rigid_transform.rotation.dirZ(),
+                    self.ray.point(self.hit),
+                );
+                if (drag_plane.intersect(ray)) |hit| {
+                    const current = ray.point(hit);
+                    const v = current.sub(start);
+                    dragAxis(
+                        input.transform,
+                        self.start_transform.rigid_transform.translation,
+                        v,
+                        Vec3.right,
+                        Vec3.up,
+                    );
+                }
+            },
+            .Translate_yz => {
+                const drag_plane = Plane.fromNormalAndPoint(
+                    self.start_transform.rigid_transform.rotation.dirX(),
+                    self.ray.point(self.hit),
+                );
+                if (drag_plane.intersect(ray)) |hit| {
+                    const current = ray.point(hit);
+                    const v = current.sub(start);
+                    dragAxis(
+                        input.transform,
+                        self.start_transform.rigid_transform.translation,
+                        v,
+                        Vec3.up,
+                        Vec3.forward,
+                    );
+                }
+            },
+            .Translate_zx => {
+                const drag_plane = Plane.fromNormalAndPoint(
+                    self.start_transform.rigid_transform.rotation.dirY(),
+                    self.ray.point(self.hit),
+                );
+                if (drag_plane.intersect(ray)) |hit| {
+                    const current = ray.point(hit);
+                    const v = current.sub(start);
+                    dragAxis(
+                        input.transform,
+                        self.start_transform.rigid_transform.translation,
+                        v,
+                        Vec3.forward,
+                        Vec3.right,
+                    );
+                }
+            },
+            .Translate_xyz => {
+                const drag_plane = self.getRayHitPlane();
+                if (drag_plane.intersect(ray)) |hit| {
+                    const current = ray.point(hit);
+                    const v = current.sub(start);
+                    dragAxis(
+                        input.transform,
+                        self.start_transform.rigid_transform.translation,
+                        v,
+                        input.camera.transform.rotation.dirX(),
+                        input.camera.transform.rotation.dirY(),
+                    );
+                }
+            },
         }
     }
 };
