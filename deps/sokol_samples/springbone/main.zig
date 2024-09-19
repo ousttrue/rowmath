@@ -72,6 +72,9 @@ const Node = struct {
     joint_index: u16,
     children: std.ArrayList(u16),
     parent_index: ?u16 = null,
+    // springbone
+    length_from_parent: f32 = 0,
+
     pub fn init(
         allocator: std.mem.Allocator,
         joint_index: u16,
@@ -143,7 +146,12 @@ pub const SpringBone = struct {
         // build hierarchy.
         // bones[0] must root
         for (bones) |bone| {
-            try self.nodes.items[bone.head].addChild(&self.nodes.items[bone.tail]);
+            const child = &self.nodes.items[bone.tail];
+            try self.nodes.items[bone.head].addChild(child);
+
+            const parent_pos = joints[bone.head].transform.rigid_transform.translation;
+            const child_pos = joints[bone.tail].transform.rigid_transform.translation;
+            child.length_from_parent = child_pos.sub(parent_pos).norm();
         }
     }
 
@@ -170,13 +178,25 @@ pub const SpringBone = struct {
         }
 
         // constraint
-        self.constraintRecursive(0);
+        self.constraintRecursive(0, simuation.next());
     }
 
-    pub fn constraintRecursive(self: @This(), i: usize) void {
-        const node = self.nodes.items[i];
+    pub fn constraintRecursive(
+        self: @This(),
+        joint_index: usize,
+        next: []Vec3,
+    ) void {
+        const node = self.nodes.items[joint_index];
+        if (node.parent_index) |parent_index| {
+            const joint_pos = next[joint_index];
+            const parent_pos = next[parent_index];
+            next[joint_index] = parent_pos.add(
+                joint_pos.sub(parent_pos).normalize().scale(node.length_from_parent),
+            );
+        }
+
         for (node.children.items) |child| {
-            self.constraintRecursive(child);
+            self.constraintRecursive(child, next);
         }
     }
 };
