@@ -25,11 +25,11 @@ pub fn uniformScale(self: @This()) bool {
     return self.scale.x == self.scale.y and self.scale.x == self.scale.z;
 }
 pub fn matrix(self: @This()) Mat4 {
-    return Mat4.trs(
-        self.rigid_transform.translation,
-        self.rigid_transform.rotation,
-        self.scale,
-    );
+    return Mat4.trs(.{
+        .t = self.rigid_transform.translation,
+        .r = self.rigid_transform.rotation,
+        .s = self.scale,
+    });
 }
 
 pub fn transformVector(self: @This(), vec: Vec3) Vec3 {

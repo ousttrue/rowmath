@@ -183,12 +183,16 @@ fn f4(v: Vec3, w: f32) [4]f32 {
     return .{ v.x, v.y, v.z, w };
 }
 
-pub fn trs(t: Vec3, r: Quat, s: Vec3) Mat4 {
+pub fn trs(o: struct {
+    t: Vec3 = Vec3.zero,
+    r: Quat = Quat.identity,
+    s: Vec3 = Vec3.one,
+}) Mat4 {
     return .{
-        .m = f4(r.dirX().scale(s.x), 0) ++
-            f4(r.dirY().scale(s.y), 0) ++
-            f4(r.dirZ().scale(s.z), 0) ++
-            [4]f32{ t.x, t.y, t.z, 1 },
+        .m = f4(o.r.dirX().scale(o.s.x), 0) ++
+            f4(o.r.dirY().scale(o.s.y), 0) ++
+            f4(o.r.dirZ().scale(o.s.z), 0) ++
+            [4]f32{ o.t.x, o.t.y, o.t.z, 1 },
     };
 }
 
