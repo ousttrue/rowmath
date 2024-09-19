@@ -179,7 +179,7 @@ fn draw_debug(
     }
 
     // drag plane & current ray intersection
-    const drag_plane = drag.getPlane();
+    const drag_plane = drag.getRayHitPlane();
     if (drag_plane.intersect(ray)) |hit| {
         const start = drag.ray.point(drag.hit);
         sokol.gl.v3f(start.x, start.y, start.z);
