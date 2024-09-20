@@ -67,4 +67,9 @@ pub const examples = [_]Example{
         .src = "springbone/main.zig",
         .use_imgui = true,
     },
+    .{
+        .name = "gltf",
+        .src = "gltf/main.zig",
+        .use_imgui = true,
+    },
 };

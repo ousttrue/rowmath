@@ -24,6 +24,10 @@
             .url = "git+https://github.com/floooh/sokol-tools-bin.git#8cc8c257380c9a5e230a84aeebf09cd500903fbc",
             .hash = "12200f5129c997728160ab584adcc939b9dbca6f802d7273f386dad777de85e80421",
         },
+        .cecium = .{
+            .url = "https://github.com/CesiumGS/cesium/releases/download/1.121/Cesium-1.121.zip",
+            .hash = "12202a1aeb3d505b61fba4c5133011b1c194627c782c3ba95628ffcc0d33133c1419",
+        },
     },
     .paths = .{
         "build.zig",

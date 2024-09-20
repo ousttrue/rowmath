@@ -111,7 +111,13 @@ pub fn build(b: *std.Build) void {
     cuber.addImport("rowmath", rowmath_mod);
     cuber.addImport("sokol", sokol_dep.module("sokol"));
 
+    const cecium_dep = b.dependency("cecium", .{});
+
     const out_wf = b.addNamedWriteFiles("build");
+    _ = out_wf.addCopyFile(
+        cecium_dep.path("Specs/Data/Models/glTF-2.0/Box/glTF/Box.gltf"),
+        "web/Box.gltf",
+    );
     for (examples) |example| {
         const compile = build_example(
             b,
