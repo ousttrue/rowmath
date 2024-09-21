@@ -70,24 +70,16 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
             defer parsed.deinit();
             state.status = "parsed";
             std.debug.print("{s}\n", .{parsed.value});
-        } else |_| {
-            state.status = "fail to parse";
+        } else |e| {
+            state.status = std.fmt.bufPrintZ(
+                &status_buffer,
+                "fail to parse: {s}",
+                .{@errorName(e)},
+            ) catch @panic("bufPrintZ");
         }
     } else if (response.*.failed) {
         state.status = "fetch fail";
     }
-}
-
-fn parse_gltf(
-    allocator: std.mem.Allocator,
-    data: []const u8,
-) !std.json.Parsed(rowmath.Gltf) {
-    return try std.json.parseFromSlice(
-        rowmath.Gltf,
-        allocator,
-        data,
-        .{},
-    );
 }
 
 export fn frame() void {

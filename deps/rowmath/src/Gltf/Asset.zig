@@ -1,4 +1,5 @@
 const std = @import("std");
+const format_helper = @import("format_helper.zig");
 
 pub const Asset = @This();
 version: []const u8,
@@ -15,9 +16,9 @@ pub fn format(
     _ = fmt;
     _ = options;
     try writer.print("{{\n", .{});
-    try writer.print("    version: {s}\n", .{self.version});
-    try writer.print("    minVersion: {s}\n", .{if (self.minVersion) |x| x else "null"});
-    try writer.print("    generator: {s}\n", .{if (self.generator) |x| x else "null"});
-    try writer.print("    copyright: {s}\n", .{if (self.copyright) |x| x else "null"});
-    try writer.print("  }}\n", .{});
+    try writer.print("  version: \"{s}\"\n", .{self.version});
+    try format_helper.string_field(writer, 2, "minVersion", self.minVersion, .{});
+    try format_helper.string_field(writer, 2, "generator", self.generator, .{});
+    try format_helper.string_field(writer, 2, "copyright", self.copyright, .{});
+    try writer.print("}}", .{});
 }
