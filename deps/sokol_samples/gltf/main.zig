@@ -8,19 +8,17 @@ const state = struct {
     var pass_action = sg.PassAction{};
     var input = rowmath.InputState{};
     var orbit = rowmath.OrbitCamera{};
+    var status: [:0]const u8 = "loading...";
 };
 
 var fetch_buffer: [1024 * 1024]u8 = undefined;
+var status_buffer: [1024]u8 = undefined;
 
 export fn init() void {
     sg.setup(.{
         .environment = sokol.glue.environment(),
         .logger = .{ .func = sokol.log.func },
     });
-    state.pass_action.colors[0] = .{
-        .load_action = .CLEAR,
-        .clear_value = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 },
-    };
     sokol.gl.setup(.{
         .logger = .{ .func = sokol.log.func },
     });
@@ -31,6 +29,11 @@ export fn init() void {
     debugtext_desc.fonts[0] = sokol.debugtext.fontOric();
     sokol.debugtext.setup(debugtext_desc);
 
+    state.pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 },
+    };
+
     // setup sokol-fetch with 2 channels and 6 lanes per channel,
     // we'll use one channel for mesh data and the other for textures
     sokol.fetch.setup(.{
@@ -39,7 +42,6 @@ export fn init() void {
         .num_lanes = 2,
         .logger = .{ .func = sokol.log.func },
     });
-
     // start loading the base gltf file...
     _ = sokol.fetch.send(.{
         .path = "Box.gltf",
@@ -50,10 +52,13 @@ export fn init() void {
 
 export fn gltf_fetch_callback(response: [*c]const sokol.fetch.Response) void {
     if (response.*.fetched) {
-        std.debug.print("{}bytes\n", .{response.*.data.size});
-        //
+        state.status = std.fmt.bufPrintZ(
+            &status_buffer,
+            "{}bytes\n",
+            .{response.*.data.size},
+        ) catch @panic("bufPrintZ");
     } else if (response.*.failed) {
-        //
+        state.status = "fetch fail";
     }
 }
 
@@ -67,13 +72,7 @@ export fn frame() void {
 
     sokol.debugtext.canvas(sokol.app.widthf() * 0.5, sokol.app.heightf() * 0.5);
     sokol.debugtext.pos(0.5, 0.5);
-    sokol.debugtext.puts(
-        \\orbit camera:
-        \\
-        \\  right drag : yaw, pitch
-        \\  middle drag: shift
-        \\  wheel      : dolly
-    );
+    sokol.debugtext.puts(state.status);
 
     sg.beginPass(.{
         .action = state.pass_action,
