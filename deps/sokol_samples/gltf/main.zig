@@ -45,21 +45,49 @@ export fn init() void {
     // start loading the base gltf file...
     _ = sokol.fetch.send(.{
         .path = "Box.gltf",
-        .callback = gltf_fetch_callback,
+        .callback = fetch_callback,
         .buffer = sokol.fetch.asRange(&fetch_buffer),
     });
 }
 
-export fn gltf_fetch_callback(response: [*c]const sokol.fetch.Response) void {
+export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
     if (response.*.fetched) {
         state.status = std.fmt.bufPrintZ(
             &status_buffer,
             "{}bytes\n",
             .{response.*.data.size},
         ) catch @panic("bufPrintZ");
+        const p: [*]const u8 = @ptrCast(response.*.data.ptr);
+        const allocator = std.heap.c_allocator;
+        if (std.json.parseFromSlice(
+            rowmath.Gltf,
+            allocator,
+            p[0..response.*.data.size],
+            .{
+                .ignore_unknown_fields = true,
+            },
+        )) |parsed| {
+            defer parsed.deinit();
+            state.status = "parsed";
+            std.debug.print("{s}\n", .{parsed.value});
+        } else |_| {
+            state.status = "fail to parse";
+        }
     } else if (response.*.failed) {
         state.status = "fetch fail";
     }
+}
+
+fn parse_gltf(
+    allocator: std.mem.Allocator,
+    data: []const u8,
+) !std.json.Parsed(rowmath.Gltf) {
+    return try std.json.parseFromSlice(
+        rowmath.Gltf,
+        allocator,
+        data,
+        .{},
+    );
 }
 
 export fn frame() void {
