@@ -71,5 +71,6 @@ pub const examples = [_]Example{
         .name = "gltf",
         .src = "gltf/main.zig",
         .use_imgui = true,
+        .shader = "gltf/gltf.glsl",
     },
 };

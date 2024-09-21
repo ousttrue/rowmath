@@ -3,16 +3,16 @@ const sokol = @import("sokol");
 const sg = sokol.gfx;
 const rowmath = @import("rowmath");
 const utils = @import("utils");
+const Scene = @import("Scene.zig");
+const gltf_fetcher = @import("gltf_fetcher.zig");
 
 const state = struct {
     var pass_action = sg.PassAction{};
     var input = rowmath.InputState{};
     var orbit = rowmath.OrbitCamera{};
-    var status: [:0]const u8 = "loading...";
+    var gltf: ?std.json.Parsed(rowmath.Gltf) = null;
+    var scene = Scene{};
 };
-
-var fetch_buffer: [1024 * 1024]u8 = undefined;
-var status_buffer: [1024]u8 = undefined;
 
 export fn init() void {
     sg.setup(.{
@@ -34,52 +34,36 @@ export fn init() void {
         .clear_value = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 },
     };
 
-    // setup sokol-fetch with 2 channels and 6 lanes per channel,
-    // we'll use one channel for mesh data and the other for textures
-    sokol.fetch.setup(.{
-        .max_requests = 2,
-        .num_channels = 1,
-        .num_lanes = 2,
-        .logger = .{ .func = sokol.log.func },
-    });
-    // start loading the base gltf file...
-    _ = sokol.fetch.send(.{
-        .path = "Box.gltf",
-        .callback = fetch_callback,
-        .buffer = sokol.fetch.asRange(&fetch_buffer),
-    });
+    state.scene.init(std.heap.c_allocator);
+
+    gltf_fetcher.init();
+    gltf_fetcher.fetch_gltf("Box.gltf", &on_gltf) catch @panic("fetch_gltf");
 }
 
-export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
-    if (response.*.fetched) {
-        state.status = std.fmt.bufPrintZ(
-            &status_buffer,
-            "{}bytes\n",
-            .{response.*.data.size},
-        ) catch @panic("bufPrintZ");
-        const p: [*]const u8 = @ptrCast(response.*.data.ptr);
-        const allocator = std.heap.c_allocator;
-        if (std.json.parseFromSlice(
-            rowmath.Gltf,
-            allocator,
-            p[0..response.*.data.size],
-            .{
-                .ignore_unknown_fields = true,
-            },
-        )) |parsed| {
-            defer parsed.deinit();
-            state.status = "parsed";
-            std.debug.print("{s}\n", .{parsed.value});
-        } else |e| {
-            state.status = std.fmt.bufPrintZ(
-                &status_buffer,
-                "fail to parse: {s}",
-                .{@errorName(e)},
-            ) catch @panic("bufPrintZ");
-        }
-    } else if (response.*.failed) {
-        state.status = "fetch fail";
-    }
+fn on_gltf(gltf: std.json.Parsed(rowmath.Gltf)) void {
+    state.gltf = gltf;
+    std.debug.print("{s}\n", .{gltf.value});
+
+    // for (state.gltf.buffers) |buffer| {
+    //     if (buffer.uri) |uri| {
+    //         if (rowmath.Gltf.base64(uri)) |_| {
+    //             continue;
+    //         }
+    //
+    //         // start loading the base gltf file...
+    //         _ = sokol.fetch.send(.{
+    //             .path = uri,
+    //             .callback = fetch_callback,
+    //             .buffer = sokol.fetch.asRange(&self.fetch_buffer),
+    //         });
+    //     }
+    // }
+
+    state.scene.load(gltf.value, &.{}) catch |e| {
+        std.debug.print("{s}\n", .{@errorName(e)});
+        @panic("Scene.load");
+    };
+    gltf_fetcher.status = "loaded";
 }
 
 export fn frame() void {
@@ -92,7 +76,7 @@ export fn frame() void {
 
     sokol.debugtext.canvas(sokol.app.widthf() * 0.5, sokol.app.heightf() * 0.5);
     sokol.debugtext.pos(0.5, 0.5);
-    sokol.debugtext.puts(state.status);
+    sokol.debugtext.puts(gltf_fetcher.status);
 
     sg.beginPass(.{
         .action = state.pass_action,
@@ -104,6 +88,8 @@ export fn frame() void {
     });
     utils.draw_lines(&rowmath.lines.Grid(5).lines);
     utils.gl_end();
+
+    state.scene.draw(state.orbit.camera);
 
     sokol.debugtext.draw();
     sg.endPass();

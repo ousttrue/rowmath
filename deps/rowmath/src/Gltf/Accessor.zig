@@ -7,7 +7,7 @@ componentType: u32,
 type: []const u8,
 count: u32,
 bufferView: ?u32,
-byteOffset: ?u32,
+byteOffset: u32 = 0,
 
 fn componentTypeToStr(componentType: u32) []const u8 {
     return switch (componentType) {
@@ -59,10 +59,44 @@ pub fn format(
     });
     if (self.bufferView) |bufferView| {
         try writer.print(" => bufferView#{}", .{bufferView});
-        if (self.byteOffset) |byteOffset| {
-            if (byteOffset > 0) {
-                try writer.print("+{}", .{byteOffset});
-            }
+        if (self.byteOffset > 0) {
+            try writer.print("+{}", .{self.byteOffset});
         }
     }
+}
+
+fn componentByteSize(componentType: u32) u32 {
+    return switch (componentType) {
+        5120 => 1,
+        5121 => 1,
+        5122 => 2,
+        5123 => 2,
+        5125 => 4,
+        5126 => 4,
+        else => unreachable,
+    };
+}
+
+fn typeCount(type_: []const u8) u32 {
+    if (std.mem.eql(u8, "SCALAR", type_)) {
+        return 1;
+    } else if (std.mem.eql(u8, "VEC2", type_)) {
+        return 2;
+    } else if (std.mem.eql(u8, "VEC3", type_)) {
+        return 3;
+    } else if (std.mem.eql(u8, "VEC4", type_)) {
+        return 4;
+    } else if (std.mem.eql(u8, "MAT2", type_)) {
+        return 4;
+    } else if (std.mem.eql(u8, "MAT3", type_)) {
+        return 9;
+    } else if (std.mem.eql(u8, "MAT4", type_)) {
+        return 16;
+    } else {
+        unreachable;
+    }
+}
+
+pub fn stride(self: @This()) u32 {
+    return componentByteSize(self.componentType) * typeCount(self.type);
 }

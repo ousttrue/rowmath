@@ -3,7 +3,7 @@ const format_helper = @import("format_helper.zig");
 pub const Mesh = @This();
 
 const Attributes = struct {
-    POSITION: ?u32,
+    POSITION: u32,
     NORMAL: ?u32,
 
     pub fn format(
@@ -14,9 +14,9 @@ const Attributes = struct {
     ) !void {
         _ = fmt;
         _ = options;
-        if (self.POSITION) |POSITION| {
-            try writer.print("[POS=>#{}]", .{POSITION});
-        }
+        // if (self.POSITION) |POSITION| {
+        try writer.print("[POS=>#{}]", .{self.POSITION});
+        // }
         if (self.NORMAL) |NORMAL| {
             try writer.print("[NOM=>#{}]", .{NORMAL});
         }

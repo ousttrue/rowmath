@@ -35,7 +35,9 @@ pub const Frustum = @import("Frustum.zig");
 
 pub const bvh = @import("bvh/bvh.zig");
 pub const gizmo = @import("gizmo/gizmo.zig");
+
 pub const Gltf = @import("Gltf/Gltf.zig");
+pub const GltfBuffer = @import("GltfBuffer.zig");
 
 test {
     // const std = @import("std");

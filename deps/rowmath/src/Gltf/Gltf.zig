@@ -1,5 +1,6 @@
 const std = @import("std");
 pub const Asset = @import("Asset.zig");
+pub const Buffer = @import("Buffer.zig");
 pub const BufferView = @import("BufferView.zig");
 pub const Accessor = @import("Accessor.zig");
 pub const Material = @import("Material.zig");
@@ -9,6 +10,7 @@ pub const Skin = @import("Skin.zig");
 pub const Gltf = @This();
 
 asset: Asset,
+buffers:[]Buffer = &.{},
 bufferViews: []BufferView = &.{},
 accessors: []Accessor = &.{},
 materials: []Material = &.{},
@@ -38,6 +40,7 @@ pub fn format(
 
     try writer.print("asset: {any}\n", .{self.asset});
 
+    try print_list(writer, "buffers", self.buffers);
     try print_list(writer, "bufferViews", self.bufferViews);
     try print_list(writer, "accessors", self.accessors);
     try print_list(writer, "materials", self.materials);

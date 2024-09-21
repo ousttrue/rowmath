@@ -15,7 +15,7 @@
             "name": "exe",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/zig-out/bin/springbone.exe",
+            "program": "${workspaceFolder}/zig-out/bin/gltf.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/zig-out/web",
