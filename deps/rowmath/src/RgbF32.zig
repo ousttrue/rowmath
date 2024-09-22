@@ -1,4 +1,4 @@
-const RgbF32 = @This();
+pub const RgbF32 = @This();
 
 r: f32,
 g: f32,

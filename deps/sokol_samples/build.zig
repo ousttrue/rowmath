@@ -55,6 +55,12 @@ pub fn build(b: *std.Build) void {
     });
     const rowmath_mod = rowmath_dep.module("rowmath");
 
+    const zigltf_dep = b.dependency("zigltf", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const zigltf_mod = zigltf_dep.module("zigltf");
+
     const sokol_dep = b.dependency("sokol", .{
         .target = target,
         .optimize = optimize,
@@ -129,6 +135,7 @@ pub fn build(b: *std.Build) void {
                 .utils = utils,
                 .cuber = cuber,
                 .rowmath_mod = rowmath_mod,
+                .zigltf_mod = zigltf_mod,
                 .cimgui_dep = cimgui_dep,
                 .sokol_dep = sokol_dep,
             },
@@ -158,12 +165,14 @@ const BuildExampleOptions = struct {
     utils: *std.Build.Module,
     cuber: *std.Build.Module,
     rowmath_mod: *std.Build.Module,
+    zigltf_mod: *std.Build.Module,
     cimgui_dep: *std.Build.Dependency,
     sokol_dep: *std.Build.Dependency,
 
     fn inject(self: @This(), compile: *std.Build.Step.Compile) void {
         compile.root_module.addImport("sokol", self.sokol_dep.module("sokol"));
         compile.root_module.addImport("rowmath", self.rowmath_mod);
+        compile.root_module.addImport("zigltf", self.zigltf_mod);
         compile.root_module.addImport("cimgui", self.cimgui_dep.module("cimgui"));
         compile.root_module.addImport("utils", self.utils);
         compile.root_module.addImport("cuber", self.cuber);

@@ -1,5 +1,5 @@
 const Vec2 = @import("Vec2.zig");
-const InputState = @This();
+pub const InputState = @This();
 
 pub const MouseButton = enum {
     left,

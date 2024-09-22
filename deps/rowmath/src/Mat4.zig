@@ -1,8 +1,8 @@
-const Mat4 = @This();
 const std = @import("std");
 const Vec4 = @import("Vec4.zig");
 const Vec3 = @import("Vec3.zig");
 const Quat = @import("Quat.zig");
+pub const Mat4 = @This();
 
 m: [16]f32,
 

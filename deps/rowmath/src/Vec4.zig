@@ -1,5 +1,5 @@
-const Vec4 = @This();
 const Vec3 = @import("Vec3.zig");
+pub const Vec4 = @This();
 
 x: f32,
 y: f32,

@@ -10,34 +10,29 @@
 // * trs
 // [vec4][s][r][t]
 //------------------------------------------------------------------------------
-pub const Vec2 = @import("Vec2.zig");
-pub const Vec3 = @import("Vec3.zig");
-pub const Vec4 = @import("Vec4.zig");
-pub const Mat4 = @import("Mat4.zig");
-pub const Quat = @import("Quat.zig");
-pub const RgbF32 = @import("RgbF32.zig");
-pub const RgbaF32 = @import("RgbaF32.zig");
-pub const RgbU8 = @import("RgbU8.zig");
-pub const RgbaU8 = @import("RgbaU8.zig");
-
-pub const RigidTransform = @import("RigidTransform.zig");
-pub const Transform = @import("Transform.zig");
-
-pub const InputState = @import("InputState.zig");
-pub const Ray = @import("Ray.zig");
-pub const Plane = @import("Plane.zig");
-pub const Camera = @import("Camera.zig");
-pub const OrbitCamera = @import("OrbitCamera.zig");
+pub usingnamespace @import("Vec2.zig");
+pub usingnamespace @import("Vec3.zig");
+pub usingnamespace @import("Vec4.zig");
+pub usingnamespace @import("Mat4.zig");
+pub usingnamespace @import("Quat.zig");
+pub usingnamespace @import("RgbF32.zig");
+pub usingnamespace @import("RgbaF32.zig");
+pub usingnamespace @import("RgbU8.zig");
+pub usingnamespace @import("RgbaU8.zig");
+pub usingnamespace @import("RigidTransform.zig");
+pub usingnamespace @import("Transform.zig");
+pub usingnamespace @import("InputState.zig");
+pub usingnamespace @import("Ray.zig");
+pub usingnamespace @import("Plane.zig");
+pub usingnamespace @import("Camera.zig");
+pub usingnamespace @import("OrbitCamera.zig");
 pub usingnamespace @import("drag_handler.zig");
 
 pub const lines = @import("lines/lines.zig");
-pub const Frustum = @import("Frustum.zig");
+pub usingnamespace @import("Frustum.zig");
 
 pub const bvh = @import("bvh/bvh.zig");
 pub const gizmo = @import("gizmo/gizmo.zig");
-
-pub const Gltf = @import("Gltf/Gltf.zig");
-pub const GltfBuffer = @import("GltfBuffer.zig");
 
 test {
     // const std = @import("std");

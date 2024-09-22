@@ -1,8 +1,8 @@
-const RigidTransform = @This();
 const Quat = @import("Quat.zig");
 const Vec3 = @import("Vec3.zig");
 const Mat4 = @import("Mat4.zig");
 const Ray = @import("Ray.zig");
+pub const RigidTransform = @This();
 
 rotation: Quat = Quat.identity,
 translation: Vec3 = Vec3.zero,

@@ -2,6 +2,7 @@ const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const rowmath = @import("rowmath");
+const zigltf = @import("zigltf");
 const utils = @import("utils");
 const Scene = @import("Scene.zig");
 const gltf_fetcher = @import("gltf_fetcher.zig");
@@ -10,7 +11,7 @@ const state = struct {
     var pass_action = sg.PassAction{};
     var input = rowmath.InputState{};
     var orbit = rowmath.OrbitCamera{};
-    var gltf: ?std.json.Parsed(rowmath.Gltf) = null;
+    var gltf: ?std.json.Parsed(zigltf.Gltf) = null;
     var scene = Scene{};
 };
 
@@ -40,13 +41,13 @@ export fn init() void {
     gltf_fetcher.fetch_gltf("Box.gltf", &on_gltf) catch @panic("fetch_gltf");
 }
 
-fn on_gltf(gltf: std.json.Parsed(rowmath.Gltf)) void {
+fn on_gltf(gltf: std.json.Parsed(zigltf.Gltf)) void {
     state.gltf = gltf;
     std.debug.print("{s}\n", .{gltf.value});
 
     // for (state.gltf.buffers) |buffer| {
     //     if (buffer.uri) |uri| {
-    //         if (rowmath.Gltf.base64(uri)) |_| {
+    //         if (zigltf.Gltf.base64(uri)) |_| {
     //             continue;
     //         }
     //

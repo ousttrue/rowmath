@@ -1,8 +1,9 @@
 const std = @import("std");
 const sokol = @import("sokol");
 const rowmath = @import("rowmath");
+const zigltf = @import("zigltf");
 
-const GltfCallback = fn (gltf: std.json.Parsed(rowmath.Gltf)) void;
+const GltfCallback = fn (gltf: std.json.Parsed(zigltf.Gltf)) void;
 
 const Task = union(enum) {
     gltf: struct {
@@ -64,7 +65,7 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
                 const p: [*]const u8 = @ptrCast(response.*.data.ptr);
                 const allocator = std.heap.c_allocator;
                 if (std.json.parseFromSlice(
-                    rowmath.Gltf,
+                    zigltf.Gltf,
                     allocator,
                     p[0..response.*.data.size],
                     .{

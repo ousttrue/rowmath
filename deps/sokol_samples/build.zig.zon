@@ -28,6 +28,10 @@
             .url = "https://github.com/CesiumGS/cesium/releases/download/1.121/Cesium-1.121.zip",
             .hash = "12202a1aeb3d505b61fba4c5133011b1c194627c782c3ba95628ffcc0d33133c1419",
         },
+        .zigltf = .{
+            .url = "git+https://github.com/ousttrue/zigltf.git#77a7d928a82718f54e7f8b22d0a3bd217b325d92",
+            .hash = "122051a65892738788f347155ffc14d76829560e1166e47a39892b3f9dd04045ce33",
+        },
     },
     .paths = .{
         "build.zig",

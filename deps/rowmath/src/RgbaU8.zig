@@ -1,4 +1,4 @@
-const RgbaU8 = @This();
+pub const RgbaU8 = @This();
 
 r: u8,
 g: u8,

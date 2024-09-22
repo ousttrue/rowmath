@@ -1,4 +1,4 @@
-const RgbaF32 = @This();
+pub const RgbaF32 = @This();
 
 r: f32,
 g: f32,

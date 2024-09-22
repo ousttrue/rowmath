@@ -1,4 +1,3 @@
-const Camera = @This();
 const std = @import("std");
 const Vec2 = @import("Vec2.zig");
 const Vec3 = @import("Vec3.zig");
@@ -9,6 +8,7 @@ const RigidTransform = @import("RigidTransform.zig");
 const Ray = @import("Ray.zig");
 const InputState = @import("InputState.zig");
 pub const Projection = @import("CameraProjection.zig");
+pub const Camera = @This();
 
 projection: Projection = .{},
 transform: RigidTransform = .{},

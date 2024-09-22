@@ -1,5 +1,5 @@
-const Vec2 = @This();
 const std = @import("std");
+pub const Vec2 = @This();
 
 x: f32,
 y: f32,

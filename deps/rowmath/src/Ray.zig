@@ -1,5 +1,5 @@
-const Ray = @This();
 const Vec3 = @import("Vec3.zig");
+pub const Ray = @This();
 
 origin: Vec3,
 direction: Vec3,

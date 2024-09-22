@@ -10,7 +10,7 @@ pub const SkeletonJoint = struct {
     parent: ?u16,
 };
 
-const Skeleton = @This();
+pub const Skeleton = @This();
 
 allocator: std.mem.Allocator,
 joints: []SkeletonJoint,

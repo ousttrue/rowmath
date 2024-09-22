@@ -1,8 +1,8 @@
-const Transform = @This();
 const RigidTransform = @import("RigidTransform.zig");
 const Vec3 = @import("Vec3.zig");
 const Quat = @import("Quat.zig");
 const Mat4 = @import("Mat4.zig");
+pub const Transform = @This();
 
 // rigid_transform() {}
 // rigid_transform(const minalg::float4 & orientation, const minalg::float3 & position, const minalg::float3 & scale) : orientation(orientation), position(position), scale(scale) {}

@@ -3,11 +3,11 @@ const sokol = @import("sokol");
 const sg = sokol.gfx;
 const shader = @import("gltf.glsl.zig");
 const rowmath = @import("rowmath");
-const Vec3 = rowmath.Vec3;
+const zigltf = @import("zigltf");
 
 pub const Vertex = struct {
-    position: Vec3,
-    normal: Vec3,
+    position: [3]f32,
+    normal: [3]f32,
 };
 
 pub const Mesh = struct {
@@ -70,7 +70,7 @@ pub fn deinit(self: *@This()) void {
 
 pub fn load(
     self: *@This(),
-    gltf: rowmath.Gltf,
+    gltf: zigltf.Gltf,
     bin: []const u8,
 ) !void {
     var meshes = std.ArrayList(Mesh).init(self.allocator);
@@ -80,7 +80,7 @@ pub fn load(
     var mesh_indices = std.ArrayList(u16).init(self.allocator);
     defer mesh_indices.deinit();
 
-    var gltf_buffer = rowmath.GltfBuffer.init(
+    var gltf_buffer = zigltf.GltfBuffer.init(
         self.allocator,
         gltf,
         bin,
@@ -112,11 +112,7 @@ pub fn load(
                     primitive.attributes.POSITION,
                 );
                 for (positions, 0..) |pos, i| {
-                    mesh_vertices.items[vertex_count + i].position = .{
-                        .x = pos[0],
-                        .y = pos[1],
-                        .z = pos[2],
-                    };
+                    mesh_vertices.items[vertex_count + i].position = pos;
                 }
             }
             if (primitive.attributes.NORMAL) |normal_accessor_index| {
@@ -126,11 +122,7 @@ pub fn load(
                     normal_accessor_index,
                 );
                 for (normals, 0..) |normal, i| {
-                    mesh_vertices.items[vertex_count + i].normal = .{
-                        .x = normal[0],
-                        .y = normal[1],
-                        .z = normal[2],
-                    };
+                    mesh_vertices.items[vertex_count + i].normal = normal;
                 }
             }
 

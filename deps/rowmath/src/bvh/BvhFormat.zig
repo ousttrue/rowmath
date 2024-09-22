@@ -3,10 +3,10 @@ const BvhTokenizer = @import("BvhTokenizer.zig");
 const is_space = BvhTokenizer.is_space;
 const get_eol = BvhTokenizer.get_eol;
 const get_name = BvhTokenizer.get_name;
-const BvhFormat = @This();
 const BvhJoint = @import("BvhJoint.zig");
 const BvhChannels = @import("BvhChannels.zig");
 const Vec3 = @import("../Vec3.zig");
+pub const BvhFormat = @This();
 
 token: BvhTokenizer,
 joints: std.ArrayList(BvhJoint),

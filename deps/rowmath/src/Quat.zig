@@ -1,7 +1,7 @@
-const Quat = @This();
 const std = @import("std");
 const Vec3 = @import("Vec3.zig");
 const Mat4 = @import("Mat4.zig");
+pub const Quat = @This();
 
 fn f4(v: Vec3, w: f32) [4]f32 {
     return .{ v.x, v.y, v.z, w };

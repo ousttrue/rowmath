@@ -6,7 +6,7 @@ const rowmath = @import("rowmath");
 const Vec3 = rowmath.Vec3;
 const Mat4 = rowmath.Mat4;
 
-const Bone = @This();
+pub const Bone = @This();
 
 pip: sg.Pipeline = .{},
 bind: sg.Bindings = .{},
