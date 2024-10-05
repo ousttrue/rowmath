@@ -58,9 +58,9 @@ pub fn fromMatrix(m: Mat4) !@This() {
 
     const m1 = Mat4{
         .m = .{
-            m.m[0] / scale.X, m.m[1] / scale.X, m.m[3] / scale.X,  0, //
-            m.m[4] / scale.Y, m.m[5] / scale.Y, m.m[6] / scale.Y,  0,
-            m.m[8] / scale.Z, m.m[9] / scale.Z, m.m[10] / scale.Z, 0,
+            m.m[0] / scale.x, m.m[1] / scale.x, m.m[3] / scale.x,  0, //
+            m.m[4] / scale.y, m.m[5] / scale.y, m.m[6] / scale.y,  0,
+            m.m[8] / scale.z, m.m[9] / scale.z, m.m[10] / scale.z, 0,
             0,                0,                0,                 1,
         },
     };
