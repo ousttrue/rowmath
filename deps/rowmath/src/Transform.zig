@@ -36,9 +36,9 @@ pub fn matrix(self: @This()) Mat4 {
 // https://github.com/MonoGame/MonoGame/blob/develop/MonoGame.Framework/Matrix.cs#L1476
 pub fn fromMatrix(m: Mat4) !@This() {
     const translation = Vec3{
-        .X = m.m[12],
-        .Y = m.m[13],
-        .Z = m.m[14],
+        .x = m.m[12],
+        .y = m.m[13],
+        .z = m.m[14],
     };
 
     const xs: f32 = if (std.math.sign(m.m[0] * m.m[1] * m.m[2] * m.m[3]) < 0) -1 else 1;
@@ -46,9 +46,9 @@ pub fn fromMatrix(m: Mat4) !@This() {
     const zs: f32 = if (std.math.sign(m.m[8] * m.m[9] * m.m[10] * m.m[11]) < 0) -1 else 1;
 
     const scale = Vec3{
-        .X = xs * std.math.sqrt(m.m[0] * m.m[0] + m.m[1] * m.m[1] + m.m[2] * m.m[2]),
-        .Y = ys * std.math.sqrt(m.m[4] * m.m[4] + m.m[5] * m.m[5] + m.m[6] * m.m[6]),
-        .Z = zs * std.math.sqrt(m.m[8] * m.m[8] + m.m[9] * m.m[9] + m.m[10] * m.m[10]),
+        .x = xs * std.math.sqrt(m.m[0] * m.m[0] + m.m[1] * m.m[1] + m.m[2] * m.m[2]),
+        .y = ys * std.math.sqrt(m.m[4] * m.m[4] + m.m[5] * m.m[5] + m.m[6] * m.m[6]),
+        .z = zs * std.math.sqrt(m.m[8] * m.m[8] + m.m[9] * m.m[9] + m.m[10] * m.m[10]),
     };
 
     if (scale.x == 0.0 or scale.y == 0.0 or scale.z == 0.0) {
