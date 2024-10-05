@@ -65,7 +65,7 @@ pub fn fromMatrix(m: Mat4) !@This() {
         },
     };
 
-    const rotation = m1.toQuat();
+    const rotation = try m1.toQuat();
 
     return trs(translation, rotation, scale);
 }

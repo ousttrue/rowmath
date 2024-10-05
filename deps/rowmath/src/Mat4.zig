@@ -178,8 +178,8 @@ pub fn toQuat(self: @This()) !Quat {
     const pz = -self.m[0] - self.m[5] + self.m[10] + 1;
     const pw = self.m[0] + self.m[5] + self.m[10] + 1;
 
-    const selected = 0;
-    const max = px;
+    var selected: u32 = 0;
+    var max = px;
     if (max < py) {
         selected = 1;
         max = py;
