@@ -1,3 +1,4 @@
+const std = @import("std");
 const RigidTransform = @import("RigidTransform.zig");
 const Vec3 = @import("Vec3.zig");
 const Quat = @import("Quat.zig");
@@ -30,6 +31,43 @@ pub fn matrix(self: @This()) Mat4 {
         .r = self.rigid_transform.rotation,
         .s = self.scale,
     });
+}
+
+// https://github.com/MonoGame/MonoGame/blob/develop/MonoGame.Framework/Matrix.cs#L1476
+pub fn fromMatrix(m: Mat4) !@This() {
+    const translation = Vec3{
+        .X = m.m[12],
+        .Y = m.m[13],
+        .Z = m.m[14],
+    };
+
+    const xs: f32 = if (std.math.sign(m.m[0] * m.m[1] * m.m[2] * m.m[3]) < 0) -1 else 1;
+    const ys: f32 = if (std.math.sign(m.m[4] * m.m[5] * m.m[6] * m.m[7]) < 0) -1 else 1;
+    const zs: f32 = if (std.math.sign(m.m[8] * m.m[9] * m.m[10] * m.m[11]) < 0) -1 else 1;
+
+    const scale = Vec3{
+        .X = xs * std.math.sqrt(m.m[0] * m.m[0] + m.m[1] * m.m[1] + m.m[2] * m.m[2]),
+        .Y = ys * std.math.sqrt(m.m[4] * m.m[4] + m.m[5] * m.m[5] + m.m[6] * m.m[6]),
+        .Z = zs * std.math.sqrt(m.m[8] * m.m[8] + m.m[9] * m.m[9] + m.m[10] * m.m[10]),
+    };
+
+    if (scale.x == 0.0 or scale.y == 0.0 or scale.z == 0.0) {
+        // rotation = Quaternion.Identity;
+        return error.zero;
+    }
+
+    const m1 = Mat4{
+        .m = .{
+            m.M11 / scale.X, m.M12 / scale.X, m.M13 / scale.X, 0, //
+            m.M21 / scale.Y, m.M22 / scale.Y, m.M23 / scale.Y, 0,
+            m.M31 / scale.Z, m.M32 / scale.Z, m.M33 / scale.Z, 0,
+            0,               0,               0,               1,
+        },
+    };
+
+    const rotation = m1.toQuat();
+
+    return trs(translation, rotation, scale);
 }
 
 pub fn transformVector(self: @This(), vec: Vec3) Vec3 {

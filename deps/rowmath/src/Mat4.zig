@@ -171,6 +171,68 @@ pub fn rotate(degree: f32, axis_unorm: Vec3) Mat4 {
     return res;
 }
 
+// https://qiita.com/aa_debdeb/items/abe90a9bd0b4809813da#%E5%9B%9E%E8%BB%A2%E8%A1%8C%E5%88%97%E3%81%8B%E3%82%89%E3%82%AF%E3%82%A9%E3%83%BC%E3%82%BF%E3%83%8B%E3%82%AA%E3%83%B3
+pub fn toQuat(self: @This()) !Quat {
+    const px = self.m[0] - self.m[5] - self.m[10] + 1;
+    const py = -self.m[0] + self.m[5] - self.m[10] + 1;
+    const pz = -self.m[0] - self.m[5] + self.m[10] + 1;
+    const pw = self.m[0] + self.m[5] + self.m[10] + 1;
+
+    const selected = 0;
+    const max = px;
+    if (max < py) {
+        selected = 1;
+        max = py;
+    }
+    if (max < pz) {
+        selected = 2;
+        max = pz;
+    }
+    if (max < pw) {
+        selected = 3;
+        max = pw;
+    }
+
+    if (selected == 0) {
+        const x = std.math.sqrt(px) * 0.5;
+        const d = 1 / (4 * x);
+        return .{
+            .x = x,
+            .y = (self.m[4] + self.m[1]) * d,
+            .z = (self.m[2] + self.m[8]) * d,
+            .w = (self.m[9] - self.m[6]) * d,
+        };
+    } else if (selected == 1) {
+        const y = std.math.sqrt(py) * 0.5;
+        const d = 1 / (4 * y);
+        return .{
+            .x = (self.m[4] + self.m[1]) * d,
+            .y = y,
+            .z = (self.m[9] + self.m[6]) * d,
+            .w = (self.m[2] - self.m[8]) * d,
+        };
+    } else if (selected == 2) {
+        const z = std.math.sqrt(pz) * 0.5;
+        const d = 1 / (4 * z);
+        return .{
+            .x = (self.m[2] + self.m[8]) * d,
+            .y = (self.m[9] + self.m[6]) * d,
+            .z = z,
+            .w = (self.m[4] - self.m[1]) * d,
+        };
+    } else if (selected == 3) {
+        const w = std.math.sqrt(pw) * 0.5;
+        const d = 1 / (4 * w);
+        return .{
+            .x = (self.m[9] - self.m[6]) * d,
+            .y = (self.m[2] - self.m[8]) * d,
+            .z = (self.m[4] - self.m[1]) * d,
+            .w = w,
+        };
+    }
+    unreachable;
+}
+
 pub fn translate(translation: Vec3) Mat4 {
     var res = Mat4.identity;
     res.m[12] = translation.x;
