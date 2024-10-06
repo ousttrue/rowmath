@@ -1,10 +1,5 @@
 const Line = @import("Line.zig");
-
-fn MakeType(comptime _value: anytype) type {
-    return struct {
-        pub const lines = _value;
-    };
-}
+const MakeType = @import("MakeType.zig").MakeType;
 
 pub fn Grid(comptime _n: u16) type {
     const n: f32 = @floatFromInt(_n); //5.0;

@@ -174,6 +174,7 @@ export fn frame() void {
 
                 // grid
                 utils.draw_lines(&rowmath.lines.Grid(5).lines);
+                utils.draw_lines(&rowmath.lines.Axis(1).lines);
                 // frustum
                 utils.draw_camera_frustum(state.screen.orbit);
             }
@@ -188,6 +189,7 @@ export fn frame() void {
         defer state.screen.end();
 
         utils.draw_lines(&rowmath.lines.Grid(5).lines);
+        utils.draw_lines(&rowmath.lines.Axis(1).lines);
     }
     sg.commit();
 }
