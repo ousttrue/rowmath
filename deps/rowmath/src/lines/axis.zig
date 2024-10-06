@@ -1,5 +1,5 @@
 const Line = @import("Line.zig");
-const MakeType = @import("MakeType.zig").MakeType;
+const MakeType = @import("maketype.zig").MakeType;
 const Vec3 = @import("../Vec3.zig");
 const RgbF32 = @import("../RgbF32.zig");
 

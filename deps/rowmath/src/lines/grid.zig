@@ -1,5 +1,5 @@
 const Line = @import("Line.zig");
-const MakeType = @import("MakeType.zig").MakeType;
+const MakeType = @import("maketype.zig").MakeType;
 
 pub fn Grid(comptime _n: u16) type {
     const n: f32 = @floatFromInt(_n); //5.0;
