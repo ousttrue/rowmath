@@ -143,7 +143,7 @@ const Drag = struct {
         offset_on_axis = flush_to_zero(offset_on_axis);
         var new_scale = self.original_scale.add(offset_on_axis);
 
-        new_scale = if (uniform) Vec3.scalar(std.math.clamp(distance.dot(new_scale), 0.01, 1000.0)) else Vec3{
+        new_scale = if (uniform) Vec3.fromScalar(std.math.clamp(distance.dot(new_scale), 0.01, 1000.0)) else Vec3{
             .x = std.math.clamp(new_scale.x, 0.01, 1000.0),
             .y = std.math.clamp(new_scale.y, 0.01, 1000.0),
             .z = std.math.clamp(new_scale.z, 0.01, 1000.0),
@@ -166,7 +166,7 @@ pub const ScalingContext = struct {
         _p: *Transform,
         uniform: bool,
     ) !void {
-        var p = Transform.trs(
+        var p = Transform.fromTrs(
             _p.rigid_transform.translation,
             _p.rigid_transform.rotation,
             Vec3.one,
@@ -233,7 +233,7 @@ pub const ScalingContext = struct {
             }
         }
 
-        const scaleMatrix = Mat4.scaleUniform(draw_scale);
+        const scaleMatrix = Mat4.makeScaleUniform(draw_scale);
         const modelMatrix = p.matrix().mul(scaleMatrix);
         for ([_]InteractionMode{ .Scale_x, .Scale_y, .Scale_z }) |i| {
             if (get(i)) |c| {

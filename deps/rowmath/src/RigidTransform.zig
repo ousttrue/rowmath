@@ -8,14 +8,14 @@ rotation: Quat = Quat.identity,
 translation: Vec3 = Vec3.zero,
 
 pub fn localToWorld(self: @This()) Mat4 {
-    const r = self.rotation.matrix();
+    const r = self.rotation.toMatrix();
     const t = Mat4.translate(self.translation);
     return r.mul(t);
 }
 
 pub fn worldToLocal(self: @This()) Mat4 {
     const t = Mat4.translate(self.translation.negate());
-    const r = self.rotation.conjugate().matrix();
+    const r = self.rotation.conjugate().toMatrix();
     return t.mul(r);
 }
 

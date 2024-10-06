@@ -46,7 +46,7 @@ pub fn resize(self: *@This(), size: Vec2) void {
 pub fn updateProjectionMatrix(self: *@This()) void {
     switch (self.projection_type) {
         .perspective => {
-            self.matrix = Mat4.perspective(
+            self.matrix = Mat4.makePerspective(
                 self.fov_y_radians,
                 self.getAspectRatio(),
                 self.near_clip,
@@ -56,7 +56,7 @@ pub fn updateProjectionMatrix(self: *@This()) void {
         .orthographic => {
             const aspect = self.getAspectRatio();
             const height = self.getHeight();
-            self.matrix = Mat4.orthographic(
+            self.matrix = Mat4.makeOrthographic(
                 -height * aspect / 2,
                 height * aspect / 2,
                 -height / 2,

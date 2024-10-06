@@ -3,10 +3,6 @@ const Vec3 = @import("Vec3.zig");
 const Mat4 = @import("Mat4.zig");
 pub const Quat = @This();
 
-fn f4(v: Vec3, w: f32) [4]f32 {
-    return .{ v.x, v.y, v.z, w };
-}
-
 x: f32,
 y: f32,
 z: f32,
@@ -14,7 +10,7 @@ w: f32,
 
 pub const identity: Quat = .{ .x = 0, .y = 0, .z = 0, .w = 1 };
 
-pub fn axisAngle(axis: Vec3, angle: f32) Quat {
+pub fn fromAxisAngle(axis: Vec3, angle: f32) Quat {
     const s = std.math.sin(angle / 2);
     return .{
         .x = axis.x * s,
@@ -87,7 +83,11 @@ pub fn dirZ(q: @This()) Vec3 {
     };
 }
 
-pub fn matrix(q: @This()) Mat4 {
+fn f4(v: Vec3, w: f32) [4]f32 {
+    return .{ v.x, v.y, v.z, w };
+}
+
+pub fn toMatrix(q: @This()) Mat4 {
     return .{
         .m = f4(q.dirX(), 0) ++
             f4(q.dirY(), 0) ++

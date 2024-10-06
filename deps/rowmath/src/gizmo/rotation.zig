@@ -187,7 +187,7 @@ const Drag = struct {
         if (!mouse_left) {
             return null;
         }
-        const original_pose = Transform.trs(
+        const original_pose = Transform.fromTrs(
             self.original_position,
             start_orientation,
             Vec3.one,
@@ -220,7 +220,7 @@ const Drag = struct {
                 return snapped.mul(start_orientation);
             } else {
                 const a = arm1.cross(arm2).normalize();
-                return Quat.axisAngle(a, angle).mul(start_orientation);
+                return Quat.fromAxisAngle(a, angle).mul(start_orientation);
             }
         }
 
@@ -271,7 +271,7 @@ pub const RotationContext = struct {
     ) !void {
         std.debug.assert(_p.rigid_transform.rotation.sqNorm() > 1e-6);
 
-        var p = Transform.trs(
+        var p = Transform.fromTrs(
             _p.rigid_transform.translation,
             if (local_toggle) _p.rigid_transform.rotation else Quat.identity,
             Vec3.one,
@@ -343,7 +343,7 @@ pub const RotationContext = struct {
             self.drag = null;
         }
 
-        const scaleMatrix = Mat4.scale(.{
+        const scaleMatrix = Mat4.makeScale(.{
             .x = draw_scale,
             .y = draw_scale,
             .z = draw_scale,

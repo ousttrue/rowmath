@@ -167,7 +167,7 @@ export fn frame() void {
         });
         defer sg.endPass();
         utils.gl_begin(.{
-            .projection = Mat4.orthographic(
+            .projection = Mat4.makeOrthographic(
                 0,
                 sokol.app.widthf(),
                 sokol.app.heightf(),

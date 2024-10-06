@@ -35,7 +35,7 @@ pub fn transpose(s: Mat4) Mat4 {
     };
 }
 
-pub fn scale(s: Vec3) Mat4 {
+pub fn makeScale(s: Vec3) Mat4 {
     return Mat4{
         .m = [_]f32{
             s.x, 0.0, 0.0, 0.0,
@@ -46,8 +46,8 @@ pub fn scale(s: Vec3) Mat4 {
     };
 }
 
-pub fn scaleUniform(s: f32) Mat4 {
-    return scale(.{ .x = s, .y = s, .z = s });
+pub fn makeScaleUniform(s: f32) Mat4 {
+    return makeScale(.{ .x = s, .y = s, .z = s });
 }
 
 pub fn row0(self: Mat4) Vec4 {
@@ -75,6 +75,14 @@ pub fn col3(self: Mat4) Vec4 {
     return .{ .x = self.m[3], .y = self.m[7], .z = self.m[11], .w = self.m[15] };
 }
 
+pub fn add(left: Mat4, right: Mat4) Mat4 {
+    const m = left;
+    for (m, 0..) |*f, i| {
+        f.* += right.m[i];
+    }
+    return m;
+}
+
 pub fn mul(left: Mat4, right: Mat4) Mat4 {
     return Mat4{
         .m = [_]f32{
@@ -88,7 +96,7 @@ pub fn mul(left: Mat4, right: Mat4) Mat4 {
 
 /// d3d: [-1, +1]
 /// gl: [0, +1]
-pub fn orthographic(
+pub fn makeOrthographic(
     left: f32,
     right: f32,
     bottom: f32,
@@ -111,7 +119,7 @@ pub fn orthographic(
 
 /// d3d: [-1, +1]
 /// gl: [0, +1]
-pub fn perspective(fovYRadians: f32, aspect: f32, near: f32, far: f32) Mat4 {
+pub fn makePerspective(fovYRadians: f32, aspect: f32, near: f32, far: f32) Mat4 {
     var res = Mat4.identity;
     const cot = 1 / std.math.tan(fovYRadians / 2);
     res.m[0] = cot / aspect;
@@ -123,7 +131,7 @@ pub fn perspective(fovYRadians: f32, aspect: f32, near: f32, far: f32) Mat4 {
     return res;
 }
 
-pub fn lookAt(eye: Vec3, center: Vec3, up: Vec3) Mat4 {
+pub fn makeLookAt(eye: Vec3, center: Vec3, up: Vec3) Mat4 {
     var res = Mat4.zero;
 
     const f = Vec3.sub(center, eye).normalize();
@@ -245,7 +253,7 @@ fn f4(v: Vec3, w: f32) [4]f32 {
     return .{ v.x, v.y, v.z, w };
 }
 
-pub fn trs(o: struct {
+pub fn fromTrs(o: struct {
     t: Vec3 = Vec3.zero,
     r: Quat = Quat.identity,
     s: Vec3 = Vec3.one,

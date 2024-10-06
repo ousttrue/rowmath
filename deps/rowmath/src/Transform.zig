@@ -15,7 +15,7 @@ rigid_transform: RigidTransform = .{},
 // orientation: Quat = .{ .x = 0, .y = 0, .z = 0, .w = 1 },
 scale: Vec3 = .{ .x = 1, .y = 1, .z = 1 },
 
-pub fn trs(t: Vec3, r: Quat, s: Vec3) @This() {
+pub fn fromTrs(t: Vec3, r: Quat, s: Vec3) @This() {
     return .{
         .rigid_transform = .{ .translation = t, .rotation = r },
         .scale = s,
@@ -26,7 +26,7 @@ pub fn uniformScale(self: @This()) bool {
     return self.scale.x == self.scale.y and self.scale.x == self.scale.z;
 }
 pub fn matrix(self: @This()) Mat4 {
-    return Mat4.trs(.{
+    return Mat4.fromTrs(.{
         .t = self.rigid_transform.translation,
         .r = self.rigid_transform.rotation,
         .s = self.scale,
@@ -67,7 +67,7 @@ pub fn fromMatrix(m: Mat4) !@This() {
 
     const rotation = try m1.toQuat();
 
-    return trs(translation, rotation, scale);
+    return fromTrs(translation, rotation, scale);
 }
 
 pub fn transformVector(self: @This(), vec: Vec3) Vec3 {
