@@ -76,11 +76,26 @@ pub fn col3(self: Mat4) Vec4 {
 }
 
 pub fn add(left: Mat4, right: Mat4) Mat4 {
-    const m = left;
-    for (m, 0..) |*f, i| {
-        f.* += right.m[i];
-    }
-    return m;
+    return .{
+        .m = .{
+            left.m[0] + right.m[0],
+            left.m[1] + right.m[1],
+            left.m[2] + right.m[2],
+            left.m[3] + right.m[3],
+            left.m[4] + right.m[4],
+            left.m[5] + right.m[5],
+            left.m[6] + right.m[6],
+            left.m[7] + right.m[7],
+            left.m[8] + right.m[8],
+            left.m[9] + right.m[9],
+            left.m[10] + right.m[10],
+            left.m[11] + right.m[11],
+            left.m[12] + right.m[12],
+            left.m[13] + right.m[13],
+            left.m[14] + right.m[14],
+            left.m[15] + right.m[15],
+        },
+    };
 }
 
 pub fn mul(left: Mat4, right: Mat4) Mat4 {
