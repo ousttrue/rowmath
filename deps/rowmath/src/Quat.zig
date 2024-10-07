@@ -59,6 +59,10 @@ pub fn mul(a: @This(), b: @This()) @This() {
     };
 }
 
+pub fn dot(a: @This(), b: @This()) f32 {
+    return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
 pub fn slerp(a: @This(), _b: @This(), t: f32) @This() {
     var cos_omega = a.dot(_b);
     const b = if (cos_omega < 0) blk: {
