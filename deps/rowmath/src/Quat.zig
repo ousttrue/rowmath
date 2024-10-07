@@ -59,6 +59,39 @@ pub fn mul(a: @This(), b: @This()) @This() {
     };
 }
 
+pub fn slerp(a: @This(), _b: @This(), t: f32) @This() {
+    var cos_omega = a.dot(_b);
+    const b = if (cos_omega < 0) blk: {
+        cos_omega = -cos_omega;
+        break :blk Quat{
+            .x = -_b.x,
+            .y = -_b.y,
+            .z = -_b.z,
+            .w = -_b.w,
+        };
+    } else _b;
+
+    var k0: f32 = undefined;
+    var k1: f32 = undefined;
+    if (cos_omega > 0.9999) {
+        k0 = 1 - t;
+        k1 = t;
+    } else {
+        const sin_omega = std.math.sqrt(1 - cos_omega * cos_omega);
+        const omega = std.math.atan2(sin_omega, cos_omega);
+        const one_over_sin_omega = 1 / sin_omega;
+        k0 = std.math.sin((1 - t) * omega) * one_over_sin_omega;
+        k1 = std.math.sin(t * omega) * one_over_sin_omega;
+    }
+
+    return .{
+        .x = a.x * k0 + b.x * k1,
+        .y = a.y * k0 + b.y * k1,
+        .z = a.z * k0 + b.z * k1,
+        .w = a.w * k0 + b.w * k1,
+    };
+}
+
 pub fn dirX(q: @This()) Vec3 {
     return .{
         .x = q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z,
