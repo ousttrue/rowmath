@@ -173,7 +173,7 @@ pub fn makeLookAt(eye: Vec3, center: Vec3, up: Vec3) Mat4 {
     return res;
 }
 
-pub fn rotate(degree: f32, axis_unorm: Vec3) Mat4 {
+pub fn makeRotation(degree: f32, axis_unorm: Vec3) Mat4 {
     var res = Mat4.identity;
 
     const axis = axis_unorm.normalize();
@@ -256,7 +256,7 @@ pub fn toQuat(self: @This()) !Quat {
     unreachable;
 }
 
-pub fn translate(translation: Vec3) Mat4 {
+pub fn makeTranslate(translation: Vec3) Mat4 {
     var res = Mat4.identity;
     res.m[12] = translation.x;
     res.m[13] = translation.y;
@@ -268,7 +268,7 @@ fn f4(v: Vec3, w: f32) [4]f32 {
     return .{ v.x, v.y, v.z, w };
 }
 
-pub fn fromTrs(o: struct {
+pub fn makeTrs(o: struct {
     t: Vec3 = Vec3.zero,
     r: Quat = Quat.identity,
     s: Vec3 = Vec3.one,
@@ -331,7 +331,7 @@ fn eq(val: f32, cmp: f32) bool {
 }
 
 test "Mat4.perspective" {
-    const m = Mat4.perspective(std.math.degreesToRadians(60.0), 1.33333337, 0.01, 10.0);
+    const m = Mat4.makePerspective(std.math.degreesToRadians(60.0), 1.33333337, 0.01, 10.0);
 
     try std.testing.expect(eq(m.m[0], 1.73205 / 1.333));
     try std.testing.expect(eq(m.m[1], 0.0));
@@ -355,7 +355,7 @@ test "Mat4.perspective" {
 }
 
 test "Mat4.lookat" {
-    const m = Mat4.lookAt(
+    const m = Mat4.makeLookAt(
         .{ .x = 0.0, .y = 1.5, .z = 6.0 },
         Vec3.zero,
         Vec3.up,
@@ -383,7 +383,7 @@ test "Mat4.lookat" {
 }
 
 test "Mat4.rotate" {
-    const m = Mat4.rotate(2.0, .{ .x = 0.0, .y = 1.0, .z = 0.0 });
+    const m = Mat4.makeRotation(2.0, .{ .x = 0.0, .y = 1.0, .z = 0.0 });
 
     try std.testing.expect(eq(m.m[0], 0.99939));
     try std.testing.expect(eq(m.m[1], 0.0));
