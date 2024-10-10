@@ -256,7 +256,7 @@ pub fn toQuat(self: @This()) !Quat {
     unreachable;
 }
 
-pub fn makeTranslate(translation: Vec3) Mat4 {
+pub fn makeTranslation(translation: Vec3) Mat4 {
     var res = Mat4.identity;
     res.m[12] = translation.x;
     res.m[13] = translation.y;

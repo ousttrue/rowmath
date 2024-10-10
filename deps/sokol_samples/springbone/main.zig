@@ -121,7 +121,7 @@ pub fn ParticleSimulation(comptime n: usize) type {
 
         pub fn currentToMatrixFlip(self: *@This()) void {
             for (&self.matrices, self.current()) |*m, *b| {
-                m.* = Mat4.translate(b.*);
+                m.* = Mat4.makeTranslation(b.*);
             }
             self.phase += 1;
         }

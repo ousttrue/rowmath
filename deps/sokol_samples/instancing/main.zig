@@ -46,10 +46,10 @@ export fn frame() void {
 
     // update instance data
     const n = 2;
-    state.cuber.instances[0] = .{ .matrix = Mat4.translate(.{ .x = -n, .y = 0, .z = -n }) };
-    state.cuber.instances[1] = .{ .matrix = Mat4.translate(.{ .x = n, .y = 0, .z = -n }) };
-    state.cuber.instances[2] = .{ .matrix = Mat4.translate(.{ .x = n, .y = 0, .z = n }) };
-    state.cuber.instances[3] = .{ .matrix = Mat4.translate(.{ .x = -n, .y = 0, .z = n }) };
+    state.cuber.instances[0] = .{ .matrix = Mat4.makeTranslation(.{ .x = -n, .y = 0, .z = -n }) };
+    state.cuber.instances[1] = .{ .matrix = Mat4.makeTranslation(.{ .x = n, .y = 0, .z = -n }) };
+    state.cuber.instances[2] = .{ .matrix = Mat4.makeTranslation(.{ .x = n, .y = 0, .z = n }) };
+    state.cuber.instances[3] = .{ .matrix = Mat4.makeTranslation(.{ .x = -n, .y = 0, .z = n }) };
     state.cuber.upload(4);
 
     // ...and draw

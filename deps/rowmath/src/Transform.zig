@@ -26,7 +26,7 @@ pub fn uniformScale(self: @This()) bool {
     return self.scale.x == self.scale.y and self.scale.x == self.scale.z;
 }
 pub fn matrix(self: @This()) Mat4 {
-    return Mat4.fromTrs(.{
+    return Mat4.makeTrs(.{
         .t = self.rigid_transform.translation,
         .r = self.rigid_transform.rotation,
         .s = self.scale,

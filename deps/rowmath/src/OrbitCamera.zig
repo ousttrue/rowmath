@@ -172,10 +172,10 @@ pub fn updateTransform(self: *@This()) void {
     const yaw = Quat.fromAxisAngle(.{ .x = 0, .y = 1, .z = 0 }, self.yaw);
     const pitch = Quat.fromAxisAngle(.{ .x = 1, .y = 0, .z = 0 }, self.pitch);
     self.camera.transform.rotation = pitch.mul(yaw); //.matrix();
-    const m = Mat4.translate(self.shift).mul(
+    const m = Mat4.makeTranslation(self.shift).mul(
         self.camera.transform.rotation.toMatrix(),
     ).mul(
-        Mat4.translate(self.pivot),
+        Mat4.makeTranslation(self.pivot),
     );
     self.camera.transform.translation.x = m.m[12];
     self.camera.transform.translation.y = m.m[13];
