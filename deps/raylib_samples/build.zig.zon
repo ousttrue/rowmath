@@ -10,8 +10,8 @@
             .hash = "12202255eda360df76a6b63dc588dc2420e644bcdc17d5147285f39342e5dd70e677",
         },
         .@"emsdk-zig" = .{
-            .url = "git+https://github.com/ousttrue/emsdk-zig.git#f36400831add3e00c94059f594a163f3e93b5742",
-            .hash = "122088fff71531cd275164d5d879952dfbf7a1aee70736462ce85f235f5cf7dfb03d",
+            .url = "git+https://github.com/ousttrue/emsdk-zig.git#149035fc555ba520b07f40fbad6a884ad09494a2",
+            .hash = "12209748efd123d7b0ec8c49abe27144f935685e4df2f049ae7877ef29e169402742",
         },
     },
     .paths = .{

@@ -8,17 +8,9 @@
         .cimgui = .{
             .path = "../cimgui",
         },
-        // .sokol = .{
-        //     .url = "git+https://github.com/floooh/sokol-zig.git#9e4eabae83c74df29b24cdba7b31e985a2d8c33f",
-        //     .hash = "12209706d64fa2127cc2d48134c22790d70f561c40bdeb4589fa7f9c41c4f53fe9da",
-        // },
-        .sokol = .{
-            .url = "git+https://github.com/ousttrue/sokol-zig.git#38014bc673fd3c82f44612f02573d5af00dfc66f",
-            .hash = "12205b36041f858db146628cd3b25fae4cda5f161a6a52d48fa22cde0c03b689ccb8",
-        },
         .@"emsdk-zig" = .{
-            .url = "git+https://github.com/ousttrue/emsdk-zig.git#4b3df5dc7824514a3ef99c1dee77ee3087019050",
-            .hash = "122062b769fe74a24375a9409bce954bdd378f79b4b9fd2adf7a23360634cf5ad55c",
+            .url = "git+https://github.com/ousttrue/emsdk-zig.git#149035fc555ba520b07f40fbad6a884ad09494a2",
+            .hash = "12209748efd123d7b0ec8c49abe27144f935685e4df2f049ae7877ef29e169402742",
         },
         .@"sokol-tools-bin" = .{
             .url = "git+https://github.com/floooh/sokol-tools-bin.git#8cc8c257380c9a5e230a84aeebf09cd500903fbc",
@@ -29,8 +21,8 @@
             .hash = "12202a1aeb3d505b61fba4c5133011b1c194627c782c3ba95628ffcc0d33133c1419",
         },
         .zigltf = .{
-            .url = "git+https://github.com/ousttrue/zigltf.git#77a7d928a82718f54e7f8b22d0a3bd217b325d92",
-            .hash = "122051a65892738788f347155ffc14d76829560e1166e47a39892b3f9dd04045ce33",
+            .url = "git+https://github.com/ousttrue/zigltf.git#a730524f177cbdad4d63830da25c98fb677c0002",
+            .hash = "122037aa7a889ededf27998b0d788db6978250c1e5a598e45d5793f8bba10ee3be91",
         },
     },
     .paths = .{
