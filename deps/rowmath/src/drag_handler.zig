@@ -8,11 +8,11 @@ pub const MouseButton = enum {
 };
 
 fn StateType(Handler: type) type {
-    return @typeInfo(Handler).Fn.return_type.?;
+    return @typeInfo(Handler).@"fn".return_type.?;
 }
 
 fn FrameInputType(Handler: type) type {
-    return @typeInfo(Handler).Fn.params[1].type.?;
+    return @typeInfo(Handler).@"fn".params[1].type.?;
 }
 
 // handler required:
