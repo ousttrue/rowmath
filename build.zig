@@ -30,83 +30,83 @@ pub fn build(b: *std.Build) void {
     }
 
     // examples sokol
-    if (b.option(bool, "sokol", "build sokol examples") orelse false) {
-        const sokol_dep = b.dependency("sokol_samples", .{
-            .target = target,
-            .optimize = optimize,
-        });
-
-        const sokol_wf = sokol_dep.namedWriteFiles("build");
-        const install_wf = b.addInstallDirectory(.{
-            .source_dir = sokol_wf.getDirectory(),
-            .install_dir = .{ .prefix = void{} },
-            .install_subdir = "",
-        });
-
-        const univrm_dep = b.dependency("univrm", .{});
-        const bvh = univrm_dep.path("Assets/VRM10_Samples/VRM10Viewer/Motions/vrm10viewer_test_motion.txt");
-        const install_bvh = b.addInstallFile(bvh, "web/univrm.bvh");
-
-        if (target.result.isWasm()) {
-            b.getInstallStep().dependOn(&install_wf.step);
-            b.getInstallStep().dependOn(&install_bvh.step);
-        } else {
-            for (sokol_dep.builder.install_tls.step.dependencies.items) |dep_step| {
-                // }
-
-                if (dep_step.cast(std.Build.Step.InstallArtifact)) |install_artifact| {
-                    // exe
-                    const run = b.addRunArtifact(install_artifact.artifact);
-                    run.setCwd(b.path("zig-out/web"));
-                    run.step.dependOn(&install_artifact.step);
-                    run.step.dependOn(&install_wf.step);
-
-                    b.step(
-                        b.fmt("run-{s}", .{install_artifact.artifact.name}),
-                        b.fmt("Run {s}", .{install_artifact.artifact.name}),
-                    ).dependOn(&run.step);
-
-                    const install = b.addInstallArtifact(install_artifact.artifact, .{});
-                    b.getInstallStep().dependOn(&install.step);
-                    install.step.dependOn(&install_artifact.step);
-                    run.step.dependOn(&install.step);
-                    run.step.dependOn(&install_bvh.step);
-                }
-            }
-        }
-
-        const sokol_build = @import("sokol_samples");
-        const run = sokol_build.emrun(b, sokol_dep);
-        b.step("emrun", "run emrun").dependOn(&run.step);
-    }
+    // if (b.option(bool, "sokol", "build sokol examples") orelse false) {
+    //     const sokol_dep = b.dependency("sokol_samples", .{
+    //         .target = target,
+    //         .optimize = optimize,
+    //     });
+    //
+    //     const sokol_wf = sokol_dep.namedWriteFiles("build");
+    //     const install_wf = b.addInstallDirectory(.{
+    //         .source_dir = sokol_wf.getDirectory(),
+    //         .install_dir = .{ .prefix = void{} },
+    //         .install_subdir = "",
+    //     });
+    //
+    //     const univrm_dep = b.dependency("univrm", .{});
+    //     const bvh = univrm_dep.path("Assets/VRM10_Samples/VRM10Viewer/Motions/vrm10viewer_test_motion.txt");
+    //     const install_bvh = b.addInstallFile(bvh, "web/univrm.bvh");
+    //
+    //     if (target.result.isWasm()) {
+    //         b.getInstallStep().dependOn(&install_wf.step);
+    //         b.getInstallStep().dependOn(&install_bvh.step);
+    //     } else {
+    //         for (sokol_dep.builder.install_tls.step.dependencies.items) |dep_step| {
+    //             // }
+    //
+    //             if (dep_step.cast(std.Build.Step.InstallArtifact)) |install_artifact| {
+    //                 // exe
+    //                 const run = b.addRunArtifact(install_artifact.artifact);
+    //                 run.setCwd(b.path("zig-out/web"));
+    //                 run.step.dependOn(&install_artifact.step);
+    //                 run.step.dependOn(&install_wf.step);
+    //
+    //                 b.step(
+    //                     b.fmt("run-{s}", .{install_artifact.artifact.name}),
+    //                     b.fmt("Run {s}", .{install_artifact.artifact.name}),
+    //                 ).dependOn(&run.step);
+    //
+    //                 const install = b.addInstallArtifact(install_artifact.artifact, .{});
+    //                 b.getInstallStep().dependOn(&install.step);
+    //                 install.step.dependOn(&install_artifact.step);
+    //                 run.step.dependOn(&install.step);
+    //                 run.step.dependOn(&install_bvh.step);
+    //             }
+    //         }
+    //     }
+    //
+    //     const sokol_build = @import("sokol_samples");
+    //     const run = sokol_build.emrun(b, sokol_dep);
+    //     b.step("emrun", "run emrun").dependOn(&run.step);
+    // }
 
     // examples raylib
-    if (b.option(bool, "raylib", "build raylib examples") orelse false) {
-        const raylib_dep = b.dependency("raylib_samples", .{
-            .target = target,
-            .optimize = optimize,
-        });
-        for (raylib_dep.builder.install_tls.step.dependencies.items) |dep_step| {
-            if (target.result.isWasm()) {
-                if (dep_step.cast(std.Build.Step.InstallDir)) |dir| {
-                    b.installDirectory(.{
-                        .source_dir = dir.options.source_dir,
-                        .install_dir = .prefix,
-                        .install_subdir = "web",
-                    });
-                }
-            } else {
-                const inst = dep_step.cast(std.Build.Step.InstallArtifact) orelse continue;
-                const install = b.addInstallArtifact(inst.artifact, .{});
-                b.getInstallStep().dependOn(&install.step);
-                // run exe
-                const run = b.addRunArtifact(inst.artifact);
-                run.step.dependOn(&install.step);
-                b.step(
-                    b.fmt("run-{s}", .{inst.artifact.name}),
-                    b.fmt("Run {s}", .{inst.artifact.name}),
-                ).dependOn(&run.step);
-            }
-        }
-    }
+    // if (b.option(bool, "raylib", "build raylib examples") orelse false) {
+    //     const raylib_dep = b.dependency("raylib_samples", .{
+    //         .target = target,
+    //         .optimize = optimize,
+    //     });
+    //     for (raylib_dep.builder.install_tls.step.dependencies.items) |dep_step| {
+    //         if (target.result.isWasm()) {
+    //             if (dep_step.cast(std.Build.Step.InstallDir)) |dir| {
+    //                 b.installDirectory(.{
+    //                     .source_dir = dir.options.source_dir,
+    //                     .install_dir = .prefix,
+    //                     .install_subdir = "web",
+    //                 });
+    //             }
+    //         } else {
+    //             const inst = dep_step.cast(std.Build.Step.InstallArtifact) orelse continue;
+    //             const install = b.addInstallArtifact(inst.artifact, .{});
+    //             b.getInstallStep().dependOn(&install.step);
+    //             // run exe
+    //             const run = b.addRunArtifact(inst.artifact);
+    //             run.step.dependOn(&install.step);
+    //             b.step(
+    //                 b.fmt("run-{s}", .{inst.artifact.name}),
+    //                 b.fmt("Run {s}", .{inst.artifact.name}),
+    //             ).dependOn(&run.step);
+    //         }
+    //     }
+    // }
 }
