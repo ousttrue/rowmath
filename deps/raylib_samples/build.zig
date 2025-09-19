@@ -16,7 +16,7 @@ pub fn build(b: *std.Build) void {
 
     // create a build step which invokes the Emscripten linker
     var _emsdk: ?*std.Build.Dependency = null;
-    if (target.result.isWasm()) {
+    if (target.result.cpu.arch.isWasm()) {
         const emsdk = b.dependency("emsdk-zig", .{}).builder.dependency("emsdk", .{});
         b.sysroot = emsdk.path("upstream/emscripten").getPath(b);
         _emsdk = emsdk;
@@ -29,17 +29,21 @@ pub fn build(b: *std.Build) void {
     const raylib_lib = raylib_dep.artifact("raylib");
 
     if (_emsdk) |emsdk| {
-        const lib = b.addStaticLibrary(.{
-            .target = target,
-            .optimize = optimize,
+        const lib = b.addLibrary(.{
             .name = name,
-            .root_source_file = b.path(src),
+            .root_module = b.addModule(name, .{
+                .target = target,
+                .optimize = optimize,
+                .root_source_file = b.path(src),
+                .link_libc = true,
+            }),
         });
         b.installArtifact(lib);
         const emsdk_incl_path = emsdk.path(
             "upstream/emscripten/cache/sysroot/include",
         );
         lib.addSystemIncludePath(emsdk_incl_path);
+        raylib_lib.addSystemIncludePath(emsdk_incl_path);
 
         // inject dependency(must inject before emLinkStep)
         lib.root_module.linkLibrary(raylib_lib);
@@ -64,10 +68,12 @@ pub fn build(b: *std.Build) void {
         b.getInstallStep().dependOn(&link_step.step);
     } else {
         const exe = b.addExecutable(.{
-            .target = target,
-            .optimize = optimize,
             .name = name,
-            .root_source_file = b.path(src),
+            .root_module = b.addModule(name, .{
+                .target = target,
+                .optimize = optimize,
+                .root_source_file = b.path(src),
+            }),
         });
         b.installArtifact(exe);
 

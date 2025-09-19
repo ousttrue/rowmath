@@ -18,7 +18,7 @@ pub fn runShdcCommand(
 ) *std.Build.Step.Run {
     const tools = b.dependency("sokol-tools-bin", .{});
     const shdc_path = tools.path(subPath()).getPath(b);
-    const glsl = if (target.result.isDarwin()) "glsl410" else "glsl430";
+    const glsl = if (target.result.os.tag.isDarwin()) "glsl410" else "glsl430";
     const slang = glsl ++ ":metal_macos:hlsl5:glsl300es:wgsl";
     const tool_step = b.addSystemCommand(&.{
         shdc_path,

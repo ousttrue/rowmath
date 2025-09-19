@@ -1,5 +1,5 @@
 .{
-    .name = "rowmath",
+    .name = .rowmath,
     .version = "0.0.0",
     .paths = .{
         "",

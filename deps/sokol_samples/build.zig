@@ -78,7 +78,7 @@ pub fn build(b: *std.Build) void {
 
     // create a build step which invokes the Emscripten linker
     var emsdk: ?*std.Build.Dependency = null;
-    if (target.result.isWasm()) {
+    if (target.result.cpu.arch.isWasm()) {
         const _emsdk_zig = b.dependency("emsdk-zig", .{});
         const _emsdk = _emsdk_zig.builder.dependency("emsdk", .{});
         emsdk = _emsdk;
@@ -206,12 +206,14 @@ fn build_example(
     out_wf: *std.Build.Step.WriteFile,
 ) *std.Build.Step.Compile {
     if (_emsdk) |emsdk| {
-        const lib = b.addStaticLibrary(.{
-            .target = target,
-            .optimize = optimize,
+        const lib = b.addLibrary(.{
             .name = example.name,
-            .root_source_file = b.path(example.src),
-            .pic = true,
+            .root_module = b.addModule(example.name, .{
+                .target = target,
+                .optimize = optimize,
+                .root_source_file = b.path(example.src),
+                .pic = true,
+            }),
         });
         example.injectShader(b, target, lib);
         // inject dependency(must inject before emLinkStep)
@@ -245,10 +247,12 @@ fn build_example(
         return lib;
     } else {
         const exe = b.addExecutable(.{
-            .target = target,
-            .optimize = optimize,
             .name = example.name,
-            .root_source_file = b.path(example.src),
+            .root_module = b.addModule(example.name, .{
+                .target = target,
+                .optimize = optimize,
+                .root_source_file = b.path(example.src),
+            }),
         });
         b.installArtifact(exe);
 

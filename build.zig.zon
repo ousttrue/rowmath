@@ -1,6 +1,8 @@
 .{
-    .name = "rowmath",
+    .name = .rowmath,
+    .fingerprint = 0xdca8447d4929352d,
     .version = "0.0.0",
+    .minimum_zig_version = "0.15.1",
     .dependencies = .{
         .rowmath = .{
             .path = "deps/rowmath",

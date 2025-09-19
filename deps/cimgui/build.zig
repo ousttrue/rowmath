@@ -15,11 +15,13 @@ pub fn build(b: *std.Build) void {
     const root = wf.getDirectory();
 
     // build cimgui as C/C++ library
-    const lib_cimgui = b.addStaticLibrary(.{
+    const lib_cimgui = b.addLibrary(.{
         .name = "cimgui_clib",
-        .target = target,
-        .optimize = optimize,
-        .link_libc = true,
+        .root_module = b.addModule("cimgui_clib", .{
+            .target = target,
+            .optimize = optimize,
+            .link_libc = true,
+        }),
     });
     lib_cimgui.linkLibCpp();
     lib_cimgui.addCSourceFiles(.{

@@ -1,17 +1,19 @@
 .{
-    .name = "examples",
+    .minimum_zig_version = "0.15.1",
+    .name = .examples,
+    .fingerprint = 0x7bd0ad4571880fc0,
     .version = "0.0.0",
     .dependencies = .{
         .rowmath = .{
             .path = "../rowmath",
         },
         .raylib = .{
-            .url = "git+https://github.com/raysan5/raylib.git#6e644a27fc1c3d3499750a0e58a0ba5c2a4a0ed2",
-            .hash = "12202255eda360df76a6b63dc588dc2420e644bcdc17d5147285f39342e5dd70e677",
+            .url = "git+https://github.com/raysan5/raylib.git#1c3f9fa135cafa494af760c4cd0541c9a23cdf60",
+            .hash = "raylib-5.6.0-dev-whq8uMw1ywQblBEHnrrJ2dLC7ifPmZJZbvCgdIak3CQs",
         },
         .@"emsdk-zig" = .{
-            .url = "git+https://github.com/ousttrue/emsdk-zig.git#149035fc555ba520b07f40fbad6a884ad09494a2",
-            .hash = "12209748efd123d7b0ec8c49abe27144f935685e4df2f049ae7877ef29e169402742",
+            .url = "git+https://github.com/ousttrue/emsdk-zig.git#098715d16c875e1c36f27e49db48e7c5f357a57f",
+            .hash = "emsdk_zig-0.0.0-caLXQb5AAACY2sja0G9N83fy5dT4yeVHccNbKlYyMvmU",
         },
     },
     .paths = .{
